@@ -9,86 +9,33 @@ class QuadraticFormulaDerivation(Scene):
                     "text": "이차방정식의 표준형",
                     "render": True,
                 },
-                "equation": "ax^2 + bx + c = 0",
+                "equation": "{{ax^2 + bx}} {{+ c}} {{= 0}}",
             },
             {
                 "explanation": "c항을 우변으로 이항",
-                "equation": "ax^2 + bx = -c",
+                "equation": "{{ax^2 + bx}} {{= -c}}",
             },
             {
                 "explanation": "양변을 a로 나누기",
-                "equation": "x^2 + \\frac{b}{a}x = -\\frac{c}{a}",
+                "equation": "{{x^2 + \\frac{b}{a}x}} {{= -\\frac{c}{a}}}",
             },
             {
                 "explanation": {
                     "text": "좌변 x항 계수의 절반의 제곱을 양변에 더하기",
                     "render": True,
                 },
-                "equation": "x^2 + \\frac{b}{a}x + {\\left(\\dfrac{\\frac{b}{a}}{2}\\right)}^2 = {\\left(\\dfrac{\\frac{b}{a}}{2}\\right)}^2 - \\frac{c}{a}",
+                "equation": "{{x^2 + \\frac{b}{a}x}} + \\left(\\dfrac{\\frac{b}{a}}{2}\\right)^2 = \\left(\\dfrac{\\frac{b}{a}}{2}\\right)^2 {{- \\frac{c}{a}}}",
             },
             {
                 "explanation": "양변 정리",
-                "equation": "x^2 + \\frac{b}{a}x + \\left(\\frac{b}{2a}\\right)^2 = \\left(\\frac{b}{2a}\\right)^2 - \\frac{c}{a}",
+                "equation": "{{x^2 + \\frac{b}{a}x}} {{+ \\left(\\frac{b}{2a}\\right)^2}} {{= \\left(\\frac{b}{2a}\\right)^2 - \\frac{c}{a}}}",
             },
             {
                 "explanation": {
                     "text": "좌변의 x항 표현을 완전제곱식으로 정리하기 위해서 변형",
                     "render": True,
                 },
-                "equation": "x^2 + 2 \\cdot x \\cdot \\frac{b}{2a} + \\left(\\frac{b}{2a}\\right)^2 = \\left(\\frac{b}{2a}\\right)^2 - \\frac{c}{a}",
-            },
-            {
-                "explanation": "좌변을 완전제곱식으로 정리",
-                "equation": "\\left(x + \\frac{b}{2a}\\right)^2 = \\left(\\frac{b}{2a}\\right)^2 - \\frac{c}{a}",
-            },
-            {
-                "explanation": "우변의 제곱항 변형",
-                "equation": "\\left(x + \\frac{b}{2a}\\right)^2 = \\frac{b^2}{4a^2} - \\frac{c}{a}",
-            },
-            {
-                "explanation": "우변항들의 분모 통분",
-                "equation": "\\left(x + \\frac{b}{2a}\\right)^2 = \\frac{b^2}{4a^2} - \\frac{4ac}{4a^2}",
-            },
-            {
-                "explanation": "우변 정리",
-                "equation": "\\left(x + \\frac{b}{2a}\\right)^2 = \\frac{b^2 - 4ac}{4a^2}",
-            },
-            {
-                "explanation": "양변에 제곱근 적용",
-                "equation": "\\sqrt{\\left(x + \\frac{b}{2a}\\right)^2} = \\sqrt{\\frac{b^2 - 4ac}{4a^2}}",
-            },
-            {
-                "explanation": "좌변의 제곱근 표현을 절대값 표현으로 변형",
-                "equation": "\\left|x + \\frac{b}{2a}\\right| = \\sqrt{\\frac{b^2 - 4ac}{4a^2}}",
-            },
-            {
-                "explanation": {
-                    "text": "절대값 정의를 이용한 경우 나누기",
-                    "render": True,
-                },
-                "equation": "x + \\frac{b}{2a} = \\begin{cases} +\\sqrt{\\frac{b^2 - 4ac}{4a^2}} & \\text{if } x + \\frac{b}{2a} \\geq 0 \\\\\\\\ -\\sqrt{\\frac{b^2 - 4ac}{4a^2}} & \\text{if } x + \\frac{b}{2a} < 0 \\end{cases}",
-            },
-            {
-                "explanation": {
-                    "text": "양수, 음수 경우를 ± 기호로 통합",
-                    "render": True,
-                },
-                "equation": "x + \\frac{b}{2a} = \\pm \\sqrt{\\frac{b^2 - 4ac}{4a^2}}",
-            },
-            {
-                "explanation": "우변의 분모를 간단히 정리",
-                "equation": "x + \\frac{b}{2a} = \\pm \\frac{\\sqrt{b^2 - 4ac}}{2a}",
-            },
-            {
-                "explanation": "좌변의 상수항을 우변으로 이항",
-                "equation": "x = -\\frac{b}{2a} \\pm \\frac{\\sqrt{b^2 - 4ac}}{2a}",
-            },
-            {
-                "explanation": {
-                    "text": "최종적인 근의 공식",
-                    "render": True,
-                },
-                "equation": "x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}",
+                "equation": "{{x^2}} {{+ 2 \\cdot x \\cdot \\frac{b}{2a}}} {{+ \\left(\\frac{b}{2a}\\right)^2}} {{= \\left(\\frac{b}{2a}\\right)^2 - \\frac{c}{a}}}",
             },
         ]
 
