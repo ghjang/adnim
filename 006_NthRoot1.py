@@ -89,7 +89,6 @@ class NthRootByNewtonRaphson(Scene):
         self.play(FadeOut(start_graph_label))
         start_group.remove(start_graph_label)
 
-        # 최종 상태 (원하는 위치와 크기)
         mid_plane = NumberPlane(
             x_range=[-2, 4],
             y_range=[-3, 5],  # y축 범위를 1만큼 아래로
