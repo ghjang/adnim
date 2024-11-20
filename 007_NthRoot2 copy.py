@@ -1,6 +1,6 @@
 from manim import *
-from tex_builder import TexBuilder
-from manim_utils import create_vertical_dash, format_number
+from lib.tex_builder import TexBuilder
+from lib.manim_utils import create_vertical_dash, format_number
 
 
 class NthRootByGradientDescent(Scene):

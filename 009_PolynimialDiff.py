@@ -1,6 +1,6 @@
 from manim import *
 from sympy import symbols, diff, solve, latex
-from manim_utils import create_code_block_from_file
+from lib.manim_utils import create_code_block_from_file
 
 
 class PolynimialDiff(Scene):
@@ -285,4 +285,4 @@ like differentiation and equation solving."""
             rate_func=linear
         )
 
-        self.wait(1)
+        self.wait(2)

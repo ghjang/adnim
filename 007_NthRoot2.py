@@ -10,7 +10,7 @@ class NthRootByGradientDescent(Scene):
         super().setup()
         self.tex_builder = TexBuilder()
         self.arrow_length = 1
-        self.learning_rate = 0.1  # 학습률 변수로 추출
+        self.learning_rate = 0.05  # 학습률을 0.05로 변경
 
     def calculate_next_x(self, current_x, learning_rate):
         """실제 gradient descent 계산"""
@@ -93,7 +93,7 @@ class NthRootByGradientDescent(Scene):
         tb = self.tex_builder
 
         self.next_section(
-            "Gradient Descent Method Formular Derivation")
+            "Gradient Descent Method Formular Derivation", skip_animations=True)
 
         # 타이틀
         title_parts = [
@@ -113,8 +113,8 @@ class NthRootByGradientDescent(Scene):
              "Gradient descent update rule"),
             (["x_{n+1} = x_n - \\alpha \\cdot 4x_n(x_n^2-2)"],
              "Substituted gradient"),
-            (["\\alpha = 0.1"], "Learning rate (step size)"),
-            ([(r"x_{n+1} = x_n - 0.4x_n(x_n^2-2)", GREEN)],
+            (["\\alpha = 0.05"], "Learning rate (step size)"),  # 학습률 표시 변경
+            ([(r"x_{n+1} = x_n - 0.2x_n(x_n^2-2)", GREEN)],   # 수식도 변경
              "Final update formula")
         ]
 
@@ -134,7 +134,7 @@ class NthRootByGradientDescent(Scene):
             FadeOut(table)
         )
 
-        self.next_section("Target Equation")
+        self.next_section("Target Equation", skip_animations=True)
 
         # 초기 상태 (전체 화면)
         start_plane = NumberPlane(
@@ -173,7 +173,7 @@ class NthRootByGradientDescent(Scene):
         self.play(FadeOut(start_graph_label))
         start_group.remove(start_graph_label)
 
-        self.next_section("Loss Function")
+        self.next_section("Loss Function", skip_animations=True)
 
         mid_plane = NumberPlane(
             x_range=[-2, 8],
@@ -230,7 +230,7 @@ class NthRootByGradientDescent(Scene):
             DOWN * 1.3 + RIGHT * 1.5).set_z_index(9999)
         self.play(FadeIn(x0), run_time=0.5)
 
-        self.next_section("Gradient Descent Step 1")
+        self.next_section("Gradient Descent Step 1", skip_animations=False)
 
         x1 = MathTex("x_1 = ", format_number(x1_value), color=GRAY).next_to(
             x0, DOWN, buff=0.2).set_z_index(9999)
@@ -289,7 +289,7 @@ class NthRootByGradientDescent(Scene):
             )
         )
 
-        self.next_section("Gradient Descent Step 2")
+        self.next_section("Gradient Descent Step 2", skip_animations=False)
 
         x2_gradient_arrow_start_dot = Dot(
             mid_plane.c2p(x2_value, (x2_value**2 - 2)**2),
@@ -337,7 +337,7 @@ class NthRootByGradientDescent(Scene):
             )
         )
 
-        self.next_section("Gradient Descent Step 3")
+        self.next_section("Gradient Descent Step 3", skip_animations=False)
 
         x3_gradient_arrow_start_dot = Dot(
             mid_plane.c2p(x3_value, (x3_value**2 - 2)**2),
