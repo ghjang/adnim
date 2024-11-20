@@ -1,6 +1,6 @@
 from manim import *
 from sympy import symbols, diff, solve, latex
-from lib.manim_utils import create_code_block_from_file
+from common.manim_utils import create_code_block_from_file
 
 
 class PolynimialDiff(Scene):
