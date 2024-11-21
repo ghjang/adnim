@@ -1,10 +1,10 @@
 from manim import *
-from common.web import WebImageMobject  # import 문 수정
+from common.web import WebImageMobject
+from common.open_emoji import EmojiImageMobject
 
 
 class WebImageTest(Scene):
     def construct(self):
-        # 단일 이미지는 WebImageMobject가 알아서 처리하므로 변경 불필요
         web_img = WebImageMobject(
             'https://www.google.com/images/branding/googlelogo/2x/googlelogo_color_272x92dp.png'
         )
@@ -34,3 +34,21 @@ class WebImageTest1(Scene):
                 image_grid.set_height(config.frame_height - 0.5)
 
             self.add(image_grid)
+
+
+class EmojiImageTest(Scene):
+    def construct(self):
+        emoji_img = EmojiImageMobject('🐶')
+        self.add(emoji_img)
+
+
+class EmojiImageTest1(Scene):
+    def construct(self):
+        self.camera.background_color = BLUE_A
+        face_emojis = [
+            '😀', '😃', '😄', '😁', '😆', '😅', '😂', '🤣', '😊', '😇',
+            '🙂', '🙃', '😉', '😌', '😍', '🥰', '😘', '😗', '😙', '😚',
+        ]
+        emoji_imgs = [EmojiImageMobject(emoji).scale(0.4) for emoji in face_emojis]
+        group = Group(*emoji_imgs).arrange_in_grid(rows=4, cols=5, buff=0.2)
+        self.add(group)
