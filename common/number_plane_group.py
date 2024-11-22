@@ -8,7 +8,7 @@ class OriginStyle(Enum):
     CROSS = auto()
 
 
-class EnhancedNumberPlane(VGroup):
+class NumberPlaneGroup(VGroup):
     def __init__(
         self,
         x_range=[-20, 20, 1],

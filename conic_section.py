@@ -1,5 +1,5 @@
 from manim import *
-from common.enhanced_number_plane import EnhancedNumberPlane
+from common.number_plane_group import NumberPlaneGroup
 
 
 def vertical_opening_parabola(x):
@@ -12,7 +12,7 @@ def directrix_line(x):
 
 class Parabola(Scene):
     def construct(self):
-        plane = EnhancedNumberPlane(
+        plane = NumberPlaneGroup(
             origin_config={
                 "size": 0.025,
                 "color": BLUE

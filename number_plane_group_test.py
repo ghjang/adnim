@@ -1,5 +1,5 @@
 from manim import *
-from common.enhanced_number_plane import EnhancedNumberPlane, OriginStyle
+from common.number_plane_group import NumberPlaneGroup, OriginStyle
 
 
 class NumberPlaneTransformExample(Scene):
@@ -86,10 +86,10 @@ class NumberPlaneWithOriginExample(Scene):
         self.wait(2)
 
 
-class EnhancedNumberPlaneExample(Scene):
+class NumberPlaneGroupExample(Scene):
     def construct(self):
         # 기본 DOT 스타일로 생성
-        enhanced_plane = EnhancedNumberPlane(
+        plane_group = NumberPlaneGroup(
             origin_style_type=OriginStyle.DOT,
             origin_config={
                 "color": RED,
@@ -97,46 +97,46 @@ class EnhancedNumberPlaneExample(Scene):
                 "opacity": 1.0
             }
         )
-        enhanced_plane.scale(1.2)
-        self.play(Create(enhanced_plane))
+        plane_group.scale(1.2)
+        self.play(Create(plane_group))
         self.wait()
 
         # CROSS 스타일로 변경
-        self.play(enhanced_plane.animate.shift(RIGHT * 2))
-        enhanced_plane.set_origin_style(
+        self.play(plane_group.animate.shift(RIGHT * 2))
+        plane_group.set_origin_style(
             OriginStyle.CROSS,
             {"color": YELLOW, "size": 0.2}
         )
         self.wait()
 
         # CIRCLE 스타일로 변경
-        self.play(enhanced_plane.animate.scale(1.5, about_point=ORIGIN))
-        enhanced_plane.set_origin_style(
+        self.play(plane_group.animate.scale(1.5, about_point=ORIGIN))
+        plane_group.set_origin_style(
             OriginStyle.CIRCLE,
             {"color": BLUE, "size": 0.12}
         )
         self.wait()
 
         # 원점 표시 숨기기/보이기
-        self.play(enhanced_plane.animate.rotate(PI/6))
-        enhanced_plane.hide_origin()
+        self.play(plane_group.animate.rotate(PI/6))
+        plane_group.hide_origin()
         self.wait()
-        enhanced_plane.show_origin()
+        plane_group.show_origin()
         self.wait()
 
         # 복합 변환
         self.play(
-            enhanced_plane.animate
+            plane_group.animate
             .scale(0.8)
             .shift(LEFT * 2 + UP * 1.5)
         )
         self.wait(2)
 
 
-class EnhancedNumberPlaneFunctionExample(Scene):
+class NumberPlaneGroupFunctionExample(Scene):
     def construct(self):
         # 좌표평면 생성 (보기 좋은 범위로 설정)
-        enhanced_plane = EnhancedNumberPlane(
+        plane_group = NumberPlaneGroup(
             background_line_style={
                 "stroke_opacity": 0.6
             },
@@ -146,7 +146,7 @@ class EnhancedNumberPlaneFunctionExample(Scene):
                 "size": 0.15
             }
         )
-        enhanced_plane.scale(1.2)
+        plane_group.scale(1.2)
 
         # 다양한 함수들 정의
         def parabola(x): return 0.5 * x**2  # y = 0.5x²
@@ -154,11 +154,11 @@ class EnhancedNumberPlaneFunctionExample(Scene):
         def cubic(x): return 0.1 * x**3      # y = 0.1x³
 
         # 좌표평면 생성
-        self.play(Create(enhanced_plane))
+        self.play(Create(plane_group))
         self.wait()
 
         # 포물선 그래프 추가 (파란색)
-        parabola_graph = enhanced_plane.plot_function(
+        parabola_graph = plane_group.plot_function(
             parabola,
             name="parabola",
             color=BLUE
@@ -167,7 +167,7 @@ class EnhancedNumberPlaneFunctionExample(Scene):
         self.wait()
 
         # 사인 함수 그래프 추가 (초록색)
-        sine_graph = enhanced_plane.plot_function(
+        sine_graph = plane_group.plot_function(
             sine,
             name="sine",
             color=GREEN
@@ -177,12 +177,12 @@ class EnhancedNumberPlaneFunctionExample(Scene):
 
         # 전체 평면 이동
         self.play(
-            enhanced_plane.animate.shift(RIGHT * 1.5 + UP)
+            plane_group.animate.shift(RIGHT * 1.5 + UP)
         )
         self.wait()
 
         # 3차 함수 그래프 추가 (빨간색)
-        cubic_graph = enhanced_plane.plot_function(
+        cubic_graph = plane_group.plot_function(
             cubic,
             name="cubic",
             color=RED
@@ -192,26 +192,26 @@ class EnhancedNumberPlaneFunctionExample(Scene):
 
         # 확대
         self.play(
-            enhanced_plane.animate.scale(1.5, about_point=ORIGIN)
+            plane_group.animate.scale(1.5, about_point=ORIGIN)
         )
         self.wait()
 
         # 포물선 그래프 제거
-        self.play(FadeOut(enhanced_plane.get_function_graph("parabola")))
-        enhanced_plane.remove_function("parabola")
+        self.play(FadeOut(plane_group.get_function_graph("parabola")))
+        plane_group.remove_function("parabola")
         self.wait()
 
         # 회전 애니메이션
         self.play(
-            enhanced_plane.animate.rotate(PI/6)  # 30도 회전
+            plane_group.animate.rotate(PI/6)  # 30도 회전
         )
         self.wait(2)
 
 
-class EnhancedNumberPlaneFunctionExample1(ThreeDScene):  # Scene -> ThreeDScene
+class NumberPlaneGroupFunctionExample1(ThreeDScene):  # Scene -> ThreeDScene
     def construct(self):
         # 좌표평면 생성 (더 넓은 범위로 설정)
-        enhanced_plane = EnhancedNumberPlane(
+        plane_group = NumberPlaneGroup(
             background_line_style={
                 "stroke_opacity": 0.3
             },
@@ -222,7 +222,7 @@ class EnhancedNumberPlaneFunctionExample1(ThreeDScene):  # Scene -> ThreeDScene
         )
 
         # 초기 크기와 위치 조정
-        enhanced_plane.scale(1.2)
+        plane_group.scale(1.2)
 
         # 함수들 정의 (일반 함수와 파라메트릭 함수 분리)
         def parabola(x): return 0.25 * x**2    # 원래대로 x축 방향
@@ -232,11 +232,11 @@ class EnhancedNumberPlaneFunctionExample1(ThreeDScene):  # Scene -> ThreeDScene
             [-2 * np.cos(t), t, 0])  # y축 방향 코사인
 
         # 좌표평면 생성
-        self.play(Create(enhanced_plane))
+        self.play(Create(plane_group))
         self.wait()
 
         # 포물선 그래프 추가 (일반 함수)
-        parabola_graph = enhanced_plane.plot_function(
+        parabola_graph = plane_group.plot_function(
             parabola,
             name="parabola",
             color=BLUE
@@ -246,24 +246,24 @@ class EnhancedNumberPlaneFunctionExample1(ThreeDScene):  # Scene -> ThreeDScene
 
         # 전체 평면 이동 (이동 거리 감소)
         self.play(
-            enhanced_plane.animate.shift(RIGHT * 1 + UP * 0.5)  # 이동 거리 감소
+            plane_group.animate.shift(RIGHT * 1 + UP * 0.5)  # 이동 거리 감소
         )
         self.wait()
 
         # 확대 (비율 감소)
         self.play(
-            enhanced_plane.animate.scale(1.3, about_point=ORIGIN)  # 확대 비율 감소
+            plane_group.animate.scale(1.3, about_point=ORIGIN)  # 확대 비율 감소
         )
         self.wait()
 
         # 회전 애니메이션 (ORIGIN 기준으로 회전)
         self.play(
-            enhanced_plane.animate.rotate(PI/6, about_point=ORIGIN)
+            plane_group.animate.rotate(PI/6, about_point=ORIGIN)
         )
         self.wait()
 
         # 사인 함수 그래프 추가 (일반 함수)
-        sine_graph = enhanced_plane.plot_function(
+        sine_graph = plane_group.plot_function(
             sine,
             name="sine",
             color=GREEN
@@ -272,7 +272,7 @@ class EnhancedNumberPlaneFunctionExample1(ThreeDScene):  # Scene -> ThreeDScene
         self.wait()
 
         # 코사인 함수만 y축 방향으로 그리기 (파라메트릭)
-        cosine_graph = enhanced_plane.plot_parametric(
+        cosine_graph = plane_group.plot_parametric(
             cosine_vertical,
             t_range=[-20, 20],  # y축 범위 확장
             name="cosine",
@@ -282,15 +282,15 @@ class EnhancedNumberPlaneFunctionExample1(ThreeDScene):  # Scene -> ThreeDScene
         self.wait()
 
         # 포물선 그래프 제거
-        self.play(FadeOut(enhanced_plane.get_function_graph("parabola")))
-        enhanced_plane.remove_function("parabola")
+        self.play(FadeOut(plane_group.get_function_graph("parabola")))
+        plane_group.remove_function("parabola")
         self.wait()
 
         # 반지름이 2인 원 그리기 (파라메트릭 방정식: x = 2cos(t), y = 2sin(t))
         def circle_func(t):
             return np.array([2 * np.cos(t), 2 * np.sin(t), 0])
 
-        circle_graph = enhanced_plane.plot_parametric(
+        circle_graph = plane_group.plot_parametric(
             circle_func,
             name="circle",
             color=YELLOW,
