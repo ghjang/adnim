@@ -610,29 +610,23 @@ class NumberPlaneGroup(VGroup):
                              corner_point,
                              direction1=RIGHT*0.5,
                              direction2=UP*0.5,
-                             size=0.3,
+                             size=0.2,
                              color=LIGHT_BROWN):
-        """직각을 표시하는 기호를 추가합니다.
-        Args:
-            corner_point: 직각이 위치할 점의 좌표 (x, y)
-            direction1: 첫 번째 변의 방향 (기본값: RIGHT)
-            direction2: 두 번째 변의 방향 (기본값: UP)
-            size: 직각 기호의 크기
-            color: 직각 기호의 색상
-        """
+        """직각을 표시하는 기호를 추가합니다."""
         # 코너 포인트를 화면 좌표계로 변환
         corner = self.plane.c2p(*corner_point)
 
-        # 직각 기호를 그리기 위한 세 점 계산
-        p1 = corner + size * direction1
-        p2 = corner + size * (direction1 + direction2)
-        p3 = corner + size * direction2
+        # 두 선분 생성
+        line1 = Line(corner, corner + direction1)
+        line2 = Line(corner, corner + direction2)
 
-        # 직각 기호 생성
-        angle_mark = VMobject(color=color)
-        angle_mark.set_points_as_corners([p1, p2, p3])
+        # RightAngle 클래스 사용
+        angle_mark = RightAngle(
+            line1, line2,
+            length=size,
+            color=color
+        )
 
-        # 메타데이터 설정 추가
         self._ensure_metadata(angle_mark)
         angle_mark.metadata = {"type": "ANGLE_MARK"}
 
