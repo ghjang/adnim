@@ -1,8 +1,8 @@
 from manim import *
-from common.number_plane_group import NumberPlaneGroup, OriginStyle
+from common.number_plane_group import NumberPlaneGroup, OriginStyle, MobjectType
 
 
-class NumberPlaneTransformExample(Scene):
+class TransformExample(Scene):
     def construct(self):
         # 더 넓은 범위의 NumberPlane 생성 ([-40, 40] 범위로 확장)
         plane = NumberPlane(
@@ -26,7 +26,7 @@ class NumberPlaneTransformExample(Scene):
         self.wait(2)
 
 
-class NumberPlaneWithOriginExample(Scene):
+class OriginExample(Scene):
     def construct(self):
         # NumberPlane 생성
         plane = NumberPlane(
@@ -119,7 +119,7 @@ class NumberPlaneGroupExample(Scene):
 
         # 원점 표시 숨기기/보이기
         self.play(plane_group.animate.rotate(PI/6))
-        plane_group.hide_origin()
+        plane_group.show_origin(False)
         self.wait()
         plane_group.show_origin()
         self.wait()
@@ -133,7 +133,7 @@ class NumberPlaneGroupExample(Scene):
         self.wait(2)
 
 
-class NumberPlaneGroupFunctionExample(Scene):
+class FunctionExample(Scene):
     def construct(self):
         # 좌표평면 생성 (보기 좋은 범위로 설정)
         plane_group = NumberPlaneGroup(
@@ -208,7 +208,7 @@ class NumberPlaneGroupFunctionExample(Scene):
         self.wait(2)
 
 
-class NumberPlaneGroupFunctionExample1(ThreeDScene):  # Scene -> ThreeDScene
+class FunctionExample1(ThreeDScene):  # Scene -> ThreeDScene
     def construct(self):
         # 좌표평면 생성 (더 넓은 범위로 설정)
         plane_group = NumberPlaneGroup(
@@ -398,5 +398,93 @@ class NumberPlaneGroupFunctionExample1(ThreeDScene):  # Scene -> ThreeDScene
             phi=50 * DEGREES,    # 각도 조정
             theta=45 * DEGREES,  # 큐빅 함수가 잘 보이는 각도
             run_time=3
+        )
+        self.wait(2)
+
+
+class IterationExample(Scene):
+    def construct(self):
+        # 좌표평면 생성
+        plane_group = NumberPlaneGroup(
+            background_line_style={"stroke_opacity": 0.4},
+            origin_style_type=OriginStyle.CROSS,
+            origin_config={"color": YELLOW, "size": 0.1}
+        )
+        plane_group.scale(1.2)
+        self.play(Create(plane_group))
+        self.wait()
+
+        # 여러 점들 추가
+        points = [
+            ((-2, 1), "A"), ((1, 2), "B"), ((2, -1), "C"),
+            ((-1, -2), "D"), ((0, 2), "E")
+        ]
+        for pos, label in points:
+            point = plane_group.add_point(
+                pos,
+                name=f"point_{label}",
+                color=BLUE,
+                label=label
+            )
+            self.play(Create(point), run_time=0.5)
+
+        # 여러 함수 그래프 추가
+        def f1(x): return 0.5 * x**2
+        def f2(x): return np.sin(x)
+        def f3(x): return 0.2 * x**3
+
+        funcs = [
+            (f1, "quad"), (f2, "sine"), (f3, "cubic")
+        ]
+        for func, name in funcs:
+            graph = plane_group.plot_function(
+                func,
+                name=f"func_{name}",
+                color=RED
+            )
+            self.play(Create(graph), run_time=0.5)
+
+        # 모든 점 순회하며 색상 변경 애니메이션
+        self.wait()
+        for point in plane_group.get_all_points():
+            self.play(
+                point.animate.set_color(GREEN),
+                run_time=0.3
+            )
+
+        # "func_" 패턴의 모든 함수 그래프 순회하며 스타일 변경
+        self.wait()
+        for graph in plane_group.iter_mobjects("func_.*", MobjectType.FUNCTION):
+            self.play(
+                graph.animate.set_stroke(color=YELLOW, width=4),
+                run_time=0.5
+            )
+
+        # 점들 중 일부만 선택하여 애니메이션
+        self.wait()
+        for point in plane_group.iter_mobjects("point_[AC]", MobjectType.POINT):
+            self.play(
+                point.animate.scale(1.5).set_color(PINK),
+                run_time=0.5
+            )
+
+        # 모든 함수 그래프 제거
+        self.wait()
+        self.play(
+            *[FadeOut(graph) for graph in plane_group.get_all_functions()],
+            run_time=1
+        )
+
+        # "point_[BD]" 패턴의 점들만 제거
+        self.wait()
+        plane_group.remove_all_by_pattern("point_[BD]", MobjectType.POINT)
+        self.wait()
+
+        # 남은 점들을 한 번에 이동
+        self.wait()
+        self.play(
+            *[point.animate.shift(UP * 0.5)
+              for point in plane_group.get_all_points()],
+            run_time=1
         )
         self.wait(2)

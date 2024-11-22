@@ -1,11 +1,21 @@
 from manim import *
 from enum import Enum, auto
+import re  # 정규표현식 지원 추가
 
 
 class OriginStyle(Enum):
     DOT = auto()
     CIRCLE = auto()
     CROSS = auto()
+
+
+class MobjectType(Enum):
+    """객체 타입 정의"""
+    ORIGIN = auto()
+    POINT = auto()
+    FUNCTION = auto()
+    PARAMETRIC = auto()
+    LABEL = auto()
 
 
 class NumberPlaneGroup(VGroup):
@@ -16,7 +26,7 @@ class NumberPlaneGroup(VGroup):
         x_length=16,
         y_length=16,
         background_line_style={"stroke_opacity": 0.4},
-        origin_style_type=OriginStyle.DOT,  # 기본값은 DOT
+        origin_style_type=OriginStyle.DOT,
         origin_config={
             "color": RED,
             "size": 0.05,
@@ -26,7 +36,8 @@ class NumberPlaneGroup(VGroup):
     ):
         super().__init__(**kwargs)
 
-        # NumberPlane 생성
+        # NOTE: NumberPlane의 'x_range, y_range'는 생성시에만 설정 가능함.
+        #       이 속성들의 변경이 필요하면 새로운 NumberPlane 객체를 생성해야 함.
         self.plane = NumberPlane(
             x_range=x_range,
             y_range=y_range,
@@ -36,17 +47,12 @@ class NumberPlaneGroup(VGroup):
         )
         self.add(self.plane)
 
-        # 원점 표시 생성
-        self.origin_marker = self._create_origin_marker(
-            origin_style_type, origin_config)
-        self.add(self.origin_marker)
-
-        self.current_style = origin_style_type
-
-        # 함수 그래프들을 저장할 딕셔너리 추가
-        self.function_graphs = {}
-        self.point_groups = {}  # points -> point_groups로 이름 변경
-        self.labels = {}  # 라벨들을 저장할 딕셔너리 추가
+        # 원점 저장 (멤버변수 제거)
+        origin_marker = self._create_origin_marker(
+            origin_style_type,
+            origin_config
+        )
+        self.add(origin_marker)
 
     def _create_origin_marker(self, style_type, config):
         """원점 표시 생성 헬퍼 메서드"""
@@ -55,25 +61,95 @@ class NumberPlaneGroup(VGroup):
         opacity = config.get("opacity", 1.0)
 
         # 원점 마커를 plane의 원점 위치에 생성
-        origin_point = self.plane.c2p(0, 0)  # 좌표계의 (0,0)을 화면 좌표로 변환
+        origin_point = self.plane.c2p(0, 0)
 
         if style_type == OriginStyle.DOT:
-            return Dot(
-                point=origin_point,
-                radius=size,  # size를 radius로 사용
-                color=color
-            ).set_opacity(opacity)
+            marker = Dot(point=origin_point, radius=size,
+                         color=color).set_opacity(opacity)
         elif style_type == OriginStyle.CIRCLE:
-            return Circle(
-                radius=size,
-                color=color,
-                fill_opacity=opacity
-            ).move_to(origin_point)
+            marker = Circle(radius=size, color=color,
+                            fill_opacity=opacity).move_to(origin_point)
         elif style_type == OriginStyle.CROSS:
-            return VGroup(
+            marker = VGroup(
                 Line(UP * size, DOWN * size, color=color),
                 Line(LEFT * size, RIGHT * size, color=color)
             ).move_to(origin_point).set_opacity(opacity)
+
+        # 메타데이터 설정을 여기서 한 번에 처리
+        marker = self._ensure_metadata(marker)
+        marker.metadata = {
+            "type": MobjectType.ORIGIN,
+            "style": style_type
+        }
+
+        return marker
+
+    def _ensure_metadata(self, mob):
+        """객체에 metadata 속성이 없으면 추가"""
+        if not hasattr(mob, "metadata"):
+            setattr(mob, "metadata", {})
+        return mob
+
+    def _find_mobject(self, name, obj_type=None):
+        """이름과 타입으로 객체 찾기"""
+        for mob in self.submobjects:
+            mob = self._ensure_metadata(mob)
+            if (mob.metadata.get("name") == name and
+                    (obj_type is None or mob.metadata.get("type") == obj_type)):
+                return mob
+        return None
+
+    def iter_mobjects(self, name_pattern=None, obj_type=None):
+        """이름 패턴과 타입으로 객체들을 필터링하여 이터레이션
+
+        Args:
+            name_pattern (str, optional): 정규표현식 패턴 (예: "point_.*", "function_[0-9]+")
+            obj_type (str, optional): 객체 타입 (예: "point", "function", "parametric")
+
+        Yields:
+            Mobject: 조건에 맞는 객체들
+        """
+        pattern = re.compile(name_pattern) if name_pattern else None
+
+        for mob in self.submobjects:
+            mob = self._ensure_metadata(mob)
+
+            # 타입 체크
+            if obj_type and mob.metadata.get("type") != obj_type:
+                continue
+
+            # 이름 패턴 체크
+            if pattern:
+                name = mob.metadata.get("name")
+                if not name or not pattern.match(name):
+                    continue
+
+            yield mob
+
+    def get_all_points(self):
+        """모든 점 객체 이터레이터"""
+        return self.iter_mobjects(obj_type=MobjectType.POINT)
+
+    def get_all_functions(self):
+        """모든 함수 그래프 객체 이터레이터"""
+        return self.iter_mobjects(obj_type=MobjectType.FUNCTION)
+
+    def get_all_parametrics(self):
+        """모든 파라메트릭 그래프 객체 이터레이터"""
+        return self.iter_mobjects(obj_type=MobjectType.PARAMETRIC)
+
+    def get_all_labels(self):
+        """모든 라벨 객체 이터레이터"""
+        return self.iter_mobjects(obj_type=MobjectType.LABEL)
+
+    def remove_all_by_pattern(self, name_pattern, obj_type=None):
+        """패턴과 타입에 맞는 모든 객체 제거"""
+        for mob in list(self.iter_mobjects(name_pattern, obj_type)):
+            self.remove(mob)
+
+    def get_origin_marker(self):
+        """원점 마커 가져오기"""
+        return self._find_mobject(None, MobjectType.ORIGIN)
 
     def set_origin_style(self, style_type, config=None):
         """원점 표시 스타일 변경"""
@@ -85,56 +161,23 @@ class NumberPlaneGroup(VGroup):
             }
 
         # 기존 원점 표시 제거
-        self.remove(self.origin_marker)
+        old_marker = self.get_origin_marker()
+        if old_marker:
+            self.remove(old_marker)
 
         # 새로운 원점 표시 생성 및 추가
-        self.origin_marker = self._create_origin_marker(style_type, config)
-        self.add(self.origin_marker)
-        self.current_style = style_type
+        new_marker = self._create_origin_marker(style_type, config)
+        self.add(new_marker)
 
-    # 원점 위치 업데이트를 위한 새로운 메서드 추가
-    def update_origin_marker_position(self):
-        """NumberPlane의 실제 원점 위치로 마커 업데이트"""
-        origin_point = self.plane.c2p(0, 0)
-        self.origin_marker.move_to(origin_point)
+    def get_current_origin_style(self):
+        """현재 원점 스타일 가져오기"""
+        marker = self.get_origin_marker()
+        return marker.metadata.get("style") if marker else None
 
-    # 기존 변환 메서드들을 오버라이드하여 원점 마커 위치 동기화
-    def scale(self, scale_factor, **kwargs):
-        super().scale(scale_factor, **kwargs)  # VGroup의 scale을 먼저 실행
-        self.update_origin_marker_position()
-        return self
-
-    def shift(self, vector):
-        super().shift(vector)  # VGroup의 shift를 먼저 실행
-        self.update_origin_marker_position()
-        return self
-
-    def rotate(self, angle, **kwargs):
-        super().rotate(angle, **kwargs)  # VGroup의 rotate를 먼저 실행
-        self.update_origin_marker_position()
-        return self
-
-    def hide_origin(self):
-        """원점 표시 숨기기"""
-        self.origin_marker.set_opacity(0)
-
-    def show_origin(self):
-        """원점 표시 보이기"""
-        self.origin_marker.set_opacity(1)
-
-    def _is_direction_match(self, dir1, dir2):
-        """두 방향 벡터가 같은지 비교"""
-        return np.array_equal(np.array(dir1), np.array(dir2))
-
-    def _get_direction_type(self, direction):
-        """방향 벡터의 종류 반환"""
-        if any(self._is_direction_match(direction, d) for d in [UP, UR, UL]):
-            return "up"
-        if any(self._is_direction_match(direction, d) for d in [DOWN, DR, DL]):
-            return "down"
-        if any(self._is_direction_match(direction, d) for d in [LEFT, RIGHT]):
-            return "side"
-        return "other"
+    def show_origin(self, show=True):
+        marker = self.get_origin_marker()
+        if marker:
+            marker.set_opacity(1 if show else 0)
 
     def plot_function(self,
                       func,
@@ -147,7 +190,7 @@ class NumberPlaneGroup(VGroup):
             x_range = self.plane.x_range[:2]
 
         if name is None:
-            name = f"function_{len(self.function_graphs)}"
+            name = f"function_{len([m for m in self.submobjects if m.metadata.get('type') == MobjectType.FUNCTION])}"
 
         graph = self.plane.plot(
             func,
@@ -155,20 +198,21 @@ class NumberPlaneGroup(VGroup):
             color=color,
             stroke_width=stroke_width
         )
+        graph = self._ensure_metadata(graph)
+        graph.metadata = {"type": MobjectType.FUNCTION, "name": name}
 
-        self.function_graphs[name] = graph
         self.add(graph)
         return graph
 
     def remove_function(self, name):
         """함수 그래프 제거"""
-        if name in self.function_graphs:
-            graph = self.function_graphs.pop(name)
+        graph = self._find_mobject(name, MobjectType.FUNCTION)
+        if graph:
             self.remove(graph)
 
     def get_function_graph(self, name):
         """특정 함수 그래프 가져오기"""
-        return self.function_graphs.get(name)
+        return self._find_mobject(name, MobjectType.FUNCTION)
 
     def plot_parametric(self,
                         func,  # (t) -> (x,y) 형태의 함수
@@ -178,7 +222,7 @@ class NumberPlaneGroup(VGroup):
                         stroke_width=2):
         """파라메트릭 함수 그래프 추가"""
         if name is None:
-            name = f"parametric_{len(self.function_graphs)}"
+            name = f"parametric_{len([m for m in self.submobjects if m.metadata.get('type') == MobjectType.PARAMETRIC])}"
 
         graph = self.plane.plot_parametric_curve(
             func,
@@ -186,8 +230,9 @@ class NumberPlaneGroup(VGroup):
             color=color,
             stroke_width=stroke_width
         )
+        graph = self._ensure_metadata(graph)
+        graph.metadata = {"type": MobjectType.PARAMETRIC, "name": name}
 
-        self.function_graphs[name] = graph
         self.add(graph)
         return graph
 
@@ -201,14 +246,16 @@ class NumberPlaneGroup(VGroup):
                   font_size=36):
         """점 추가 메서드"""
         if name is None:
-            name = f"point_{len(self.point_groups)}"
+            name = f"point_{len([m for m in self.submobjects if m.metadata.get('type') == MobjectType.POINT])}"
+
+        point_group = VGroup()
+        point_group.metadata = {"type": MobjectType.POINT, "name": name}
 
         dot = Dot(
             point=self.plane.c2p(*point),
             color=color
         )
-
-        point_group = VGroup(dot)
+        point_group.add(dot)
 
         if label:
             point_label = MathTex(
@@ -222,15 +269,18 @@ class NumberPlaneGroup(VGroup):
             )
             point_group.add(point_label)
 
-        self.point_groups[name] = point_group
         self.add(point_group)
         return point_group
 
     def remove_point(self, name):
         """점 제거"""
-        if name in self.point_groups:  # 'is in' -> 'in'으로 수정
-            point_group = self.point_groups.pop(name)
-            self.remove(point_group)
+        point = self._find_mobject(name, MobjectType.POINT)
+        if point:
+            self.remove(point)
+
+    def get_point(self, name):
+        """특정 점 가져오기"""
+        return self._find_mobject(name, MobjectType.POINT)
 
     def add_label(self,
                   text,
@@ -239,11 +289,11 @@ class NumberPlaneGroup(VGroup):
                   color=WHITE,
                   font_size=36,
                   tex_template=None,  # LaTeX 템플릿 설정 가능
-                  direction=RIGHT,     # 기본 방향
+                  direction=RIGHT,    # 기본 방향
                   buff=0.1):          # 기본 간격
         """임의의 위치에 라벨 추가"""
         if name is None:
-            name = f"label_{len(self.labels)}"
+            name = f"label_{len([m for m in self.submobjects if m.metadata.get('type') == MobjectType.LABEL])}"
 
         # LaTeX 수식 여부에 따라 적절한 객체 생성
         if tex_template:
@@ -265,8 +315,9 @@ class NumberPlaneGroup(VGroup):
 
         # 위치 지정
         label.next_to(point, direction, buff=buff)
+        label = self._ensure_metadata(label)
+        label.metadata = {"type": MobjectType.LABEL, "name": name}
 
-        self.labels[name] = label
         self.add(label)
         return label
 
@@ -291,10 +342,10 @@ class NumberPlaneGroup(VGroup):
 
     def remove_label(self, name):
         """라벨 제거"""
-        if name in self.labels:
-            label = self.labels.pop(name)
+        label = self._find_mobject(name, MobjectType.LABEL)
+        if label:
             self.remove(label)
 
     def get_label(self, name):
         """특정 라벨 가져오기"""
-        return self.labels.get(name)
+        return self._find_mobject(name, MobjectType.LABEL)
