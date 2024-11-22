@@ -1,6 +1,8 @@
 from manim import *
 from enum import Enum, auto
 import re  # 정규표현식 지원 추가
+from .angle_decoration import AngleMarker  # AngleMarker 클래스 임포트
+from .line_decoration import LineMarker  # LineMarker 클래스 임포트
 
 
 class OriginStyle(Enum):
@@ -19,6 +21,7 @@ class MobjectType(Enum):
     ARC = auto()  # 호 타입 추가
     LINE = auto()  # 선 타입 추가
     POLYGON = auto()  # 다각형 타입 추가
+    CIRCLE = auto()  # Circle 타입 추가
 
 
 class NumberPlaneGroup(VGroup):
@@ -564,47 +567,68 @@ class NumberPlaneGroup(VGroup):
         self.add(triangle)
         return triangle
 
-    def add_equal_marks(self, start_point, end_point, num_marks=1, size=0.15, color=BLUE, spacing_ratio=0.05):
-        """선분에 같음을 나타내는 마크를 추가합니다."""
-        # 시작점과 끝점을 화면 좌표계로 변환
-        start = np.array(self.plane.c2p(*start_point))
-        end = np.array(self.plane.c2p(*end_point))
+    def add_circle(self,
+                   center_point,  # 중심점 좌표 (x,y)
+                   radius=1,
+                   name=None,
+                   color=BLUE,
+                   fill_opacity=0.2,
+                   stroke_width=2,
+                   stroke_opacity=1.0):  # stroke_opacity 파라미터 추가
+        """원 추가 메서드"""
+        if name is None:
+            name = f"circle_{len([m for m in self.submobjects if m.metadata.get('type') == MobjectType.CIRCLE])}"
 
-        # 선분의 방향 벡터와 중심점
-        line_vector = end - start
-        line_length = np.linalg.norm(line_vector)
-        center = (start + end) / 2
+        # 중심점 좌표 변환
+        center = self.plane.c2p(*center_point)
 
-        # 마커들 사이의 간격
-        spacing = line_length * spacing_ratio
+        # 반지름을 화면 좌표계로 변환 (x축 기준으로 변환)
+        radius_point = self.plane.c2p(
+            center_point[0] + radius, center_point[1]
+        )
+        transformed_radius = np.linalg.norm(radius_point - center)
 
-        # 첫 마커의 위치 계산 (마커 그룹의 중심이 선분의 중심과 일치하도록)
-        if num_marks % 2 == 0:  # 짝수 개의 마커
-            offset = spacing / 2
-            positions = np.linspace(-offset * (num_marks - 1),
-                                    offset * (num_marks - 1), num_marks)
-        else:  # 홀수 개의 마커
-            positions = np.linspace(-spacing * (num_marks - 1)/2,
-                                    spacing * (num_marks - 1)/2, num_marks)
+        # Circle 객체 생성
+        circle = Circle(
+            radius=transformed_radius,
+            color=color,
+            fill_opacity=fill_opacity,
+            stroke_width=stroke_width,
+            stroke_opacity=stroke_opacity  # 선 투명도 적용
+        ).move_to(center)
 
-        # 선분에 수직인 단위 벡터 계산
-        perpendicular = np.array([-line_vector[1], line_vector[0], 0])
-        perpendicular = perpendicular / np.linalg.norm(perpendicular)
+        # 메타데이터 설정
+        self._ensure_metadata(circle)
+        circle.metadata = {"type": MobjectType.CIRCLE, "name": name}
 
-        marks = VGroup()
+        self.add(circle)
+        return circle
 
-        # 각 위치에 마커 생성
-        for pos in positions:
-            mark_center = center + pos * line_vector / line_length
-            mark = Line(
-                mark_center - size/2 * perpendicular,
-                mark_center + size/2 * perpendicular,
-                color=color
-            )
-            marks.add(mark)
+    def add_line_marker(self,
+                        start_point,
+                        end_point,
+                        num_marks=1,
+                        size=0.15,
+                        color=BLUE,
+                        spacing=0.1,
+                        stroke_width=2):
+        """선분에 같음을 나타내는 마커를 추가한다."""
+        # 시작점과 끝점을 화면 좌표계로 변환하여 Line 객체 생성
+        start = self.plane.c2p(*start_point)
+        end = self.plane.c2p(*end_point)
+        line = Line(start, end)
 
-        self.add(marks)
-        return marks
+        markers = LineMarker(
+            line,
+            length=size,
+            color=color,
+            count=num_marks,
+            spacing=spacing,
+            stroke_width=stroke_width
+        )
+
+        self.add(markers)
+        return markers
 
     def add_right_angle_mark(self,
                              corner_point,
@@ -633,14 +657,14 @@ class NumberPlaneGroup(VGroup):
         self.add(angle_mark)
         return angle_mark
 
-    def add_angle_mark(self,
-                       point1,
-                       point2,
-                       point3,
-                       radius=0.3,
-                       color=WHITE,
-                       other_angle=False):
-        """세 점으로 정의되는 각도를 표시합니다.
+    def add_angle(self,
+                  point1,
+                  point2,
+                  point3,
+                  radius=0.3,
+                  color=WHITE,
+                  other_angle=False):
+        """세 점으로 정의되는 각도를 표시한다.
         Args:
             point1, point2, point3: 각을 이루는 세 점의 좌표 (시계방향)
                 point2가 각의 꼭지점
@@ -668,70 +692,25 @@ class NumberPlaneGroup(VGroup):
         self.add(angle)
         return angle
 
-    def add_equal_angle_marks(self,
-                              angle_point,
-                              start_angle=0,
-                              angle=PI/6,
-                              radius=0.3,
-                              mark_size=0.15,
-                              color=LIGHT_BROWN,
-                              num_marks=1,
-                              spacing=0.05,
-                              name=None):
-        """각도가 같음을 표시하는 작은 마커를 추가합니다."""
-        if name is None:
-            name = f"equal_angle_mark_{len([m for m in self.submobjects if getattr(m, 'metadata', {}).get('type') == 'EQUAL_ANGLE_MARK'])}"
+    def add_angle_marker(
+        self,
+        angle: Angle,  # Angle 객체를 직접 받도록 수정
+        mark_size=0.15,
+        color=LIGHT_BROWN,
+        num_marks=1,
+        spacing=0.1,
+        stroke_width=2,
+        name=None
+    ):
+        """각도가 같음을 표시하는 작은 마커를 추가한다."""
+        marker = AngleMarker(
+            angle,
+            length=mark_size,
+            color=color,
+            count=num_marks,
+            spacing=spacing,
+            stroke_width=stroke_width
+        )
 
-        marks = VGroup()
-        marks.metadata = {}
-
-        for i in range(num_marks):
-            # 각 마크의 반지름 계산
-            r = radius + (i * spacing)
-
-            # 호의 중간 각도 계산 (실제 호의 중간점)
-            mid_angle = start_angle + angle/2
-
-            # 호의 중간 지점 계산
-            mid_point = np.array([
-                r * np.cos(mid_angle),
-                r * np.sin(mid_angle),
-                0
-            ])
-
-            # 접선 벡터 계산 (호의 접선 방향)
-            tangent = np.array([
-                -mid_point[1],  # -y
-                mid_point[0],   # x
-                0
-            ])
-            tangent = tangent / np.linalg.norm(tangent)  # 정규화
-
-            # 마커의 시작점과 끝점 계산
-            mark_start = mid_point - tangent * mark_size/2
-            mark_end = mid_point + tangent * mark_size/2
-
-            # 마커를 각의 꼭지점 위치로 이동
-            mark = Line(
-                self.plane.c2p(*angle_point) + mark_start,
-                self.plane.c2p(*angle_point) + mark_end,
-                color=color
-            )
-
-            # 메타데이터 설정
-            self._ensure_metadata(mark)
-            mark.metadata = {
-                "type": "EQUAL_ANGLE_MARK_LINE",
-                "parent": name,
-                "index": i
-            }
-            marks.add(mark)
-
-        # VGroup의 메타데이터 설정
-        marks.metadata = {
-            "type": "EQUAL_ANGLE_MARK",
-            "name": name
-        }
-
-        self.add(marks)
-        return marks
+        self.add(marker)
+        return marker

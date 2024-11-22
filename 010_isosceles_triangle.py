@@ -6,7 +6,7 @@ import numpy as np
 class IsoscelesTriangle(Scene):
     def construct(self):
         self.next_section("Initial Number Plane And Two Dots",
-                          skip_animations=True)
+                          skip_animations=False)
         plane_group = NumberPlaneGroup(
             origin_style_type=OriginStyle.CROSS
         )
@@ -27,15 +27,35 @@ class IsoscelesTriangle(Scene):
         self.play(FadeIn(dot1), FadeIn(dot2))
 
         self.next_section("Isosceles Triangle 1, Draw Arcs",
-                          skip_animations=True)
+                          skip_animations=False)
+        # 두 원 추가 (채움 없이, 연한 선으로)
+        circle1 = plane_group.add_circle(
+            center_point=(5, 0),
+            radius=10,
+            color=PURPLE_A,
+            fill_opacity=0,
+            stroke_width=1.0,
+            stroke_opacity=0.4
+        )
+        circle2 = plane_group.add_circle(
+            center_point=(-5, 0),
+            radius=10,
+            color=PURPLE_A,
+            fill_opacity=0,
+            stroke_width=1.0,
+            stroke_opacity=0.4
+        )
+        self.play(FadeIn(circle1), FadeIn(circle2))
+
         # dot1을 중심으로 B까지의 거리를 반지름으로 하는 호
         arc1 = plane_group.add_arc(
             center_point=(5, 0),
             radius=10,
             start_angle=PI/2,
             angle=PI,
-            color=YELLOW_A,
-            dash_length=0.1
+            color=YELLOW,  # 더 선명한 노란색으로
+            stroke_width=2,  # 호는 더 굵게
+            dash_length=0.2  # 점선 간격 조정
         )
         self.play(Create(arc1))
 
@@ -45,13 +65,14 @@ class IsoscelesTriangle(Scene):
             radius=10,
             start_angle=PI/2,
             angle=-PI,
-            color=YELLOW_A,
-            dash_length=0.1
+            color=YELLOW,
+            stroke_width=2,
+            dash_length=0.2
         )
         self.play(Create(arc2))
 
         self.next_section(
-            "Isosceles Triangle 1, Draw Intersection Points", skip_animations=True)
+            "Isosceles Triangle 1, Draw Intersection Points", skip_animations=False)
 
         # 두 원의 교점 계산
         # 두 점 사이의 거리 d = 10 (점 A와 B 사이)
@@ -76,6 +97,7 @@ class IsoscelesTriangle(Scene):
             FadeIn(intersection1),
             FadeIn(intersection2)
         )
+        self.play(plane_group.animate.scale(1.1).shift(DOWN))
 
         self.next_section("Isosceles Triangle 1, Draw Triangle",)
 
@@ -90,57 +112,53 @@ class IsoscelesTriangle(Scene):
 
         self.play(Create(triangle))
 
+        self.next_section("Isosceles Triangle 1, Add Angles And Markers")
+
         # 이등변삼각형의 같은 변에 마킹 추가
-        left_marks = plane_group.add_equal_marks(
+        left_marks = plane_group.add_line_marker(
             (-5, 0), (0, y),
             num_marks=2,
             color=LIGHT_GRAY,
+            stroke_width=3
         )
-        right_marks = plane_group.add_equal_marks(
+        right_marks = plane_group.add_line_marker(
             (5, 0), (0, y),
             num_marks=2,
             color=LIGHT_GRAY,
+            stroke_width=3
         )
 
-        # 이등변삼각형의 밑각 표시 (수정)
-        left_angle = plane_group.add_angle_mark(
-            (0, y),      # 꼭대기 점
+        # 이등변삼각형의 밑각 표시
+        angle_radius = 0.4  # 각의 반지름 지정
+
+        # 왼쪽 밑각과 마커 (수정)
+        left_angle = plane_group.add_angle(
+            (-4, 0),     # x축 음의 방향으로 이동한 점 (순서 변경)
             (-5, 0),     # 밑점(꼭지점)
-            (-4, 0),     # x축 양의 방향으로 약간 이동한 점
-            color=LIGHT_BROWN,
-            other_angle=True  # 실제 내각만 표시하도록 변경
-        )
-        right_angle = plane_group.add_angle_mark(
-            (0, y),      # 꼭대기 점
-            (5, 0),      # 밑점(꼭지점)
-            (4, 0),      # x축 음의 방향으로 약간 이동한 점
+            (0, y),      # 꼭대기 점 (순서 변경)
+            radius=angle_radius,
             color=LIGHT_BROWN
         )
-
-        # 두 밑각이 같음을 표시하는 호 추가
-        # 삼각형의 각도 계산
-        base_angle = np.arctan2(y, 5)  # 밑변과 이루는 각도
-
-        # 왼쪽 밑각의 마커
-        left_angle_mark = plane_group.add_equal_angle_marks(
-            (-5, 0),    # 왼쪽 밑각의 꼭지점
-            start_angle=base_angle,  # 왼쪽 밑변에서 시작
-            angle=-base_angle,  # 음수 각도로 시계방향
-            radius=0.5,  # 반지름 키움
-            mark_size=0.2,
+        left_angle_mark = plane_group.add_angle_marker(
+            left_angle,
+            mark_size=0.15,
             color=LIGHT_BROWN,
-            num_marks=2
+            stroke_width=3
         )
 
-        # 오른쪽 밑각의 마커
-        right_angle_mark = plane_group.add_equal_angle_marks(
-            (5, 0),     # 오른쪽 밑각의 꼭지점
-            start_angle=PI-base_angle,  # 오른쪽 밑변에서 시작
-            angle=base_angle,  # 양수 각도로 반시계방향
-            radius=0.5,  # 반지름 키움
-            mark_size=0.2,
+        # 오른쪽 밑각과 마커
+        right_angle = plane_group.add_angle(
+            (0, y),
+            (5, 0),
+            (4, 0),
+            radius=angle_radius,
+            color=LIGHT_BROWN
+        )
+        right_angle_mark = plane_group.add_angle_marker(
+            right_angle,  # Angle 객체 직접 전달
+            mark_size=0.15,
             color=LIGHT_BROWN,
-            num_marks=2
+            stroke_width=3
         )
 
         self.play(
@@ -151,7 +169,5 @@ class IsoscelesTriangle(Scene):
             FadeIn(left_angle_mark),
             FadeIn(right_angle_mark)
         )
-
-        self.play(plane_group.animate.scale(1.1).shift(DOWN))
 
         self.wait(2)
