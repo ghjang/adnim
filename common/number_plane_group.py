@@ -32,8 +32,8 @@ class NumberPlaneGroup(VGroup):
         x_length=16,
         y_length=16,
         background_line_style={"stroke_opacity": 0.4},
-        origin_style_type=OriginStyle.DOT,
         origin_config={
+            "style": OriginStyle.DOT,  # style_type을 여기로 이동
             "color": RED,
             "size": 0.05,
             "opacity": 1.0
@@ -54,11 +54,9 @@ class NumberPlaneGroup(VGroup):
         self._ensure_metadata(self.plane)
         self.add(self.plane)
 
-        # 원점 저장 (멤버변수 제거)
-        origin_marker = self._create_origin_marker(
-            origin_style_type,
-            origin_config
-        )
+        # origin_config에서 style 추출
+        style_type = origin_config.pop("style", OriginStyle.DOT)
+        origin_marker = self._create_origin_marker(style_type, origin_config)
         self.add(origin_marker)
 
         self._ensure_metadata(self)
@@ -69,20 +67,32 @@ class NumberPlaneGroup(VGroup):
         size = config.get("size", 0.1)
         opacity = config.get("opacity", 1.0)
 
-        # 원점 마커를 plane의 원점 위치에 생성
-        origin_point = self.plane.c2p(0, 0)
+        # 크기를 좌표계 스케일에 맞게 변환
+        origin = self.plane.c2p(0, 0)
+        unit_point = self.plane.c2p(size, 0)  # size 만큼의 길이를 가진 점의 좌표
+        transformed_size = np.linalg.norm(
+            unit_point - origin)  # 실제 화면상의 크기로 변환
 
+        # 원점 마커를 plane의 원점 위치에 생성
         if style_type == OriginStyle.DOT:
-            marker = Dot(point=origin_point, radius=size,
-                         color=color).set_opacity(opacity)
+            marker = Dot(
+                point=origin,
+                radius=transformed_size,
+                color=color
+            ).set_opacity(opacity)
         elif style_type == OriginStyle.CIRCLE:
-            marker = Circle(radius=size, color=color,
-                            fill_opacity=opacity).move_to(origin_point)
+            marker = Circle(
+                radius=transformed_size,
+                color=color,
+                fill_opacity=opacity
+            ).move_to(origin)
         elif style_type == OriginStyle.CROSS:
             marker = VGroup(
-                Line(UP * size, DOWN * size, color=color),
-                Line(LEFT * size, RIGHT * size, color=color)
-            ).move_to(origin_point).set_opacity(opacity)
+                Line(UP * transformed_size, DOWN *
+                     transformed_size, color=color),
+                Line(LEFT * transformed_size, RIGHT *
+                     transformed_size, color=color)
+            ).move_to(origin).set_opacity(opacity)
 
         # 메타데이터 설정을 여기서 한 번에 처리
         self._ensure_metadata(marker)
@@ -208,7 +218,12 @@ class NumberPlaneGroup(VGroup):
             stroke_width=stroke_width
         )
         self._ensure_metadata(graph)
-        graph.metadata = {"type": MobjectType.FUNCTION, "name": name}
+        graph.metadata = {
+            "type": MobjectType.FUNCTION,
+            "name": name,
+            "base_plane": self.plane,  # 기준 평면 저장
+            "x_range": x_range         # x_range 저장
+        }
 
         self.add(graph)
         return graph

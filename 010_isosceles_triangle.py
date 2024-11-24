@@ -8,7 +8,9 @@ class IsoscelesTriangle(Scene):
         self.next_section("Initial Number Plane And Two Dots",
                           skip_animations=False)
         plane_group = NumberPlaneGroup(
-            origin_style_type=OriginStyle.CROSS
+            origin_config={
+                "style": OriginStyle.CROSS
+            }
         )
         self.add(plane_group)
 

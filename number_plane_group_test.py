@@ -90,8 +90,8 @@ class NumberPlaneGroupExample(Scene):
     def construct(self):
         # 기본 DOT 스타일로 생성
         plane_group = NumberPlaneGroup(
-            origin_style_type=OriginStyle.DOT,
             origin_config={
+                "style": OriginStyle.DOT,
                 "color": RED,
                 "size": 0.15,
                 "opacity": 1.0
@@ -140,8 +140,8 @@ class FunctionExample(Scene):
             background_line_style={
                 "stroke_opacity": 0.6
             },
-            origin_style_type=OriginStyle.CROSS,  # 원점은 십자로 표시
             origin_config={
+                "style": OriginStyle.CROSS,
                 "color": YELLOW,
                 "size": 0.15
             }
@@ -215,8 +215,8 @@ class FunctionExample1(ThreeDScene):  # Scene -> ThreeDScene
             background_line_style={
                 "stroke_opacity": 0.3
             },
-            origin_style_type=OriginStyle.DOT,
             origin_config={
+                "style": OriginStyle.DOT,
                 "size": 0.05
             }
         )
@@ -407,8 +407,11 @@ class IterationExample(Scene):
         # 좌표평면 생성
         plane_group = NumberPlaneGroup(
             background_line_style={"stroke_opacity": 0.4},
-            origin_style_type=OriginStyle.CROSS,
-            origin_config={"color": YELLOW, "size": 0.1}
+            origin_config={
+                "style": OriginStyle.CROSS,
+                "color": YELLOW,
+                "size": 0.1
+            }
         )
         plane_group.scale(1.2)
         self.play(Create(plane_group))
