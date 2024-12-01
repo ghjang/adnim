@@ -22,6 +22,7 @@ class MobjectType(Enum):
     LINE = auto()  # 선 타입 추가
     POLYGON = auto()  # 다각형 타입 추가
     CIRCLE = auto()  # Circle 타입 추가
+    VECTOR = auto()  # 벡터 타입 추가
 
 
 class NumberPlaneGroup(VGroup):
@@ -73,26 +74,32 @@ class NumberPlaneGroup(VGroup):
         transformed_size = np.linalg.norm(
             unit_point - origin)  # 실제 화면상의 크기로 변환
 
-        # 원점 마커를 plane의 원점 위치에 생성
+        # DOT 타입의 경우 최소 크기 보장
         if style_type == OriginStyle.DOT:
             marker = Dot(
                 point=origin,
                 radius=transformed_size,
-                color=color
-            ).set_opacity(opacity)
-        elif style_type == OriginStyle.CIRCLE:
+                color=color,
+                stroke_width=2  # stroke_width 추가
+            )
+            marker.set_stroke(opacity=opacity)  # stroke_opacity 사용
+            marker.set_fill(color=color, opacity=opacity)  # fill도 설정
+        elif (style_type == OriginStyle.CIRCLE):
             marker = Circle(
                 radius=transformed_size,
                 color=color,
                 fill_opacity=opacity
             ).move_to(origin)
-        elif style_type == OriginStyle.CROSS:
-            marker = VGroup(
-                Line(UP * transformed_size, DOWN *
-                     transformed_size, color=color),
-                Line(LEFT * transformed_size, RIGHT *
-                     transformed_size, color=color)
-            ).move_to(origin).set_opacity(opacity)
+        elif (style_type == OriginStyle.CROSS):
+            line1 = Line(UP * transformed_size, DOWN *
+                         transformed_size, color=color)
+            line2 = Line(LEFT * transformed_size, RIGHT *
+                         transformed_size, color=color)
+            marker = VGroup(line1, line2)
+            marker.move_to(origin)
+            # VGroup 전체가 아닌 각 라인에 opacity 설정
+            line1.set_stroke(opacity=opacity)
+            line2.set_stroke(opacity=opacity)
 
         # 메타데이터 설정을 여기서 한 번에 처리
         self._ensure_metadata(marker)
@@ -109,7 +116,7 @@ class NumberPlaneGroup(VGroup):
             setattr(mob, "metadata", {})
         return mob
 
-    def _find_mobject(self, name, obj_type=None):
+    def find_mobject(self, name, obj_type=None):
         """이름과 타입으로 객체 찾기"""
         for mob in self.submobjects:
             self._ensure_metadata(mob)
@@ -168,7 +175,7 @@ class NumberPlaneGroup(VGroup):
 
     def get_origin_marker(self):
         """원점 마커 가져오기"""
-        return self._find_mobject(None, MobjectType.ORIGIN)
+        return self.find_mobject(None, MobjectType.ORIGIN)
 
     def set_origin_style(self, style_type, config=None):
         """원점 표시 스타일 변경"""
@@ -230,13 +237,13 @@ class NumberPlaneGroup(VGroup):
 
     def remove_function(self, name):
         """함수 그래프 제거"""
-        graph = self._find_mobject(name, MobjectType.FUNCTION)
+        graph = self.find_mobject(name, MobjectType.FUNCTION)
         if (graph):
             self.remove(graph)
 
     def get_function_graph(self, name):
         """특정 함수 그래프 가져오기"""
-        return self._find_mobject(name, MobjectType.FUNCTION)
+        return self.find_mobject(name, MobjectType.FUNCTION)
 
     def plot_parametric(self,
                         func,  # (t) -> (x,y) 형태의 함수
@@ -300,13 +307,13 @@ class NumberPlaneGroup(VGroup):
 
     def remove_point(self, name):
         """점 제거"""
-        point = self._find_mobject(name, MobjectType.POINT)
+        point = self.find_mobject(name, MobjectType.POINT)
         if (point):
             self.remove(point)
 
     def get_point(self, name):
         """특정 점 가져오기"""
-        return self._find_mobject(name, MobjectType.POINT)
+        return self.find_mobject(name, MobjectType.POINT)
 
     def add_label(self,
                   text,
@@ -368,13 +375,13 @@ class NumberPlaneGroup(VGroup):
 
     def remove_label(self, name):
         """라벨 제거"""
-        label = self._find_mobject(name, MobjectType.LABEL)
+        label = self.find_mobject(name, MobjectType.LABEL)
         if (label):
             self.remove(label)
 
     def get_label(self, name):
         """특정 라벨 가져오기"""
-        return self._find_mobject(name, MobjectType.LABEL)
+        return self.find_mobject(name, MobjectType.LABEL)
 
     def add_arc(self,
                 center_point,  # 중심점 좌표 (x,y)
@@ -729,3 +736,223 @@ class NumberPlaneGroup(VGroup):
 
         self.add(marker)
         return marker
+
+    def add_vector(self,
+                   vec,           # 벡터 좌표 (x,y)
+                   name=None,
+                   color=RED,
+                   stroke_width=2,
+                   max_tip_length_to_length_ratio=0.25,
+                   tip_length=0.25,
+                   start_point=None):  # 시작점 파라미터 추가
+        """벡터 추가 메서드"""
+        if name is None:
+            name = f"vector_{len([m for m in self.submobjects if m.metadata.get('type') == MobjectType.VECTOR])}"
+
+        # 시작점 설정 (None이면 원점)
+        if start_point is None:
+            start = self.plane.c2p(0, 0)
+            end = self.plane.c2p(vec[0], vec[1])
+        else:
+            start = self.plane.c2p(*start_point)
+            # 시작점이 있는 경우 상대 좌표로 계산
+            end = self.plane.c2p(
+                start_point[0] + vec[0],
+                start_point[1] + vec[1]
+            )
+
+        # 벡터 객체 생성
+        vector = Vector(
+            direction=end - start,
+            color=color,
+            stroke_width=stroke_width,
+            max_tip_length_to_length_ratio=max_tip_length_to_length_ratio,
+            tip_length=tip_length,
+            buff=0
+        ).shift(start)
+
+        # 메타데이터 설정
+        self._ensure_metadata(vector)
+        vector.metadata = {
+            "type": MobjectType.VECTOR,
+            "name": name,
+            "coordinates": vec
+        }
+
+        self.add(vector)
+        return vector
+
+    def _copy_origin_marker(self, new_group):
+        """원점 마커를 새로운 좌표계에 맞게 복사"""
+        origin_marker = self.get_origin_marker()
+        if not origin_marker:
+            return
+
+        # 기존 원점의 스타일과 속성을 가져옴
+        style_type = origin_marker.metadata.get("style")
+
+        # 타입별로 색상과 opacity 가져오기
+        if style_type == OriginStyle.CROSS:
+            color = origin_marker[0].get_color()  # 첫 번째 라인의 색상만 사용
+            opacity = origin_marker[0].stroke_opacity
+            old_size = abs(origin_marker[0].get_length()) / 2
+        elif style_type == OriginStyle.DOT:
+            color = origin_marker.get_color()
+            opacity = origin_marker.get_fill_opacity()  # fill_opacity 사용
+
+            # NOTE: DOT의 경우 최소 크기 보장시킴.
+            #       'scale-down'되는 경우 너무 작아지면
+            #       원점이 아예 보이지 않아서 일단 적당한 값의 최소값으로 표시하도록 함.
+            MIN_DOT_SIZE = 0.065
+            old_size = max(origin_marker.radius, MIN_DOT_SIZE)
+        else:  # CIRCLE
+            color = origin_marker.get_color()
+            opacity = origin_marker.get_opacity()
+            old_size = abs(origin_marker.get_width()) / 2
+
+        # 크기 스케일 계산 (x축 기준)
+        old_unit = abs(self.plane.c2p(1, 0)[0] - self.plane.c2p(0, 0)[0])
+        new_unit = abs(new_group.plane.c2p(1, 0)[
+                       0] - new_group.plane.c2p(0, 0)[0])
+        new_size = old_size * (new_unit / old_unit)
+
+        # 새로운 원점 스타일 설정
+        new_group.set_origin_style(
+            style_type,
+            {
+                "color": color,
+                "size": new_size,
+                "opacity": opacity
+            }
+        )
+
+    def copy_with_transformed_plane(self,
+                                    x_range=None,
+                                    y_range=None,
+                                    x_length=None,
+                                    y_length=None,
+                                    **kwargs):
+        """새로운 영역으로 변환된 NumberPlaneGroup을 복사하여 반환"""
+        new_x_range = x_range if x_range else self.plane.x_range
+        new_y_range = y_range if y_range else self.plane.y_range
+        new_x_length = x_length if x_length else self.plane.x_length
+        new_y_length = y_length if y_length else self.plane.y_length
+
+        # 새로운 NumberPlaneGroup 생성
+        new_group = NumberPlaneGroup(
+            x_range=new_x_range,
+            y_range=new_y_range,
+            x_length=new_x_length,
+            y_length=new_y_length,
+            **kwargs
+        )
+
+        # 원점 복사
+        self._copy_origin_marker(new_group)
+
+        # 스케일 변환 비율 계산 (x축 기준)
+        # 각 좌표계에서 실제 단위 길이(1) 계산
+        old_unit_length = abs(self.plane.c2p(
+            1, 0)[0] - self.plane.c2p(0, 0)[0])
+        new_unit_length = abs(new_group.plane.c2p(
+            1, 0)[0] - new_group.plane.c2p(0, 0)[0])
+
+        # 기존 객체들을 새로운 평면에 맞게 변환하여 추가
+        for mob in self.submobjects:
+            if mob.metadata.get("type") == MobjectType.POINT:
+                new_point = new_group.add_point(
+                    self.plane.p2c(mob.get_center()),
+                    name=mob.metadata.get("name"),
+                    color=mob.get_color(),
+                    radius=mob.radius
+                )
+                if len(mob.submobjects) > 1:
+                    new_point_label = new_point[1]
+                    new_point_label.move_to(new_group.plane.c2p(
+                        *self.plane.p2c(mob.submobjects[1].get_center())))
+            elif mob.metadata.get("type") == MobjectType.FUNCTION:
+                new_group.plot_function(
+                    lambda x: self.plane.p2c(mob.underlying_function(x))[1],
+                    name=mob.metadata.get("name"),
+                    x_range=mob.metadata.get("x_range"),
+                    color=mob.get_color(),
+                    stroke_width=mob.stroke_width
+                )
+            elif mob.metadata.get("type") == MobjectType.PARAMETRIC:
+                new_group.plot_parametric(
+                    lambda t: self.plane.p2c(mob.underlying_function(t)),
+                    t_range=mob.metadata.get("t_range"),
+                    name=mob.metadata.get("name"),
+                    color=mob.get_color(),
+                    stroke_width=mob.stroke_width
+                )
+            elif mob.metadata.get("type") == MobjectType.LABEL:
+                new_group.add_label(
+                    mob.get_tex_string(),
+                    self.plane.p2c(mob.get_center()),
+                    name=mob.metadata.get("name"),
+                    color=mob.get_color(),
+                    font_size=mob.font_size
+                )
+            elif mob.metadata.get("type") == MobjectType.ARC:
+                new_group.add_arc(
+                    self.plane.p2c(mob.arc_center),
+                    radius=mob.radius,
+                    start_angle=mob.start_angle,
+                    angle=mob.angle,
+                    name=mob.metadata.get("name"),
+                    color=mob.get_color(),
+                    stroke_width=mob.stroke_width,
+                    dash_length=mob.dash_length
+                )
+            elif mob.metadata.get("type") == MobjectType.LINE:
+                new_group.add_line(
+                    self.plane.p2c(mob.get_start()),
+                    self.plane.p2c(mob.get_end()),
+                    name=mob.metadata.get("name"),
+                    color=mob.get_color(),
+                    stroke_width=mob.stroke_width
+                )
+            elif mob.metadata.get("type") == MobjectType.POLYGON:
+                new_group.add_polygon(
+                    [self.plane.p2c(p) for p in mob.get_vertices()],
+                    name=mob.metadata.get("name"),
+                    color=mob.get_color(),
+                    fill_opacity=mob.fill_opacity,
+                    stroke_width=mob.stroke_width
+                )
+            elif mob.metadata.get("type") == MobjectType.CIRCLE:
+                # 원의 경우, 좌표계의 단위 길이를 고려하여 처리
+                center = self.plane.p2c(mob.get_center())
+                # 원본 원의 실제 반지름을 논리적 단위로 변환
+                logical_radius = mob.radius / old_unit_length
+
+                new_group.add_circle(
+                    center_point=center,
+                    radius=logical_radius,  # 논리적 단위의 반지름 사용
+                    name=mob.metadata.get("name"),
+                    color=mob.get_color(),
+                    fill_opacity=mob.fill_opacity,
+                    stroke_width=mob.stroke_width,
+                    stroke_opacity=mob.stroke_opacity
+                )
+            elif mob.metadata.get("type") == MobjectType.VECTOR:
+                # 시작점과 끝점의 좌표를 각각 변환
+                start_point = self.plane.p2c(mob.get_start())
+                end_point = self.plane.p2c(mob.get_end())
+                # 시작점을 기준으로 한 상대 벡터 계산
+                relative_vec = (
+                    end_point[0] - start_point[0],
+                    end_point[1] - start_point[1]
+                )
+                new_group.add_vector(
+                    vec=relative_vec,
+                    name=mob.metadata.get("name"),
+                    color=mob.get_color(),
+                    stroke_width=mob.stroke_width,
+                    max_tip_length_to_length_ratio=mob.max_tip_length_to_length_ratio,
+                    tip_length=mob.tip_length,
+                    start_point=start_point  # 시작점 추가
+                )
+
+        return new_group

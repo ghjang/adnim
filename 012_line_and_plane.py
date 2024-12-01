@@ -1,5 +1,7 @@
 from manim import *
 
+config.frame_rate = 10
+
 
 class Conditions(ThreeDScene):
     def construct(self):
@@ -20,7 +22,7 @@ class Conditions(ThreeDScene):
 
         self.next_section(
             "2. Show Conditions for determining a line in 2D",
-            skip_animations=True
+            skip_animations=False
         )
 
         # 2D plane with customized axis colors
@@ -121,3 +123,7 @@ class Conditions(ThreeDScene):
         self.wait(5)
         self.stop_ambient_camera_rotation()
         self.wait(2.07)
+
+    def tear_down(self):
+        print("Tearing down the scene")
+        super().tear_down()
