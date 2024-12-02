@@ -26,25 +26,24 @@ class MobjectType(Enum):
 
 
 class NumberPlaneGroup(VGroup):
-    def __init__(
-        self,
-        x_range=[-20, 20, 1],
-        y_range=[-20, 20, 1],
-        x_length=16,
-        y_length=16,
-        background_line_style={"stroke_opacity": 0.4},
-        origin_config={
-            "style": OriginStyle.DOT,  # style_type을 여기로 이동
+    def __init__(self, x_range=[-20, 20, 1], y_range=[-20, 20, 1],
+                 x_length=16, y_length=16,
+                 background_line_style={"stroke_opacity": 0.4},
+                 origin_config=None,
+                 **kwargs):
+        super().__init__(**kwargs)
+
+        # 기본 origin_config 설정
+        self.default_origin_config = {
+            "style": OriginStyle.DOT,
             "color": RED,
             "size": 0.05,
             "opacity": 1.0
-        },
-        **kwargs
-    ):
-        super().__init__(**kwargs)
+        }
+        origin_config = origin_config or {}
+        self.origin_config = {**self.default_origin_config, **origin_config}
 
-        # NOTE: NumberPlane의 'x_range, y_range'는 생성시에만 설정 가능함.
-        #       이 속성들의 변경이 필요하면 새로운 NumberPlane 객체를 생성해야 함.
+        # 평면 생성
         self.plane = NumberPlane(
             x_range=x_range,
             y_range=y_range,
@@ -55,12 +54,27 @@ class NumberPlaneGroup(VGroup):
         self._ensure_metadata(self.plane)
         self.add(self.plane)
 
-        # origin_config에서 style 추출
-        style_type = origin_config.pop("style", OriginStyle.DOT)
-        origin_marker = self._create_origin_marker(style_type, origin_config)
+        # 원점 마커 생성
+        style_type = self.origin_config.pop("style", OriginStyle.DOT)
+        origin_marker = self._create_origin_marker(
+            style_type, self.origin_config)
         self.add(origin_marker)
 
         self._ensure_metadata(self)
+
+    def _transform_unit_length(self, length, source_plane=None):
+        """단위 길이를 화면 좌표계로 변환"""
+        source_plane = source_plane or self.plane
+        origin = source_plane.c2p(0, 0)
+        unit_point = source_plane.c2p(length, 0)
+        return np.linalg.norm(unit_point - origin)
+
+    def _transform_point(self, point, source_plane=None):
+        """점 좌표를 화면 좌표계로 변환"""
+        source_plane = source_plane or self.plane
+        if isinstance(point, (tuple, list, np.ndarray)):
+            return source_plane.c2p(*point)
+        return point
 
     def _create_origin_marker(self, style_type, config):
         """원점 표시 생성 헬퍼 메서드"""
@@ -75,7 +89,7 @@ class NumberPlaneGroup(VGroup):
             unit_point - origin)  # 실제 화면상의 크기로 변환
 
         # DOT 타입의 경우 최소 크기 보장
-        if style_type == OriginStyle.DOT:
+        if (style_type == OriginStyle.DOT):
             marker = Dot(
                 point=origin,
                 radius=transformed_size,
@@ -737,31 +751,31 @@ class NumberPlaneGroup(VGroup):
         self.add(marker)
         return marker
 
-    def add_vector(self,
-                   vec,           # 벡터 좌표 (x,y)
-                   name=None,
-                   color=RED,
-                   stroke_width=2,
-                   max_tip_length_to_length_ratio=0.25,
-                   tip_length=0.25,
-                   start_point=None):  # 시작점 파라미터 추가
-        """벡터 추가 메서드"""
+    def add_vector(self, vec, name=None, color=RED, stroke_width=2,
+                   max_tip_length_to_length_ratio=0.25, tip_length=0.25,
+                   start_point=None):
+        """벡터 추가 메서드 개선"""
         if name is None:
-            name = f"vector_{len([m for m in self.submobjects if m.metadata.get('type') == MobjectType.VECTOR])}"
+            name = f"vector_{len(list(self.iter_mobjects(obj_type=MobjectType.VECTOR)))}"
 
-        # 시작점 설정 (None이면 원점)
+        # 시작점 처리 개선
         if start_point is None:
-            start = self.plane.c2p(0, 0)
-            end = self.plane.c2p(vec[0], vec[1])
-        else:
-            start = self.plane.c2p(*start_point)
-            # 시작점이 있는 경우 상대 좌표로 계산
-            end = self.plane.c2p(
+            start_point = (0, 0)
+
+        # 시작점 변환
+        start = self._transform_point(start_point)
+
+        # 벡터 좌표 변환
+        if isinstance(vec, (tuple, list, np.ndarray)):
+            end = self._transform_point((
                 start_point[0] + vec[0],
                 start_point[1] + vec[1]
-            )
+            ))
+        else:
+            raise ValueError(
+                "Vector coordinates must be tuple, list or numpy array")
 
-        # 벡터 객체 생성
+        # 벡터 생성
         vector = Vector(
             direction=end - start,
             color=color,
@@ -773,11 +787,12 @@ class NumberPlaneGroup(VGroup):
 
         # 메타데이터 설정
         self._ensure_metadata(vector)
-        vector.metadata = {
+        vector.metadata.update({
             "type": MobjectType.VECTOR,
             "name": name,
-            "coordinates": vec
-        }
+            "coordinates": vec,
+            "start_point": start_point  # 시작점 정보도 저장
+        })
 
         self.add(vector)
         return vector
@@ -826,40 +841,93 @@ class NumberPlaneGroup(VGroup):
             }
         )
 
-    def copy_with_transformed_plane(self,
-                                    x_range=None,
-                                    y_range=None,
-                                    x_length=None,
-                                    y_length=None,
-                                    **kwargs):
-        """새로운 영역으로 변환된 NumberPlaneGroup을 복사하여 반환"""
-        new_x_range = x_range if x_range else self.plane.x_range
-        new_y_range = y_range if y_range else self.plane.y_range
-        new_x_length = x_length if x_length else self.plane.x_length
-        new_y_length = y_length if y_length else self.plane.y_length
+    def copy_with_transformed_plane(self, x_range=None, y_range=None,
+                                    x_length=None, y_length=None, **kwargs):
+        """좌표계 변환 복사 메서드 개선"""
+        new_group = super().copy()
+        new_group.submobjects.clear()  # 기존 submobjects 제거
 
-        # 새로운 NumberPlaneGroup 생성
-        new_group = NumberPlaneGroup(
-            x_range=new_x_range,
-            y_range=new_y_range,
-            x_length=new_x_length,
-            y_length=new_y_length,
+        # 새로운 평면 생성
+        new_plane = NumberPlane(
+            x_range=x_range or self.plane.x_range,
+            y_range=y_range or self.plane.y_range,
+            x_length=x_length or self.plane.x_length,
+            y_length=y_length or self.plane.y_length,
             **kwargs
         )
 
-        # 원점 복사
+        # 메타데이터 보존
+        new_group._ensure_metadata(new_plane)
+        new_group.plane = new_plane
+        new_group.add(new_plane)
+
+        # 원점 마커 복사
         self._copy_origin_marker(new_group)
 
-        # 스케일 변환 비율 계산 (x축 기준)
-        # 각 좌표계에서 실제 단위 길이(1) 계산
-        old_unit_length = abs(self.plane.c2p(
-            1, 0)[0] - self.plane.c2p(0, 0)[0])
-        new_unit_length = abs(new_group.plane.c2p(
-            1, 0)[0] - new_group.plane.c2p(0, 0)[0])
+        # 다른 객체들 복사
+        self._copy_mobjects_with_transform(new_group)
 
-        # 기존 객체들을 새로운 평면에 맞게 변환하여 추가
+        return new_group
+
+    def _get_unit_length(self):
+        """현재 좌표계의 단위 길이 계산"""
+        origin = self.plane.c2p(0, 0)
+        unit_point = self.plane.c2p(1, 0)
+        return np.linalg.norm(unit_point - origin)
+
+    def _calculate_relative_radius(self, circle, source_plane, target_plane):
+        """원의 상대적 반지름 계산"""
+        # 원본 좌표계의 단위 길이
+        source_unit = np.linalg.norm(
+            source_plane.c2p(1, 0) - source_plane.c2p(0, 0))
+        # 대상 좌표계의 단위 길이
+        target_unit = np.linalg.norm(
+            target_plane.c2p(1, 0) - target_plane.c2p(0, 0))
+
+        # 원의 화면상 반지름을 논리적 단위로 변환
+        return (circle.radius / source_unit)
+
+    def _copy_mobjects_with_transform(self, new_group):
+        """객체 복사 및 변환 로직 분리"""
         for mob in self.submobjects:
-            if mob.metadata.get("type") == MobjectType.POINT:
+            if not hasattr(mob, 'metadata'):
+                continue
+
+            mob_type = mob.metadata.get('type')
+            if mob_type == MobjectType.CIRCLE:
+                # 원의 경우, 좌표계의 단위 길이를 고려하여 처리
+                center = self.plane.p2c(mob.get_center())
+                # 상대적 반지름 계산
+                logical_radius = self._calculate_relative_radius(
+                    mob, self.plane, new_group.plane)
+
+                new_group.add_circle(
+                    center_point=center,
+                    radius=logical_radius,
+                    name=mob.metadata.get("name"),
+                    color=mob.get_color(),
+                    fill_opacity=mob.fill_opacity,
+                    stroke_width=mob.stroke_width,
+                    stroke_opacity=mob.stroke_opacity
+                )
+            elif mob_type == MobjectType.VECTOR:
+                # 벡터 복사 시 메타데이터 보존
+                start_point = self.plane.p2c(mob.get_start())
+                end_point = self.plane.p2c(mob.get_end())
+                relative_vec = (
+                    end_point[0] - start_point[0],
+                    end_point[1] - start_point[1]
+                )
+                new_group.add_vector(
+                    vec=relative_vec,
+                    name=mob.metadata.get('name'),
+                    color=mob.get_color(),
+                    stroke_width=mob.stroke_width,
+                    max_tip_length_to_length_ratio=mob.max_tip_length_to_length_ratio,
+                    tip_length=mob.tip_length,
+                    start_point=start_point
+                )
+            elif mob.metadata.get("type") == MobjectType.POINT:
                 new_point = new_group.add_point(
                     self.plane.p2c(mob.get_center()),
                     name=mob.metadata.get("name"),
@@ -936,23 +1004,3 @@ class NumberPlaneGroup(VGroup):
                     stroke_width=mob.stroke_width,
                     stroke_opacity=mob.stroke_opacity
                 )
-            elif mob.metadata.get("type") == MobjectType.VECTOR:
-                # 시작점과 끝점의 좌표를 각각 변환
-                start_point = self.plane.p2c(mob.get_start())
-                end_point = self.plane.p2c(mob.get_end())
-                # 시작점을 기준으로 한 상대 벡터 계산
-                relative_vec = (
-                    end_point[0] - start_point[0],
-                    end_point[1] - start_point[1]
-                )
-                new_group.add_vector(
-                    vec=relative_vec,
-                    name=mob.metadata.get("name"),
-                    color=mob.get_color(),
-                    stroke_width=mob.stroke_width,
-                    max_tip_length_to_length_ratio=mob.max_tip_length_to_length_ratio,
-                    tip_length=mob.tip_length,
-                    start_point=start_point  # 시작점 추가
-                )
-
-        return new_group
