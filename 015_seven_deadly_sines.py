@@ -11,33 +11,121 @@ ANIMATION_RUN_TIME = 8
 LEFT_EDGE_BUFF = 1.5
 RIGHT_EDGE_BUFF = 1.5
 
-# 색상 설정
-COLORS = {
-    'CIRCLE_1': BLUE,
-    'CIRCLE_2': PURPLE,
-    'VECTOR_1': TEAL,
-    'VECTOR_2': PINK,
-    'RESULT_VECTOR': YELLOW,
-    'END_DOT': RED,
-    'PLOT': RED
+# 색상 테마 정의
+COLOR_THEMES = {
+    'PASTEL': {
+        'CIRCLE_1': "#FF9ECD",  # 파스텔 핑크
+        'CIRCLE_2': "#94C9FF",  # 파스텔 블루
+        'CIRCLE_3': "#99FF99",  # 파스텔 그린
+        'CIRCLE_4': "#FFB366",  # 파스텔 오렌지
+        'CIRCLE_5': "#B19CD9",  # 파스텔 퍼플
+        'CIRCLE_6': "#87CEEB",  # 스카이 블루
+        'CIRCLE_7': "#FFB7B7",  # 라이트 코랄
+        'VECTOR_1': "#FF9ECD",
+        'VECTOR_2': "#94C9FF",
+        'VECTOR_3': "#99FF99",
+        'VECTOR_4': "#FFB366",
+        'VECTOR_5': "#B19CD9",
+        'VECTOR_6': "#87CEEB",
+        'VECTOR_7': "#FFB7B7",
+        'RESULT_VECTOR': YELLOW,
+        'END_DOT': "#FF9ECD",
+        'PLOT': RED
+    },
+    'NEON': {
+        'CIRCLE_1': "#FF00FF",  # 네온 마젠타
+        'CIRCLE_2': "#00FFFF",  # 네온 시안
+        'CIRCLE_3': "#00FF00",  # 네온 그린
+        'CIRCLE_4': "#FFFF00",  # 네온 옐로우
+        'CIRCLE_5': "#FF00CC",  # 네온 핑크
+        'CIRCLE_6': "#00CCFF",  # 네온 블루
+        'CIRCLE_7': "#FF3333",  # 밝은 레드
+        'VECTOR_1': "#FF00FF",
+        'VECTOR_2': "#00FFFF",
+        'VECTOR_3': "#00FF00",
+        'VECTOR_4': "#FFFF00",
+        'VECTOR_5': "#FF00CC",
+        'VECTOR_6': "#00CCFF",
+        'VECTOR_7': "#FF3333",
+        'RESULT_VECTOR': YELLOW,
+        'END_DOT': "#FF00FF",
+        'PLOT': RED
+    },
+    'SUNSET': {  # 새로운 그라데이션 테마 추가
+        'CIRCLE_1': "#FF5E62",  # 선홍색
+        'CIRCLE_2': "#FF9966",  # 코럴
+        'CIRCLE_3': "#FFAC68",  # 살몬
+        'CIRCLE_4': "#FFB88C",  # 피치
+        'CIRCLE_5': "#FFC3A0",  # 라이트 피치
+        'CIRCLE_6': "#FFD4B2",  # 파스텔 피치
+        'CIRCLE_7': "#FFE6CC",  # 크림
+        'VECTOR_1': "#FF5E62",
+        'VECTOR_2': "#FF9966",
+        'VECTOR_3': "#FFAC68",
+        'VECTOR_4': "#FFB88C",
+        'VECTOR_5': "#FFC3A0",
+        'VECTOR_6': "#FFD4B2",
+        'VECTOR_7': "#FFE6CC",
+        'RESULT_VECTOR': "#FF8E9E",  # 밝은 핑크
+        'END_DOT': "#FF5E62",
+        'PLOT': RED
+    },
+    'OCEAN_DEPTHS': {  # 새로운 그라데이션 테마
+        'CIRCLE_1': "#00B5AD",  # 밝은 청록색 (가장 큰 원)
+        'CIRCLE_2': "#2185D0",  # 밝은 파랑
+        'CIRCLE_3': "#6435C9",  # 보라
+        'CIRCLE_4': "#A333C8",  # 자주색
+        'CIRCLE_5': "#E03997",  # 분홍
+        'CIRCLE_6': "#B5297E",  # 진한 분홍
+        'CIRCLE_7': "#7B1FA2",  # 깊은 보라 (가장 작은 원)
+        'VECTOR_1': "#00B5AD",
+        'VECTOR_2': "#2185D0",
+        'VECTOR_3': "#6435C9",
+        'VECTOR_4': "#A333C8",
+        'VECTOR_5': "#E03997",
+        'VECTOR_6': "#B5297E",
+        'VECTOR_7': "#7B1FA2",
+        'RESULT_VECTOR': "#00D1C1",  # 밝은 청록색
+        'END_DOT': "#00B5AD",
+        'PLOT': RED
+    }
 }
+
+# 현재 사용할 테마 선택 (기본값: PASTEL)
+CURRENT_THEME = 'PASTEL'
+COLORS = COLOR_THEMES[CURRENT_THEME]
 
 
 def create_formula():
-    """수식 생성: sin(x) + sin(2x)/2"""
+    """수식 생성: sin(x) + sin(2x)/2 + sin(3x)/3"""
     return MathTex(
-        r"\sin(x)", "+", r"\frac{\sin(2x)}{2}",
+        r"\sin(x)", "+", r"\frac{\sin(2x)}{2}", "+", r"\frac{\sin(3x)}{3}", "+",
+        r"\frac{\sin(4x)}{4}", "+", r"\frac{\sin(5x)}{5}", "+", r"\frac{\sin(6x)}{6}", "+",
+        r"\frac{\sin(7x)}{7}",
         tex_to_color_map={
             r"\sin(x)": COLORS['VECTOR_1'],
-            r"\frac{\sin(2x)}{2}": COLORS['VECTOR_2']
+            r"\frac{\sin(2x)}{2}": COLORS['VECTOR_2'],
+            r"\frac{\sin(3x)}{3}": COLORS['VECTOR_3'],
+            r"\frac{\sin(4x)}{4}": COLORS['VECTOR_4'],
+            r"\frac{\sin(5x)}{5}": COLORS['VECTOR_5'],
+            r"\frac{\sin(6x)}{6}": COLORS['VECTOR_6'],
+            r"\frac{\sin(7x)}{7}": COLORS['VECTOR_7']
         }
     ).scale(FORMULA_SCALE)
 
 
-def create_sum_function_with_amplitude() -> callable:
-    """진폭이 다른 사인파의 합 함수 생성"""
+def create_sum_function_with_amplitude(n: int = 3) -> callable:
+    """n개의 진폭이 다른 사인파의 합 함수 생성
+
+    Args:
+        n: 합성할 사인파의 개수 (기본값: 3)
+
+    Returns:
+        x에 대한 n개 사인파의 합을 계산하는 함수
+        각 k번째 사인파는 sin(kx)/k 형태
+    """
     def sum_sine(x: float) -> float:
-        return np.sin(x) + np.sin(2 * x) / 2
+        return sum(np.sin(k * x) / k for k in range(1, n + 1))
     return sum_sine
 
 
@@ -85,6 +173,49 @@ class SawtoothWave(Scene):
         manager.circles.append(circle_1)
         manager.vectors.append(vector_1)
 
+        # 세 번째 원과 벡터 생성 (반지름 1/3인 원)
+        circle_2 = npg.add_circle(
+            center_point=npg.plane.p2c(vector_1.get_end()),
+            radius=1/3,  # 세 번째 원의 반지름
+            color=COLORS['CIRCLE_3'],  # 수정
+            stroke_width=2,
+            fill_opacity=0.1,
+            name="circle_2"
+        )
+        vector_2 = create_radius_vector(
+            npg,
+            circle_2,
+            0,
+            COLORS['VECTOR_3'],  # 수정
+            "radius_vector_2"
+        )
+        self.play(FadeIn(circle_2), FadeIn(vector_2))
+        manager.circles.append(circle_2)
+        manager.vectors.append(vector_2)
+
+        # 4번째에서 7번째 원과 벡터 생성
+        for i in range(4, 8):
+            prev_vector = manager.vectors[-1]  # 이전 벡터
+            radius = 1/i  # i번째 원의 반지름
+            circle = npg.add_circle(
+                center_point=npg.plane.p2c(prev_vector.get_end()),
+                radius=radius,
+                color=COLORS[f'CIRCLE_{i}'],
+                stroke_width=2,
+                fill_opacity=0.1,
+                name=f"circle_{i-1}"
+            )
+            vector = create_radius_vector(
+                npg,
+                circle,
+                0,
+                COLORS[f'VECTOR_{i}'],
+                f"radius_vector_{i-1}"
+            )
+            self.play(FadeIn(circle), FadeIn(vector))
+            manager.circles.append(circle)
+            manager.vectors.append(vector)
+
         # 변환된 좌표계로 전환
         new_npg = npg.copy_with_transformed_plane(
             x_range=[-2, 2, 1],
@@ -97,7 +228,7 @@ class SawtoothWave(Scene):
 
         # 수식 추가
         formula = create_formula()
-        formula.next_to(new_npg, DOWN, buff=0.5)
+        formula.to_edge(DOWN)
         self.play(FadeIn(formula))
 
         # 플롯 좌표계 생성
@@ -111,7 +242,7 @@ class SawtoothWave(Scene):
 
         # 사인 플롯 생성
         sine_plot = plot_npg.plot_function(
-            create_sum_function_with_amplitude(),
+            create_sum_function_with_amplitude(n=7),
             x_range=[0, 2 * PI],
             color=COLORS['PLOT']
         )

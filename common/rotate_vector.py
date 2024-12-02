@@ -9,16 +9,23 @@ DEFAULT_DOT_RADIUS = 0.05
 DEFAULT_DOT_OPACITY = 1.2
 DEFAULT_STROKE_OPACITY = 0.3
 
+# 벡터 스타일 상수 추가
+VECTOR_STYLE = {
+    'stroke_width': 3,
+    'tip_length': 0.2,
+    'max_tip_length_to_length_ratio': 0.25
+}
 
 def create_rotated_vector(plane, direction, color, start_point=ORIGIN, **kwargs):
     """벡터 생성을 위한 헬퍼 함수"""
-    return Vector(
+    # Vector 클래스 직접 사용하되 공통 스타일 적용
+    vector = Vector(
         direction=direction,
         color=color,
-        stroke_width=kwargs.get('stroke_width', DEFAULT_STROKE_WIDTH),
-        max_tip_length_to_length_ratio=kwargs.get(
-            'max_tip_length_ratio', DEFAULT_TIP_LENGTH_RATIO)
+        **VECTOR_STYLE  # 공통 스타일 적용
     ).shift(start_point)
+    
+    return vector
 
 
 class BaseVectorAnimation(Animation):
@@ -33,9 +40,16 @@ class BaseVectorAnimation(Animation):
         start = self.plane.plane.p2c(mobject.get_start())
         end = self.plane.plane.p2c(mobject.get_end())
         self.length = np.sqrt((end[0] - start[0])**2 + (end[1] - start[1])**2)
+        
+        # 원본 벡터의 스타일 저장
+        self.original_style = {
+            'max_tip_length_to_length_ratio': mobject.max_tip_length_to_length_ratio,
+            'tip_length': mobject.tip_length,
+            'stroke_width': mobject.stroke_width
+        }
 
     def create_vector_at_angle(self, angle, length=None):
-        """주어진 각도에서 벡터 생���"""
+        """주어진 각도에서 벡터 생성"""
         # length가 지정되지 않으면 원본 벡터의 길이 사용
         vector_length = length if length is not None else self.length
         # 논리적 좌표계에서 벡터 끝점 계산
@@ -47,12 +61,13 @@ class BaseVectorAnimation(Animation):
             self.plane.plane.p2c(self.center)[1] + y
         )
         
-        return create_rotated_vector(
-            self.plane,
-            vec_end - self.center,
-            self.color,
-            self.center
-        )
+        vector = Vector(
+            direction=vec_end - self.center,
+            color=self.color,
+            **self.original_style  # 원본 스타일 적용
+        ).shift(self.center)
+        
+        return vector
 
 
 class RotateVector(BaseVectorAnimation):

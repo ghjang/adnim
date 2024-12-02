@@ -3,6 +3,7 @@ from enum import Enum, auto
 import re  # 정규표현식 지원 추가
 from .angle_decoration import AngleMarker  # AngleMarker 클래스 임포트
 from .line_decoration import LineMarker  # LineMarker 클래스 임포트
+from .rotate_vector import VECTOR_STYLE  # VECTOR_STYLE 임포트 추가
 
 
 class OriginStyle(Enum):
@@ -751,38 +752,30 @@ class NumberPlaneGroup(VGroup):
         self.add(marker)
         return marker
 
-    def add_vector(self, vec, name=None, color=RED, stroke_width=2,
-                   max_tip_length_to_length_ratio=0.25, tip_length=0.25,
-                   start_point=None):
+    def add_vector(self, vec, name=None, color=RED, start_point=None, **kwargs):
         """벡터 추가 메서드 개선"""
         if name is None:
             name = f"vector_{len(list(self.iter_mobjects(obj_type=MobjectType.VECTOR)))}"
 
-        # 시작점 처리 개선
+        # 시작점 처리
         if start_point is None:
             start_point = (0, 0)
 
-        # 시작점 변환
+        # 시작점과 벡터 좌표 변환
         start = self._transform_point(start_point)
+        end = self._transform_point((
+            start_point[0] + vec[0],
+            start_point[1] + vec[1]
+        ))
 
-        # 벡터 좌표 변환
-        if isinstance(vec, (tuple, list, np.ndarray)):
-            end = self._transform_point((
-                start_point[0] + vec[0],
-                start_point[1] + vec[1]
-            ))
-        else:
-            raise ValueError(
-                "Vector coordinates must be tuple, list or numpy array")
-
+        # 표준 벡터 스타일과 사용자 정의 스타일 병합
+        vector_style = {**VECTOR_STYLE, **kwargs}
+        
         # 벡터 생성
         vector = Vector(
             direction=end - start,
             color=color,
-            stroke_width=stroke_width,
-            max_tip_length_to_length_ratio=max_tip_length_to_length_ratio,
-            tip_length=tip_length,
-            buff=0
+            **vector_style
         ).shift(start)
 
         # 메타데이터 설정
@@ -791,14 +784,15 @@ class NumberPlaneGroup(VGroup):
             "type": MobjectType.VECTOR,
             "name": name,
             "coordinates": vec,
-            "start_point": start_point  # 시작점 정보도 저장
+            "start_point": start_point,
+            "style": vector_style  # 스타일 정보도 저장
         })
 
         self.add(vector)
         return vector
 
     def _copy_origin_marker(self, new_group):
-        """원점 마커를 새로운 좌표계에 맞게 복사"""
+        """원점 마���를 새로운 좌표계에 맞게 복사"""
         origin_marker = self.get_origin_marker()
         if not origin_marker:
             return
@@ -808,7 +802,7 @@ class NumberPlaneGroup(VGroup):
 
         # 타입별로 색상과 opacity 가져오기
         if style_type == OriginStyle.CROSS:
-            color = origin_marker[0].get_color()  # 첫 번째 라인의 색상만 사용
+            color = origin_marker[0].get_color()  # 첫 번째 라인의 색상만 ���용
             opacity = origin_marker[0].stroke_opacity
             old_size = abs(origin_marker[0].get_length()) / 2
         elif style_type == OriginStyle.DOT:
