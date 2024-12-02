@@ -10,6 +10,7 @@ FORMULA_SCALE = 0.8
 ANIMATION_RUN_TIME = 8
 LEFT_EDGE_BUFF = 1.5
 RIGHT_EDGE_BUFF = 1.5
+N_COMPONENTS = 7  # 사인파 컴포넌트의 수
 
 # 색상 테마 정의
 COLOR_THEMES = {
@@ -98,21 +99,21 @@ COLORS = COLOR_THEMES[CURRENT_THEME]
 
 def create_formula(n_components: int = 3):
     """n개의 사인파 합 수식 생성
-    
+
     Args:
         n_components: 사인파의 개수 (기본값: 3)
     """
     # 모든 항과 + 기호를 번갈아가며 리스트에 추가
     elements = []
-    
+
     # 첫 번째 항 추가
     elements.append(r"\sin(x)")
-    
+
     # 2번째 항부터 마지막 항까지 + 기호와 함께 추가
     for i in range(2, n_components + 1):
         elements.append("+")  # + 기호
         elements.append(r"\frac{\sin(" + str(i) + r"x)}{" + str(i) + r"}")  # 항
-    
+
     # 색상 매핑 생성 (항만 색상 지정, + 기호는 제외)
     color_map = {}
     term_index = 0
@@ -144,15 +145,7 @@ def create_sum_function_with_amplitude(n: int = 3) -> callable:
 
 class SawtoothWave(Scene):
     def construct(self):
-        # 초기 설정 - 첫 번째 원/벡터 생성
-        configs = [
-            RotationConfig(
-                center_point=(0, 0),
-                angular_velocity=1,
-                color=COLORS['CIRCLE_1'],
-                name_suffix="0"
-            )
-        ]
+        self.next_section("Initial Circles and Vectors")
 
         # 초기 좌표계 생성 및 표시
         npg = NumberPlaneGroup().scale(MAIN_SCALE)
@@ -161,73 +154,43 @@ class SawtoothWave(Scene):
         # 회전 요소 관리자 생성
         manager = SineWaveManager(npg)
 
-        # 첫 번째 원과 벡터 생성
-        circle_0, vector_0 = manager.add_component(configs[0])
-        self.play(FadeIn(circle_0), FadeIn(vector_0))
+        # N_COMPONENTS개의 원과 벡터를 한 번에 생성
+        prev_vector = None
+        for i in range(N_COMPONENTS):
+            if i == 0:
+                # 첫 번째 원/벡터는 원점에 생성
+                config = RotationConfig(
+                    center_point=(0, 0),
+                    angular_velocity=i + 1,
+                    color=COLORS[f'CIRCLE_{i+1}'],
+                    name_suffix=str(i)
+                )
+                circle, vector = manager.add_component(config)
+            else:
+                # 나머지는 이전 벡터의 끝점에 생성
+                radius = 1/(i + 1)  # i번째 원의 반지름
+                circle = npg.add_circle(
+                    center_point=npg.plane.p2c(prev_vector.get_end()),
+                    radius=radius,
+                    color=COLORS[f'CIRCLE_{i+1}'],
+                    stroke_width=2,
+                    fill_opacity=0.1,
+                    name=f"circle_{i}"
+                )
+                vector = create_radius_vector(
+                    npg,
+                    circle,
+                    0,
+                    COLORS[f'VECTOR_{i+1}'],
+                    f"radius_vector_{i}"
+                )
+                manager.circles.append(circle)
+                manager.vectors.append(vector)
 
-        # 두 번째 원과 벡터 생성 (반지름 0.5인 원)
-        # 첫 번째 벡터의 끝점을 두 번째 원의 중심으로 사용
-        circle_1 = npg.add_circle(
-            center_point=npg.plane.p2c(vector_0.get_end()),
-            radius=0.5,  # 이 크기로 벡터도 생성될 것입니다
-            color=COLORS['CIRCLE_2'],
-            stroke_width=2,
-            fill_opacity=0.1,
-            name="circle_1"
-        )
-        vector_1 = create_radius_vector(
-            npg,
-            circle_1,  # circle_1의 반지름(0.5)을 기준으로 벡터가 생성됨
-            0,
-            COLORS['VECTOR_2'],
-            "radius_vector_1"
-        )
-        self.play(FadeIn(circle_1), FadeIn(vector_1))
-        manager.circles.append(circle_1)
-        manager.vectors.append(vector_1)
-
-        # 세 번째 원과 벡터 생성 (반지름 1/3인 원)
-        circle_2 = npg.add_circle(
-            center_point=npg.plane.p2c(vector_1.get_end()),
-            radius=1/3,  # 세 번째 원의 반지름
-            color=COLORS['CIRCLE_3'],  # 수정
-            stroke_width=2,
-            fill_opacity=0.1,
-            name="circle_2"
-        )
-        vector_2 = create_radius_vector(
-            npg,
-            circle_2,
-            0,
-            COLORS['VECTOR_3'],  # 수정
-            "radius_vector_2"
-        )
-        self.play(FadeIn(circle_2), FadeIn(vector_2))
-        manager.circles.append(circle_2)
-        manager.vectors.append(vector_2)
-
-        # 4번째에서 7번째 원과 벡터 생성
-        for i in range(4, 8):
-            prev_vector = manager.vectors[-1]  # 이전 벡터
-            radius = 1/i  # i번째 원의 반지름
-            circle = npg.add_circle(
-                center_point=npg.plane.p2c(prev_vector.get_end()),
-                radius=radius,
-                color=COLORS[f'CIRCLE_{i}'],
-                stroke_width=2,
-                fill_opacity=0.1,
-                name=f"circle_{i-1}"
-            )
-            vector = create_radius_vector(
-                npg,
-                circle,
-                0,
-                COLORS[f'VECTOR_{i}'],
-                f"radius_vector_{i-1}"
-            )
             self.play(FadeIn(circle), FadeIn(vector))
-            manager.circles.append(circle)
-            manager.vectors.append(vector)
+            prev_vector = vector
+
+        self.next_section("Transformed Plane and Formula")
 
         # 변환된 좌표계로 전환
         new_npg = npg.copy_with_transformed_plane(
@@ -239,8 +202,8 @@ class SawtoothWave(Scene):
         self.play(ReplacementTransform(npg, new_npg))
         manager.update_plane(new_npg)
 
-        # 수식 추가
-        formula = create_formula(n_components=7)
+        # 수식 추가 - N_COMPONENTS 사용
+        formula = create_formula(n_components=N_COMPONENTS)
         formula.to_edge(DOWN)
         self.play(FadeIn(formula))
 
@@ -253,9 +216,11 @@ class SawtoothWave(Scene):
         ).scale(TRANSFORMED_SCALE).to_edge(RIGHT, buff=RIGHT_EDGE_BUFF)
         self.play(FadeIn(plot_npg))
 
-        # 사인 플롯 생성
+        self.next_section("Sine Wave Plot")
+
+        # 사인 플롯 생성 - N_COMPONENTS 사용
         sine_plot = plot_npg.plot_function(
-            create_sum_function_with_amplitude(n=7),
+            create_sum_function_with_amplitude(n=N_COMPONENTS),
             x_range=[0, 2 * PI],
             color=COLORS['PLOT']
         )
