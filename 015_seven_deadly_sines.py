@@ -96,21 +96,34 @@ CURRENT_THEME = 'PASTEL'
 COLORS = COLOR_THEMES[CURRENT_THEME]
 
 
-def create_formula():
-    """수식 생성: sin(x) + sin(2x)/2 + sin(3x)/3"""
+def create_formula(n_components: int = 3):
+    """n개의 사인파 합 수식 생성
+    
+    Args:
+        n_components: 사인파의 개수 (기본값: 3)
+    """
+    # 모든 항과 + 기호를 번갈아가며 리스트에 추가
+    elements = []
+    
+    # 첫 번째 항 추가
+    elements.append(r"\sin(x)")
+    
+    # 2번째 항부터 마지막 항까지 + 기호와 함께 추가
+    for i in range(2, n_components + 1):
+        elements.append("+")  # + 기호
+        elements.append(r"\frac{\sin(" + str(i) + r"x)}{" + str(i) + r"}")  # 항
+    
+    # 색상 매핑 생성 (항만 색상 지정, + 기호는 제외)
+    color_map = {}
+    term_index = 0
+    for i, elem in enumerate(elements):
+        if elem != "+":  # + 기호가 아닌 경우에만 색상 매핑
+            color_map[elem] = COLORS[f'VECTOR_{term_index + 1}']
+            term_index += 1
+
     return MathTex(
-        r"\sin(x)", "+", r"\frac{\sin(2x)}{2}", "+", r"\frac{\sin(3x)}{3}", "+",
-        r"\frac{\sin(4x)}{4}", "+", r"\frac{\sin(5x)}{5}", "+", r"\frac{\sin(6x)}{6}", "+",
-        r"\frac{\sin(7x)}{7}",
-        tex_to_color_map={
-            r"\sin(x)": COLORS['VECTOR_1'],
-            r"\frac{\sin(2x)}{2}": COLORS['VECTOR_2'],
-            r"\frac{\sin(3x)}{3}": COLORS['VECTOR_3'],
-            r"\frac{\sin(4x)}{4}": COLORS['VECTOR_4'],
-            r"\frac{\sin(5x)}{5}": COLORS['VECTOR_5'],
-            r"\frac{\sin(6x)}{6}": COLORS['VECTOR_6'],
-            r"\frac{\sin(7x)}{7}": COLORS['VECTOR_7']
-        }
+        *elements,  # 항과 + 기호가 번갈아가며 나타남
+        tex_to_color_map=color_map
     ).scale(FORMULA_SCALE)
 
 
@@ -227,7 +240,7 @@ class SawtoothWave(Scene):
         manager.update_plane(new_npg)
 
         # 수식 추가
-        formula = create_formula()
+        formula = create_formula(n_components=7)
         formula.to_edge(DOWN)
         self.play(FadeIn(formula))
 
