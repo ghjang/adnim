@@ -100,7 +100,7 @@ class UpdateVectorWithCircle(Animation):
 
 class ShowResultantVector(Animation):
     """두 벡터의 합을 보여주는 애니메이션 클래스"""
-
+    
     def __init__(
         self,
         plane,
@@ -108,46 +108,52 @@ class ShowResultantVector(Animation):
         end_vector,
         color=YELLOW,
         stroke_opacity=0.3,
-        show_end_dot=False,
+        show_end_dot=True,
         end_dot_color=None,
         end_dot_radius=0.05,
+        stroke_width=2,
         **kwargs
     ):
-        # VGroup으로 벡터와 점을 함께 관리
+        # VGroup으로 선과 점을 함께 관리
         result_group = VGroup()
-
-        # 합 벡터 생성 방식 수정
-        resultant = Vector(
-            direction=[0, 0, 0],
+        
+        # 시작점에서 시작점으로 향하는 선으로 초기화
+        start_point = start_vector.get_start()
+        resultant = Line(
+            start=start_point,
+            end=start_point,
             color=color,
-            stroke_width=3,
-            max_tip_length_to_length_ratio=0.15
-        ).set_stroke(opacity=stroke_opacity)  # 투명도를 stroke에 직접 적용
+            stroke_width=stroke_width
+        )
+        resultant.set_stroke(opacity=stroke_opacity)
         result_group.add(resultant)
-
+        
         # 종점 표시가 활성화된 경우에만 점 생성
         if show_end_dot:
             dot_color = end_dot_color if end_dot_color else color
             end_dot = Dot(
-                point=[0, 0, 0],
+                point=start_point,
                 color=dot_color,
                 radius=end_dot_radius
-            ).set_opacity(stroke_opacity * 1.2)  # 점의 투명도 조정
+            ).set_opacity(stroke_opacity * 1.2)  # 점은 선보다 약간 더 진하게
             result_group.add(end_dot)
-
+        else:
+            end_dot = None
+            
         super().__init__(result_group, **kwargs)
-
+        
         self.resultant = resultant
-        self.end_dot = end_dot if show_end_dot else None
+        self.end_dot = end_dot
         self.start_vector = start_vector
         self.end_vector = end_vector
+        self.stroke_opacity = stroke_opacity
 
     def interpolate_mobject(self, alpha):
         start_point = self.start_vector.get_start()
         end_point = self.end_vector.get_end()
-
-        # 벡터의 시작점과 끝점을 정확하게 설정
+        
+        # 선의 시작점과 끝점을 업데이트
         self.resultant.put_start_and_end_on(start_point, end_point)
-
+        
         if self.end_dot:
             self.end_dot.move_to(end_point)
