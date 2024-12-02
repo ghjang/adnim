@@ -847,6 +847,10 @@ class NumberPlaneGroup(VGroup):
         new_group = super().copy()
         new_group.submobjects.clear()  # 기존 submobjects 제거
 
+        # background_line_style이 명시적으로 지정되지 않은 경우 원본의 스타일을 사용
+        if 'background_line_style' not in kwargs:
+            kwargs['background_line_style'] = self.plane.background_line_style
+
         # 새로운 평면 생성
         new_plane = NumberPlane(
             x_range=x_range or self.plane.x_range,

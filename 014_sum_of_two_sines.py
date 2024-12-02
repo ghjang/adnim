@@ -34,7 +34,7 @@ def create_transformed_plane(npg):
         x_range=[-2, 2, 1],
         y_range=[-2, 2, 1],
         x_length=4,
-        y_length=4,
+        y_length=4
     ).scale(TRANSFORMED_SCALE).to_edge(LEFT, buff=LEFT_EDGE_BUFF)
 
 

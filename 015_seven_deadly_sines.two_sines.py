@@ -41,7 +41,7 @@ def create_sum_function_with_amplitude() -> callable:
     return sum_sine
 
 
-class SawtoothWave(Scene):
+class SineWithHalfAmplitude(Scene):
     def construct(self):
         # 초기 설정 - 첫 번째 원/벡터 생성
         configs = [

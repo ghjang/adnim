@@ -29,14 +29,27 @@ class BaseVectorAnimation(Animation):
         self.plane = plane
         self.color = color if color else mobject.get_color()
         self.center = mobject.get_start()
+        # 벡터의 길이를 화면 좌표계가 아닌 논리적 좌표계에서 계산
+        start = self.plane.plane.p2c(mobject.get_start())
+        end = self.plane.plane.p2c(mobject.get_end())
+        self.length = np.sqrt((end[0] - start[0])**2 + (end[1] - start[1])**2)
 
-    def create_vector_at_angle(self, angle, length=1):
-        """주어진 각도에서 벡터 생성"""
-        x = length * np.cos(angle)
-        y = length * np.sin(angle)
+    def create_vector_at_angle(self, angle, length=None):
+        """주어진 각도에서 벡터 생���"""
+        # length가 지정되지 않으면 원본 벡터의 길이 사용
+        vector_length = length if length is not None else self.length
+        # 논리적 좌표계에서 벡터 끝점 계산
+        x = vector_length * np.cos(angle)
+        y = vector_length * np.sin(angle)
+        # 논리적 좌표를 화면 좌표로 변환
+        vec_end = self.plane.plane.c2p(
+            self.plane.plane.p2c(self.center)[0] + x,
+            self.plane.plane.p2c(self.center)[1] + y
+        )
+        
         return create_rotated_vector(
             self.plane,
-            self.plane.plane.c2p(x, y) - self.plane.plane.c2p(0, 0),
+            vec_end - self.center,
             self.color,
             self.center
         )
@@ -58,7 +71,7 @@ class RotateVector(BaseVectorAnimation):
 
 class RotateVectorWithAngularVelocity(BaseVectorAnimation):
     """각속도 기반 벡터 회전 애니메이션 클래스"""
-
+    
     def __init__(
         self,
         mobject,
@@ -73,8 +86,13 @@ class RotateVectorWithAngularVelocity(BaseVectorAnimation):
         self.initial_angle = initial_angle
         self.angular_velocity = angular_velocity
         self.total_angle = n_revolutions * TAU
-        self.center = reference_circle.get_center(
-        ) if reference_circle else mobject.get_start()
+        # reference_circle이 제공된 경우, 해당 원의 중심과 반지름 설정
+        if reference_circle:
+            self.center = reference_circle.get_center()
+            # 원의 반지름을 논리적 좌표계에서 계산
+            center_point = self.plane.plane.p2c(reference_circle.get_center())
+            radius_point = self.plane.plane.p2c(reference_circle.get_start())
+            self.length = abs(radius_point[0] - center_point[0])
 
     def interpolate_mobject(self, alpha):
         current_angle = self.initial_angle + \

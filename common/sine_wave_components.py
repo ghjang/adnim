@@ -1,4 +1,3 @@
-
 from manim import *
 from dataclasses import dataclass
 from typing import Tuple, Optional, List, Callable
@@ -129,8 +128,11 @@ def create_unit_circle(plane, center_point=(0, 0), color=BLUE, name=None):
 def create_radius_vector(plane, target_circle, initial_angle, color, name=None):
     """반지름 벡터 생성 헬퍼 함수"""
     center_point = plane.plane.p2c(target_circle.get_center())
-    x = np.cos(initial_angle)
-    y = np.sin(initial_angle)
+    # 원의 실제 반지름을 논리적 단위로 변환
+    radius = plane.plane.p2c(target_circle.get_start())[0] - center_point[0]
+    # 벡터 좌표 계산 시 반지름 크기 적용
+    x = radius * np.cos(initial_angle)
+    y = radius * np.sin(initial_angle)
     return plane.add_vector(
         vec=(x, y),
         name=name,
