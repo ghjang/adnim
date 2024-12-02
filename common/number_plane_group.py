@@ -24,6 +24,7 @@ class MobjectType(Enum):
     POLYGON = auto()  # 다각형 타입 추가
     CIRCLE = auto()  # Circle 타입 추가
     VECTOR = auto()  # 벡터 타입 추가
+    RESULTANT_VECTOR = auto()  # 합벡터 타입 추가
 
 
 class NumberPlaneGroup(VGroup):
@@ -792,7 +793,7 @@ class NumberPlaneGroup(VGroup):
         return vector
 
     def _copy_origin_marker(self, new_group):
-        """원점 마���를 새로운 좌표계에 맞게 복사"""
+        """원점 마커를 새로운 좌표계에 맞게 복사"""
         origin_marker = self.get_origin_marker()
         if not origin_marker:
             return
@@ -802,7 +803,7 @@ class NumberPlaneGroup(VGroup):
 
         # 타입별로 색상과 opacity 가져오기
         if style_type == OriginStyle.CROSS:
-            color = origin_marker[0].get_color()  # 첫 번째 라인의 색상만 ���용
+            color = origin_marker[0].get_color()  # 첫 번째 라인의 색상만 사용
             opacity = origin_marker[0].stroke_opacity
             old_size = abs(origin_marker[0].get_length()) / 2
         elif style_type == OriginStyle.DOT:

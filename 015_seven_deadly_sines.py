@@ -4,13 +4,15 @@ from common.create_with_tracer import *
 from common.sine_wave_components import *
 
 # 상수 정의
-MAIN_SCALE = 4
-TRANSFORMED_SCALE = 0.9
+MAIN_SCALE = 5
+TRANSFORMED_SCALE = 1.1
 FORMULA_SCALE = 0.8
-ANIMATION_RUN_TIME = 8
-LEFT_EDGE_BUFF = 1.5
-RIGHT_EDGE_BUFF = 1.5
-N_COMPONENTS = 7  # 사인파 컴포넌트의 수
+INITIAL_ROTATION_TIME = 16    # 초기 1회전 시간
+FINAL_ROTATION_TIME = 32      # 최종 4회전 시간 (8초/회전)
+LEFT_EDGE_BUFF = 0.5
+RIGHT_EDGE_BUFF = 0.5
+N_COMPONENTS = 7              # 사인파 컴포넌트의 수
+N_FINAL_REVOLUTIONS = 4       # 최종 회전 횟수
 
 # 색상 테마 정의
 COLOR_THEMES = {
@@ -145,7 +147,22 @@ def create_sum_function_with_amplitude(n: int = 3) -> callable:
 
 class SawtoothWave(Scene):
     def construct(self):
-        self.next_section("Initial Circles and Vectors")
+        self.next_section(
+            "Intro of Plotting a Sawtooth Wave",
+            skip_animations=False
+        )
+
+        # Title with gradient color
+        title = Text("Plotting a Sawtooth Wave", font_size=68)
+        title.set_color_by_gradient(PURPLE_E, GREEN_E, PINK, YELLOW_E)
+        self.play(FadeIn(title))
+        self.wait()
+        self.play(
+            title.animate.to_edge(UP, buff=0.1).set_opacity(0),
+            run_time=1
+        )
+
+        self.next_section("Initial Circles and Vectors", skip_animations=False)
 
         # 초기 좌표계 생성 및 표시
         npg = NumberPlaneGroup().scale(MAIN_SCALE)
@@ -190,7 +207,41 @@ class SawtoothWave(Scene):
             self.play(FadeIn(circle), FadeIn(vector))
             prev_vector = vector
 
-        self.next_section("Transformed Plane and Formula")
+        self.next_section("Rotating Circles and Vectors",
+                          skip_animations=False)
+
+        # 스케일 다운하기 전에 먼저 한 번 회전 (합벡터 포함)
+        first_rotation = [
+            *manager.create_animations(n_revolutions=1),
+            manager.create_resultant_animation()
+        ]
+
+        # 더 극적인 효과를 위한 커스텀 rate 함수
+        def custom_rate(t):
+            # 앞부분(0-40%)은 천천히
+            if (t < 0.4):
+                return rate_functions.ease_in_sine(t * 2.5) * 0.4
+            # 중간부분(40-60%)은 빠르게
+            elif (t < 0.6):
+                return 0.4 + (t - 0.4) * 3
+            # 나머지는 다시 천천히
+            else:
+                return 0.6 + rate_functions.ease_out_sine((t - 0.6) * 2.5) * 0.4
+
+        # 또는 wiggle과 ease_in_out_elastic의 조합
+        def dramatic_rate(t):
+            elastic = rate_functions.ease_in_out_elastic(t)
+            wiggle = rate_functions.wiggle(t)
+            return (elastic + wiggle) / 2
+
+        for anim in first_rotation:
+            anim.rate_func = double_smooth
+
+        # 첫 번째 회전 애니메이션
+        self.play(*first_rotation, run_time=INITIAL_ROTATION_TIME)
+
+        self.next_section("Transformed Plane and Formula",
+                          skip_animations=False)
 
         # 변환된 좌표계로 전환
         new_npg = npg.copy_with_transformed_plane(
@@ -198,36 +249,36 @@ class SawtoothWave(Scene):
             y_range=[-2, 2, 1],
             x_length=4,
             y_length=4
-        ).scale(TRANSFORMED_SCALE).to_edge(LEFT, buff=LEFT_EDGE_BUFF)
+        ).scale(TRANSFORMED_SCALE).to_edge(LEFT, buff=LEFT_EDGE_BUFF).shift(UP)
         self.play(ReplacementTransform(npg, new_npg))
         manager.update_plane(new_npg)
 
         # 수식 추가 - N_COMPONENTS 사용
         formula = create_formula(n_components=N_COMPONENTS)
-        formula.to_edge(DOWN)
+        formula.to_edge(DOWN, buff=1)
         self.play(FadeIn(formula))
 
         # 플롯 좌표계 생성
         plot_npg = NumberPlaneGroup(
-            x_range=[-1, 2 * PI, 1],
+            x_range=[-1, 8 * PI, 1],  # x 범위 8π까지 확장
             y_range=[-2, 2, 1],  # y축 범위를 [-2, 2]로 조정 (진폭 감소)
             x_length=1 + 2 * PI,
             y_length=2 + 2,
-        ).scale(TRANSFORMED_SCALE).to_edge(RIGHT, buff=RIGHT_EDGE_BUFF)
+        ).scale(TRANSFORMED_SCALE).to_edge(RIGHT, buff=RIGHT_EDGE_BUFF).shift(UP)
         self.play(FadeIn(plot_npg))
 
-        self.next_section("Sine Wave Plot")
+        self.next_section("Sine Wave Plot", skip_animations=False)
 
         # 사인 플롯 생성 - N_COMPONENTS 사용
         sine_plot = plot_npg.plot_function(
             create_sum_function_with_amplitude(n=N_COMPONENTS),
-            x_range=[0, 2 * PI],
+            x_range=[0, 8 * PI],  # x범위를 8π까지로 확장
             color=COLORS['PLOT']
         )
 
-        # 애니메이션 실행
+        # 애니메이션 실행 - 회전 횟수를 4회로 변경하고 런타임 증가
         animations = [
-            *manager.create_animations(),
+            *manager.create_animations(n_revolutions=N_FINAL_REVOLUTIONS),
             manager.create_resultant_animation(),
             CreateWithTracer(
                 sine_plot,
@@ -236,10 +287,11 @@ class SawtoothWave(Scene):
                     "cross_lines": True,
                     "show_v_line": True,
                     "screen_fixed_lines": True,
-                    "fixed_x_range": [-4*PI, 4*PI]
+                    "fixed_x_range": [-4*PI, 8*PI]  # 범위도 확장
                 }
             )
         ]
 
-        self.play(*animations, run_time=ANIMATION_RUN_TIME)
+        # 런타임을 32초로 증가 (8초/회전)
+        self.play(*animations, run_time=FINAL_ROTATION_TIME)
         self.wait(2)

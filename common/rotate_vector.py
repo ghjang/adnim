@@ -168,10 +168,18 @@ class ShowResultantVector(Animation):
                 point=start_point,
                 color=dot_color,
                 radius=end_dot_radius
-            ).set_opacity(stroke_opacity * 1.2)  # 점은 선보다 약간 더 진하게
+            ).set_opacity(stroke_opacity * 1.2)
             result_group.add(end_dot)
         else:
             end_dot = None
+        
+        # 결과물을 NumberPlaneGroup에 추가하고 메타데이터 설정
+        plane._ensure_metadata(result_group)
+        result_group.metadata.update({
+            "type": "RESULTANT_VECTOR",
+            "name": "resultant_vector"
+        })
+        plane.add(result_group)
             
         super().__init__(result_group, **kwargs)
         
@@ -190,3 +198,8 @@ class ShowResultantVector(Animation):
         
         if self.end_dot:
             self.end_dot.move_to(end_point)
+
+    def clean_up_from_scene(self, scene):
+        # clean_up 메서드를 오버라이드하지 않음
+        # 결과물이 NumberPlaneGroup의 일부이므로 자동으로 함께 변환됨
+        pass
