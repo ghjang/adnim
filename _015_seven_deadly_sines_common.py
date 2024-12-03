@@ -58,32 +58,42 @@ class CompositeHarmonicScene(Scene, ABC):
         pass
 
     @abstractmethod
-    def create_formula(self):
+    def create_formula_latex(self):
         pass
 
     @abstractmethod
-    def create_sum_function(self):
+    def create_graph_plot_function(self):
         pass
 
     @abstractmethod
-    def get_angular_velocity(self, component_index):
+    def create_circle_rotation_info(self, component_index):
         pass
 
-    def get_component_config(self, component_index):
+    def get_component_config(self, npg, component_index, prev_vector=None):
         """각 컴포넌트의 설정 반환"""
 
-        angular_velocity = self.get_angular_velocity(component_index)
+        circle_radius, angular_velocity = self.create_circle_rotation_info(
+            component_index
+        )
+
+        if prev_vector:
+            center_point = npg.plane.p2c(prev_vector.get_end())
+        else:
+            center_point = (0, 0)
 
         return RotationConfig(
-            center_point=(0, 0) if component_index == 0 else None,  # 첫 번째만 원점에
+            center_point=center_point,
             angular_velocity=angular_velocity,
+            circle_radius=circle_radius,
             color=self.colors[f'CIRCLE_{component_index+1}'],
             name_suffix=str(component_index)
         )
 
     def construct(self):
         """메인 애니메이션 시퀀스"""
+
         self.next_section("Show title", skip_animations=False)
+
         # 타이틀 표시 (있는 경우)
         title = self.create_title()
         if title:
@@ -92,6 +102,7 @@ class CompositeHarmonicScene(Scene, ABC):
             self.play(title.animate.to_edge(UP, buff=0.1).set_opacity(0))
 
         self.next_section("Setup main plane", skip_animations=False)
+
         # 초기 좌표계 생성
         npg = NumberPlaneGroup().scale(self.main_scale)
         self.play(FadeIn(npg))
@@ -100,36 +111,17 @@ class CompositeHarmonicScene(Scene, ABC):
         manager = SineWaveManager(npg)
 
         self.next_section("Add components", skip_animations=False)
+
         # 컴포넌트 생성
         prev_vector = None
         for i in range(self.n_components):
-            config = self.get_component_config(i)
-            if i == 0:
-                circle, vector = manager.add_component(config)
-            else:
-                radius = 1/(i + 1)
-                circle = npg.add_circle(
-                    center_point=npg.plane.p2c(prev_vector.get_end()),
-                    radius=radius,
-                    color=self.colors[f'CIRCLE_{i+1}'],
-                    stroke_width=2,
-                    fill_opacity=0.1,
-                    name=f"circle_{i}"
-                )
-                vector = create_radius_vector(
-                    npg,
-                    circle,
-                    0,
-                    self.colors[f'VECTOR_{i+1}'],
-                    f"radius_vector_{i}"
-                )
-                manager.circles.append(circle)
-                manager.vectors.append(vector)
-
+            config = self.get_component_config(npg, i, prev_vector)
+            circle, vector = manager.add_component(config)
             self.play(FadeIn(circle), FadeIn(vector))
             prev_vector = vector
 
         self.next_section("Initial rotation", skip_animations=False)
+
         # 초기 1회전
         first_rotation = [
             *manager.create_animations(n_revolutions=1),
@@ -155,12 +147,15 @@ class CompositeHarmonicScene(Scene, ABC):
         manager.update_plane(new_npg)
 
         self.next_section("Show formula", skip_animations=False)
+
         # 수식 추가
-        formula = self.create_formula()
+        formula = self.create_formula_latex()
+        formula.scale(self.formula_scale)
         formula.to_edge(DOWN, buff=1)
         self.play(FadeIn(formula))
 
         self.next_section("Setup plot plane", skip_animations=False)
+
         # 플롯 좌표계 생성
         plot_npg = NumberPlaneGroup(
             x_range=[-1, 8 * PI, 1],
@@ -172,9 +167,10 @@ class CompositeHarmonicScene(Scene, ABC):
         self.play(FadeIn(plot_npg))
 
         self.next_section("Final animation", skip_animations=False)
+
         # 최종 애니메이션
         sine_plot = plot_npg.plot_function(
-            self.create_sum_function(),
+            self.create_graph_plot_function(),
             x_range=[0, 8 * PI],
             color=self.colors['PLOT']
         )

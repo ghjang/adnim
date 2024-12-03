@@ -11,6 +11,7 @@ class RotationConfig:
     """회전 요소(원과 벡터) 설정"""
     center_point: Tuple[float, float]  # 원의 중심점
     angular_velocity: float            # 각속도
+    circle_radius: float               # 원 반지름
     color: str                        # 색상
     name_suffix: str                  # 이름 접미사
     initial_angle: float = 0          # 초기 각도
@@ -21,14 +22,19 @@ class SineWaveManager:
 
     def __init__(self, plane: NumberPlaneGroup):
         self.plane = plane
+        self.configs = []
         self.circles = []
         self.vectors = []
 
     def add_component(self, config: RotationConfig) -> Tuple[Circle, Vector]:
         """회전 요소 추가"""
-        circle = create_unit_circle(
+
+        self.configs.append(config)
+
+        circle = create_circle(
             self.plane,
             center_point=config.center_point,
+            radius=config.circle_radius,
             color=config.color,
             name=f"circle_{config.name_suffix}"
         )
@@ -68,7 +74,7 @@ class SineWaveManager:
                     vector,
                     self.plane,
                     initial_angle=0,
-                    angular_velocity=i + 1,
+                    angular_velocity=self.configs[i].angular_velocity,
                     n_revolutions=n_revolutions,
                     reference_circle=circle,
                     rate_func=linear
@@ -114,16 +120,21 @@ def create_sum_function(n_components: int) -> Callable[[float], float]:
     return sum_sine
 
 
-def create_unit_circle(plane, center_point=(0, 0), color=BLUE, name=None):
-    """단위원 생성 헬퍼 함수"""
+def create_circle(plane, center_point=(0, 0), radius=1, color=BLUE, name=None):
+    """원 생성 헬퍼 함수"""
     return plane.add_circle(
         center_point=center_point,
-        radius=1,
+        radius=radius,
         color=color,
         stroke_width=2,
         fill_opacity=0.1,
         name=name
     )
+
+
+def create_unit_circle(plane, center_point=(0, 0), color=BLUE, name=None):
+    """단위원 생성 헬퍼 함수"""
+    return create_circle(plane, center_point, 1, color, name)
 
 
 def create_radius_vector(plane, target_circle, initial_angle, color, name=None):
@@ -132,7 +143,7 @@ def create_radius_vector(plane, target_circle, initial_angle, color, name=None):
     radius = plane.plane.p2c(target_circle.get_start())[0] - center_point[0]
     x = radius * np.cos(initial_angle)
     y = radius * np.sin(initial_angle)
-    
+
     # 표준 벡터 스타일 적용
     vector_config = {
         'vec': (x, y),
