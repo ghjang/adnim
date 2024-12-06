@@ -1,4 +1,49 @@
 from manim import *
+import numpy as np
+from PIL import Image
+
+class MobjectCaptureDemo(Scene):
+    def construct(self):
+        # 테스트용 도형 생성
+        circle = Circle(radius=1, color=BLUE)
+        square = Square(side_length=2, color=RED).shift(RIGHT*3)
+        group = VGroup(
+            Triangle(color=GREEN),
+            Star(color=YELLOW)
+        ).shift(LEFT*2)
+        
+        self.add(circle, square, group)
+        self.wait(2)
+        
+        # 특정 Mobject만 이미지로 캡처하는 함수
+        def capture_mobject(mobject, name="mobject_capture.png"):
+            # 임시 Scene 생성
+            temp_scene = Scene()
+            
+            # 종횡비 유지를 위한 카메라 설정
+            aspect_ratio = 16/9  # 기본 종횡비
+            
+            # 객체의 width와 height 중 큰 값을 기준으로 프레임 크기 설정
+            max_dim = max(mobject.width, mobject.height) * 1.2
+            temp_scene.camera.frame_width = max_dim
+            temp_scene.camera.frame_height = max_dim / aspect_ratio
+            
+            # 객체 중앙 정렬
+            mobject_copy = mobject.copy()
+            mobject_copy.move_to(ORIGIN)
+            temp_scene.add(mobject_copy)
+            
+            # 렌더링 및 저장
+            temp_scene.renderer.update_frame(temp_scene)
+            img = temp_scene.renderer.get_frame()
+            img = Image.fromarray(img)
+            img.save(name)
+            return img
+        
+        # 각 객체별로 캡처
+        capture_mobject(circle, "circle.png")
+        capture_mobject(square, "square.png")
+        capture_mobject(group, "group.png")
 
 class MinimapDemo(MovingCameraScene):  # Scene 대신 MovingCameraScene 사용
     def construct(self):
