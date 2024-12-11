@@ -45,9 +45,11 @@ def create_vertical_dash(plane, x_value, y_range=None, color=BLUE_C, opacity=0.3
 def create_code_block_from_file(
         file_path: str,
         tab_width: int = 4,
+        font_size: int = 24,
         background: str = "window",
         language: str = "python",
-        style: str = "monokai") -> Optional[Code]:
+        style: str = "monokai",
+        insert_line_no: bool = True) -> Optional[Code]:
     """
     Utility function to create a Manim Code object from a source file.
 
@@ -57,6 +59,7 @@ def create_code_block_from_file(
         background: Background style (default: "window")
         language: Programming language for syntax highlighting (default: "python")
         style: Code style for syntax highlighting (default: "monokai")
+        insert_line_no: Whether to show line numbers (default: True)
 
     Returns:
         Code: Manim Code object for animation
@@ -73,10 +76,12 @@ def create_code_block_from_file(
         return Code(
             code=code_content,
             tab_width=tab_width,
+            font_size=font_size,
             background=background,
             language=language,
             font="Monospace",
-            style=style  # Apply the style if provided
+            style=style,
+            insert_line_no=insert_line_no
         )
     except FileNotFoundError:
         raise FileNotFoundError(f"Could not find file at path: {file_path}")
