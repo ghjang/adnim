@@ -91,8 +91,8 @@ class SineSurfaceExample(ThreeDScene):
 
         self.wait(2)
 
-    class TetrahedronScene(ThreeDScene):
 
+class TetrahedronScene(ThreeDScene):
     def construct(self):
         self.set_camera_orientation(phi=0, theta=0, gamma=0)
 
