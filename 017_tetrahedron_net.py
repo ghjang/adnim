@@ -54,7 +54,7 @@ def create_regular_tetrahedron(length=1, face_colors=None, face_opacity=1):
     return tetrahedron
 
 
-class TetrahedronPlanarFigure(ThreeDScene):
+class TetrahedronNet(ThreeDScene):
     def construct(self):
         self.next_section("Initial Settings", skip_animations=False)
 
