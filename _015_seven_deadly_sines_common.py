@@ -23,7 +23,7 @@ CURRENT_THEME = 'PASTEL'
 COLORS = COLOR_THEMES[CURRENT_THEME]
 
 
-class CompositeHarmonicScene(Scene, ABC):
+class CompositeHarmonicScene(ZoomedScene, ABC):
     """여러 고조파의 합성을 보여주는 기본 클래스"""
 
     def __init__(
@@ -42,6 +42,7 @@ class CompositeHarmonicScene(Scene, ABC):
         **kwargs
     ):
         super().__init__(**kwargs)
+
         self.n_components = n_components
         self.main_scale = main_scale
         self.transformed_scale = transformed_scale
@@ -56,6 +57,15 @@ class CompositeHarmonicScene(Scene, ABC):
 
     @abstractmethod
     def create_title(self):
+        pass
+
+    def before_initial_rotation(self, sine_wave_manager):
+        pass
+
+    def initial_rotation_update(self, sine_wave_manager, alpha):
+        pass
+
+    def after_initial_rotation(self, sine_wave_manager):
         pass
 
     @abstractmethod
@@ -132,6 +142,7 @@ class CompositeHarmonicScene(Scene, ABC):
             prev_vector = vector
 
         self.next_section("Initial rotation", skip_animations=False)
+        self.before_initial_rotation(manager)
 
         # 초기 1회전
         first_rotation = [
@@ -142,7 +153,15 @@ class CompositeHarmonicScene(Scene, ABC):
         for anim in first_rotation:
             anim.rate_func = double_smooth
 
-        self.play(*first_rotation, run_time=self.initial_rotation_time)
+        self.play(
+            *first_rotation,
+            UpdateFromAlphaFunc(
+                Mobject(),
+                update_function=lambda _, alpha: self.initial_rotation_update(manager, alpha)
+            ),
+            run_time=self.initial_rotation_time
+        )
+        self.after_initial_rotation(manager)
 
         self.next_section("Transform to new coordinate system",
                           skip_animations=False)
