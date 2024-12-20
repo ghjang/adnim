@@ -25,11 +25,14 @@ class MobjectType(Enum):
     CIRCLE = auto()  # Circle 타입 추가
     VECTOR = auto()  # 벡터 타입 추가
     RESULTANT_VECTOR = auto()  # 합벡터 타입 추가
+    BRACE = auto()  # 브레이스 타입 추가
+    BRACE_TEXT = auto()  # 브레이스 텍스트 타입 추가
 
 
 class NumberPlaneGroup(VGroup):
     def __init__(self, x_range=[-20, 20, 1], y_range=[-20, 20, 1],
                  x_length=16, y_length=16,
+                 axis_config={},
                  background_line_style={"stroke_opacity": 0.4},
                  origin_config=None,
                  **kwargs):
@@ -51,6 +54,7 @@ class NumberPlaneGroup(VGroup):
             y_range=y_range,
             x_length=x_length,
             y_length=y_length,
+            axis_config=axis_config,
             background_line_style=background_line_style
         )
         self._ensure_metadata(self.plane)
@@ -333,7 +337,7 @@ class NumberPlaneGroup(VGroup):
 
     def add_label(self,
                   text,
-                  position,  # (x,y) 좌표
+                  position=None,  # (x,y) 좌표
                   name=None,
                   color=WHITE,
                   font_size=36,
@@ -359,11 +363,13 @@ class NumberPlaneGroup(VGroup):
                 font_size=font_size
             )
 
-        # 좌표계의 위치로 변환
-        point = self.plane.c2p(*position)
+        if position:
+            # 좌표계의 위치로 변환
+            point = self.plane.c2p(*position)
 
-        # 위치 지정
-        label.next_to(point, direction, buff=buff)
+            # 위치 지정
+            label.next_to(point, direction, buff=buff)
+
         self._ensure_metadata(label)
         label.metadata = {"type": MobjectType.LABEL, "name": name}
 
@@ -372,7 +378,7 @@ class NumberPlaneGroup(VGroup):
 
     def add_tex_label(self,
                       text,
-                      position,
+                      position=None,
                       name=None,
                       color=WHITE,
                       font_size=36,
@@ -771,7 +777,7 @@ class NumberPlaneGroup(VGroup):
 
         # 표준 벡터 스타일과 사용자 정의 스타일 병합
         vector_style = {**VECTOR_STYLE, **kwargs}
-        
+
         # 벡터 생성
         vector = Vector(
             direction=end - start,
@@ -791,6 +797,76 @@ class NumberPlaneGroup(VGroup):
 
         self.add(vector)
         return vector
+
+    def add_brace(self,
+                  mobject,
+                  direction=DOWN,
+                  name=None,
+                  buff=0.1,
+                  color=WHITE,
+                  text=None,
+                  text_color=None,
+                  text_buff=0.1,
+                  font_size=36):  # 텍스트 색상을 독립적으로 설정
+        """Brace(중괄호) 추가 메서드
+
+        Args:
+            mobject: 브레이스를 추가할 객체
+            direction: 브레이스의 방향 (DOWN, UP, LEFT, RIGHT)
+            name: 브레이스의 이름 (None이면 자동생성)
+            buff: 브레이스와 객체 사이의 간격
+            color: 브레이스의 색상
+            text: 브레이스에 표시할 텍스트 (선택사항)
+            font_size: 텍스트의 크기
+            text_color: 텍스트의 색상 (None이면 브레이스와 같은 색상)
+
+        Returns:
+            tuple: (Brace, MathTex or None) - 브레이스와 텍스트 객체 튜플
+        """
+        if name is None:
+            name = f"brace_{len(list(self.iter_mobjects(obj_type='BRACE')))}"
+
+        # Brace 객체 생성
+        brace = Brace(
+            mobject,
+            direction=direction,
+            buff=buff,
+            color=color
+        )
+
+        # 메타데이터 설정
+        self._ensure_metadata(brace)
+        brace.metadata = {
+            "type": "BRACE",
+            "name": name,
+            "direction": direction,
+            "has_text": text is not None
+        }
+
+        self.add(brace)
+
+        # 텍스트 생성 및 추가
+        tex = None
+        if text:
+            if text_color is None:
+                text_color = color
+
+            tex = brace.get_tex(text, buff=text_buff)
+            tex.set_font_size(font_size)
+            tex.set_color(text_color)
+
+            # 텍스트 메타데이터 설정
+            self._ensure_metadata(tex)
+            tex.metadata = {
+                "type": "BRACE_TEXT",
+                "name": f"{name}_text",
+                "parent_brace": name
+            }
+
+            # 텍스트 객체 따로 추가
+            self.add(tex)
+
+        return (brace, tex)
 
     def _copy_origin_marker(self, new_group):
         """원점 마커를 새로운 좌표계에 맞게 복사"""
@@ -992,7 +1068,7 @@ class NumberPlaneGroup(VGroup):
                 # 원의 경우, 좌표계의 단위 길이를 고려하여 처리
                 center = self.plane.p2c(mob.get_center())
                 # 원본 원의 실제 반지름을 논리적 단위로 변환
-                logical_radius = mob.radius / old_unit_length
+                logical_radius = mob.radius / old_unit_length   # FIXME: old_unit_length가 정의되지 않음
 
                 new_group.add_circle(
                     center_point=center,
@@ -1003,3 +1079,9 @@ class NumberPlaneGroup(VGroup):
                     stroke_width=mob.stroke_width,
                     stroke_opacity=mob.stroke_opacity
                 )
+            elif mob.metadata.get("type") == MobjectType.BRACE:
+                # TODO: Brace 객체 복사
+                pass
+            elif mob.metadata.get("type") == MobjectType.BRACE_TEXT:
+                # TODO: Brace Text 객체 복사
+                pass
