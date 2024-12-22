@@ -6,6 +6,36 @@ from .line_decoration import LineMarker  # LineMarker 클래스 임포트
 from .rotate_vector import VECTOR_STYLE  # VECTOR_STYLE 임포트 추가
 
 
+def calculate_enough_number_of_samples(axes_length):
+    """축 길이에 따른 적절한 샘플링 포인트 수 계산"""
+    return int(axes_length * config["pixel_width"] / config["frame_width"])
+
+
+def create_asymptote_lines(axes, discontinuities, color=RED, dash_length=0.1, stroke_width=1.5):
+    """탄젠트 함수의 점근선들을 생성
+
+    Args:
+        axes: Manim Axes 또는 NumberPlane 객체
+        discontinuities: 불연속점들의 x 좌표 리스트
+        color: 점근선 색상 (기본값: RED)
+        dash_length: 점선의 간격 (기본값: 0.2)
+        stroke_width: 선 두께 (기본값: 2)
+
+    Returns:
+        VGroup: 생성된 점근선들의 그룹
+    """
+    return VGroup(*[
+        DashedLine(
+            start=axes.c2p(x, axes.y_range[0]),
+            end=axes.c2p(x, axes.y_range[1]),
+            color=color,
+            dash_length=dash_length,
+            stroke_width=stroke_width
+        )
+        for x in discontinuities
+    ])
+
+
 class OriginStyle(Enum):
     DOT = auto()
     CIRCLE = auto()
@@ -230,7 +260,8 @@ class NumberPlaneGroup(VGroup):
                       name=None,
                       x_range=None,
                       color=BLUE,
-                      stroke_width=2):
+                      stroke_width=2,
+                      **kwargs):  # 추가 인자를 받을 수 있도록 kwargs 추가
         """함수 그래프 추가"""
         if x_range is None:
             x_range = self.plane.x_range[:2]
@@ -242,8 +273,10 @@ class NumberPlaneGroup(VGroup):
             func,
             x_range=x_range,
             color=color,
-            stroke_width=stroke_width
+            stroke_width=stroke_width,
+            **kwargs  # 추가 인자들을 plot 메서드로 전달
         )
+
         self._ensure_metadata(graph)
         graph.metadata = {
             "type": MobjectType.FUNCTION,
