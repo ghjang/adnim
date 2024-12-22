@@ -16,6 +16,7 @@ class SinePlot(Scene):
         )
         self.play(Create(sine_plot), run_time=6)
 
+
 class CosinePlot(Scene):
     def construct(self):
         plane_group = NumberPlaneGroup().scale(2)
@@ -30,25 +31,29 @@ class CosinePlot(Scene):
         self.play(Create(cosine_plot), run_time=6)
 
 
+def tan_discontinuity_finder(x_min, x_max):
+    """탄젠트 함수의 불연속점 계산"""
+    n_min = int(np.floor((x_min * 2/PI - 1) / 2))
+    n_max = int(np.ceil((x_max * 2/PI - 1) / 2))
+    return [(2 * n + 1) * PI / 2 for n in range(n_min, n_max + 1)
+            if x_min <= (2 * n + 1) * PI / 2 <= x_max]
+
+
 class TangentPlot(Scene):
     def construct(self):
         plane_group = NumberPlaneGroup().scale(2)
         self.add(plane_group)
 
-        # 탄젠트 함수 그래프 추가
-        # 불연속점들을 미리 계산
-        discontinuities = [
-            (2 * k + 1) * PI / 2
-            for k in range(-4, 5)  # -4π/2부터 4π/2까지의 불연속점들
-        ]
-
-        tangent_plot = plane_group.plot_function(
-            lambda x: np.tan(x),
-            x_range=[-PI + 0.01, PI - 0.01],
+        # 탄젠트 함수 그래프 추가 (불연속점 자동 처리)
+        tangent_graph = plane_group.plot_discontinuous_function(
+            func=np.tan,
+            x_range=[-3 * PI, 3 * PI],
+            discontinuity_finder=tan_discontinuity_finder,
             color=BLUE,
         )
-        
-        self.play(Create(tangent_plot), run_time=6)
+
+        self.play(Create(tangent_graph), run_time=6)
+
 
 class SinePlotWithTracer(Scene):
     def construct(self):
@@ -124,4 +129,3 @@ class SinePlotWithCustomTracer(Scene):
                 run_time=6
             )
         )
-
