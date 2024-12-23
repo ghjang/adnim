@@ -2,8 +2,12 @@ from manim import *
 from dataclasses import dataclass
 from typing import Tuple, Optional, List, Callable
 from .number_plane_group import *
-from .rotate_vector import *
-from .rotate_vector import VECTOR_STYLE  # 공통 스타일 임포트
+from .animation.rotate_vector import (
+    VECTOR_STYLE,
+    RotateVectorWithAngularVelocity,
+    UpdateVectorWithCircle,
+    ShowResultantVector
+)
 
 
 @dataclass

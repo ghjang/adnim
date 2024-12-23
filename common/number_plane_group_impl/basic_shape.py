@@ -7,7 +7,7 @@ from .number_plane_group_base import (
 
 from ..angle_decoration import AngleMarker  # AngleMarker 클래스 임포트
 from ..line_decoration import LineMarker  # LineMarker 클래스 임포트
-from ..rotate_vector import VECTOR_STYLE  # VECTOR_STYLE 임포트 추가
+from ..animation.rotate_vector import VECTOR_STYLE  # VECTOR_STYLE 임포트 추가
 
 
 class BasicShapeMixin(NumberPlaneGroupBase):

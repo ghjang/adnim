@@ -1,6 +1,6 @@
 from manim import *
 from common.number_plane_group import *
-from common.rotate_vector import *
+from common.animation.rotate_vector import RotateVector
 
 
 def create_unit_circle(plane, center_point=(0, 0), color=BLUE):

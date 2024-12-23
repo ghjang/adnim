@@ -1,6 +1,6 @@
 from manim import *
 from common.number_plane_group import *
-from common.create_with_tracer import CreateWithTracer
+from common.animation.create_with_tracer import CreateWithTracer
 
 
 class SinePlot(Scene):

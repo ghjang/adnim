@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 from manim import *
 
 from common.number_plane_group import *
-from common.create_with_tracer import *
+from common.animation.create_with_tracer import CreateWithTracer
 from common.sine_wave_components import *
 from _015_seven_deadly_sines_theme import COLOR_THEMES
 
@@ -157,7 +157,8 @@ class CompositeHarmonicScene(ZoomedScene, ABC):
             *first_rotation,
             UpdateFromAlphaFunc(
                 Mobject(),
-                update_function=lambda _, alpha: self.initial_rotation_update(manager, alpha)
+                update_function=lambda _, alpha: self.initial_rotation_update(
+                    manager, alpha)
             ),
             run_time=self.initial_rotation_time
         )
