@@ -151,3 +151,13 @@ class LabelMixIn(NumberPlaneGroupBase):
             self.add(tex)
 
         return (brace, tex)
+
+    def remove_brace(self, name):
+        """Brace 제거"""
+        brace = self.find_mobject(name, obj_type='BRACE')
+        if (brace):
+            self.remove(brace)
+
+        text = self.find_mobject(f"{name}_text", obj_type='BRACE_TEXT')
+        if (text):
+            self.remove(text)

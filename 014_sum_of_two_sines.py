@@ -1,6 +1,6 @@
 from manim import *
 from common.number_plane_group import *
-from common.create_with_tracer import *
+from common.animation.create_with_tracer import *
 from common.sine_wave_components import *
 
 # 상수 정의
