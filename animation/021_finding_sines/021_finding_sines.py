@@ -1,7 +1,18 @@
-from typing import override
+# fmt: off
+import os
+import sys
 
+# Python path에 프로젝트 루트 추가
+project_dir = os.path.abspath(os.getcwd())
+sys.path.append(project_dir)
+
+# 기본 라이브러리
+from typing import override
 from manim import *
+
+# 프로젝트 모듈
 from common.number_plane_group import *
+# fmt: on
 
 
 class BaseUnitCircle(VGroup):
