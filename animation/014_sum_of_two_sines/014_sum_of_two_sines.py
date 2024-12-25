@@ -1,7 +1,19 @@
+# fmt: off
+import os
+import sys
+
+# Python path에 프로젝트 루트 추가
+project_dir = os.path.abspath(os.getcwd())
+sys.path.append(project_dir)
+
+# 기본 라이브러리
 from manim import *
+
+# 사용자 정의 라이브러리
 from common.number_plane_group import *
 from common.animation.create_with_tracer import *
 from common.sine_wave_components import *
+# fmt: on
 
 # 상수 정의
 MAIN_SCALE = 4
@@ -66,12 +78,14 @@ class SumOfTwoSine(Scene):
             RotationConfig(
                 center_point=(0, 0),
                 angular_velocity=1,
+                circle_radius=1,
                 color=COLORS['CIRCLE_1'],
                 name_suffix="0"
             ),
             RotationConfig(
                 center_point=(1, 0),
                 angular_velocity=2,
+                circle_radius=1,
                 color=COLORS['CIRCLE_2'],
                 name_suffix="1"
             )

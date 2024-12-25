@@ -1,15 +1,35 @@
+# fmt: off
+import os
+import sys
+
+# Python path에 프로젝트 루트 추가
+project_dir = os.path.abspath(os.getcwd())
+sys.path.append(project_dir)
+
+# 기본 라이브러리
 from manim import *
+
+# 사용자 정의 라이브러리
 from common.manim_utils import create_code_block_from_file
+# fmt: on
 
 
 class ThreeDAxesExample(ThreeDScene):
+    def _load_code_block(self, filename: str, font_size: float = 14.5, insert_line_no: bool = False) -> Mobject:
+        """코드 블록을 현재 파일 위치 기준으로 로드"""
+        return create_code_block_from_file(
+            os.path.join(os.path.dirname(__file__), filename),
+            font_size=font_size,
+            insert_line_no=insert_line_no
+        )
+
     def construct(self):
         self.next_section("Code - 00", skip_animations=False)
 
         title_text = Text("Default Scene Settings").to_edge(UL)
         self.add(title_text)
 
-        code_block = create_code_block_from_file(
+        code_block = self._load_code_block(
             "016_code_00.py",
             font_size=20
         ).shift(DOWN / 2)
@@ -40,10 +60,8 @@ class ThreeDAxesExample(ThreeDScene):
         self.next_section("Camera Move with 'phi' Parameter",
                           skip_animations=False)
 
-        code_block = create_code_block_from_file(
-            "016_code_01_phi.py",
-            font_size=14.5,
-            insert_line_no=False
+        code_block = self._load_code_block(
+            "016_code_01_phi.py"
         ).to_edge(UL, buff=0.2)
         self.add(code_block)
         self.wait(2)
@@ -62,10 +80,8 @@ class ThreeDAxesExample(ThreeDScene):
         self.next_section("Camera Move with 'theta' parameter",
                           skip_animations=False)
 
-        next_code_block = create_code_block_from_file(
-            "016_code_02_theta.py",
-            font_size=14.5,
-            insert_line_no=False
+        next_code_block = self._load_code_block(
+            "016_code_02_theta.py"
         ).to_edge(UL, buff=0.2)
         self.play(FadeOut(code_block), FadeIn(next_code_block))
         code_block = next_code_block
@@ -80,10 +96,8 @@ class ThreeDAxesExample(ThreeDScene):
         self.next_section(
             "Camera Move with 'phi, theta, gamma' parameters", skip_animations=False)
 
-        next_code_block = create_code_block_from_file(
-            "016_code_03_all.py",
-            font_size=14.5,
-            insert_line_no=False
+        next_code_block = self._load_code_block(
+            "016_code_03_all.py"
         ).to_edge(UL, buff=0.2)
         self.play(FadeOut(code_block), FadeIn(next_code_block))
         code_block = next_code_block

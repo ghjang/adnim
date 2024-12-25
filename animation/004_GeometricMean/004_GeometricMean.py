@@ -1,6 +1,5 @@
 from manim import *
 import numpy as np
-from decimal import Decimal, ROUND_HALF_UP
 
 
 class GeometricMean(Scene):
@@ -55,16 +54,17 @@ class GeometricMean(Scene):
 
         # 이제 화살표와 레이블 생성
         for i in range(len(values)-1):
-            growth_rates_display.append(f"≈ {growth_rates[i]:.2f}x")  # 모든 화살표에 실제 성장률 사용
-                
+            growth_rates_display.append(
+                f"≈ {growth_rates[i]:.2f}x")  # 모든 화살표에 실제 성장률 사용
+
             growth_rates_simple.append(f"{growth_rates[i]:.2f}x")
-            
+
             bar_width = chart.bars[0].width
             start = chart.bars[i].get_bottom() + DOWN * 0.8 + \
                 RIGHT * (bar_width * 0.3)
             end = chart.bars[i+1].get_bottom() + DOWN * 0.8 + \
                 LEFT * (bar_width * 0.3)
-            
+
             arc = CurvedArrow(
                 start_point=start,
                 end_point=end,
@@ -355,8 +355,9 @@ class GeometricMean(Scene):
 
         # 복제본 생성 및 우측으로 이동
         new_chart_group = all_elements.copy()
-        new_chart_group.shift(RIGHT * 8.5)  # 원본이 LEFT * 4로 이동했으므로, 총 RIGHT * 8.5 이동
-        
+        # 원본이 LEFT * 4로 이동했으므로, 총 RIGHT * 8.5 이동
+        new_chart_group.shift(RIGHT * 8.5)
+
         # 타이틀 텍스트 변경
         old_title = new_chart_group[1]
         old_title.become(Text(
@@ -376,37 +377,42 @@ class GeometricMean(Scene):
         # 바의 높이 조정 및 상단 텍스트 변경
         for i in range(len(geo_values)):
             bar = new_chart_group[0].bars[i]
-            
+
             # 복제된 차트의 y_range를 사용하여 정확한 높이 계산
-            y_min, y_max, y_step = new_chart_group[0].y_range  # 복제된 차트의 y_range 사용
+            # 복제된 차트의 y_range 사용
+            y_min, y_max, y_step = new_chart_group[0].y_range
             value_ratio = (geo_values[i] - y_min) / (y_max - y_min)
-            new_height = value_ratio * new_chart_group[0].y_length  # 복제된 차트의 y_length 사용
-            
+            new_height = value_ratio * \
+                new_chart_group[0].y_length  # 복제된 차트의 y_length 사용
+
             # 바의 높이를 수동으로 조정 (0.7배)
             new_height *= 0.7
-            
+
             # 바의 높이와 위치 조정
             bar.stretch_to_fit_height(new_height)
-            
+
             # x축 위치 계산 수정 - 눈금 사이 중간에 오도록
             x_coord = i + 0.5  # 0.5를 더해서 눈금 사이 중간으로 이동
             bar_bottom = new_chart_group[0].c2p(x_coord, 0)
             bar.move_to(bar_bottom, aligned_edge=DOWN)
-            
+
             # 상단 라벨의 텍스트와 위치 업데이트
             new_value = round(geo_values[i])  # 소수점 첫째 자리에서 반올림하여 정수부만 사용
             if i == 0:
-                new_label = Text(str(new_value), font_size=16)  # 첫 번째 값에는 '거의 같음 기호' 없음
+                # 첫 번째 값에는 '거의 같음 기호' 없음
+                new_label = Text(str(new_value), font_size=16)
             else:
-                new_label = Text(f"≈ {new_value}", font_size=16)  # '거의 같음 기호' 추가
+                # '거의 같음 기호' 추가
+                new_label = Text(f"≈ {new_value}", font_size=16)
             new_label.scale(0.7)  # 텍스트 크기를 0.7배로 줄임
-            new_label.next_to(bar, UP, buff=original_buff * 0.7)  # 좌상단과 동일한 버퍼 사용
+            new_label.next_to(bar, UP, buff=original_buff *
+                              0.7)  # 좌상단과 동일한 버퍼 사용
             new_chart_group[3][i].become(new_label)  # 기존 라벨을 신규 라벨로 교체
 
         # 화살표 색상 변경 및 비율 텍스트 업데이트
         for i in range(4):
             new_chart_group[4 + i].set_color(GREEN)
-            
+
             old_text = new_chart_group[8 + i]
             new_text = Text(
                 f"≈ {g_value:.2f}x",

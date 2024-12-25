@@ -1,6 +1,18 @@
+# fmt: off
+import os
+import sys
+
+# Python path에 프로젝트 루트 추가
+project_dir = os.path.abspath(os.getcwd())
+sys.path.append(project_dir)
+
+# 기본 라이브러리
 from manim import *
-from tex_builder import TexBuilder
-from manim_utils import create_vertical_dash, format_number
+
+# 사용자 정의 라이브러리
+from common.tex_builder import TexBuilder
+from common.manim_utils import create_vertical_dash, format_number
+# fmt: on
 
 
 # NOTE: 'NumberPlane'의 x축과 y축의 스케일이 다를때 화면에 표시되는 내용의 '왜곡'이 있을 수 있으니 주의할 것. 잘못된 것이 아닌데 오류라고 생각할 수도 있음.

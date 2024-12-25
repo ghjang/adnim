@@ -1,5 +1,4 @@
 from manim import *
-import numpy as np
 
 
 def create_regular_hexahedron(length=1, face_colors=None, face_opacity=1):

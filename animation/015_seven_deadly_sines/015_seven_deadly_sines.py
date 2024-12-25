@@ -1,7 +1,18 @@
+# fmt: off
+import os
+import sys
+
+# Python path에 프로젝트 루트 추가
+project_dir = os.path.abspath(os.getcwd())
+sys.path.append(project_dir)
+
+# 기본 라이브러리
 from typing import override
 from manim import *
-from _015_seven_deadly_sines_common import *
 
+# 사용자 정의 라이브러리
+from _015_seven_deadly_sines_common import *
+# fmt: on
 
 class SawtoothWave(CompositeHarmonicScene):
     """톱니파 플랏 애니메이션"""

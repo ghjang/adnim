@@ -1,6 +1,18 @@
+# fmt: off
+import os
+import sys
+
+# Python path에 프로젝트 루트 추가
+project_dir = os.path.abspath(os.getcwd())
+sys.path.append(project_dir)
+
+# 기본 라이브러리
 from manim import *
 from sympy import symbols, diff, solve, latex
+
+# 사용자 정의 라이브러리
 from common.manim_utils import create_code_block_from_file
+# fmt: on
 
 
 class PolynimialDiff(Scene):
@@ -8,7 +20,7 @@ class PolynimialDiff(Scene):
         self.next_section("Display Code Block")
 
         code_block = create_code_block_from_file(
-            "009_sympy_snippet.py",
+            os.path.join(os.path.dirname(__file__), "009_sympy_snippet.py"),
             style="monokai",  # theme 대신 style 사용
         ).scale(0.8).to_edge(UP)
         code_block_label = Text(
