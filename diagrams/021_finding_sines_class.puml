@@ -1,0 +1,80 @@
+@startuml
+
+' 기본 스타일 설정
+skinparam {
+    ClassAttributeIconSize 0
+    MonochromeCurrent true
+}
+
+' 기본 클래스들
+abstract class VGroup
+abstract class Animation
+abstract class Scene
+
+' 핵심 클래스
+class BaseUnitCircle {
+    - plane: Mobject
+    - plane_group: NumberPlaneGroup
+    - initial_angle: float
+    - unit_circle: Circle
+    - decorations: dict
+    + __init__()
+    + add_shapes_for_sine()
+    + remove_shapes_for_sine()
+    + add_shapes_for_cosine()
+    + remove_shapes_for_cosine()
+}
+
+class SineRotation {
+    - clockwise: bool
+    - rotation_count: int
+    - show_brace: bool
+    - remove_shapes: bool
+    + __init__()
+    + begin()
+    + finish()
+    + interpolate_mobject()
+}
+
+class CosineRotation {
+    - clockwise: bool
+    - rotation_count: int
+    - show_brace: bool
+    - remove_shapes: bool
+    + __init__()
+    + begin()
+    + finish()
+    + interpolate_mobject()
+}
+
+' Scene 구현 클래스들
+class FindingSine {
+    + construct()
+}
+
+class FindingCosine {
+    + construct()
+}
+
+class FindingSines {
+    + construct()
+}
+
+class FindingAll {
+    + construct()
+}
+
+' 상속 관계
+BaseUnitCircle -up-|> VGroup
+SineRotation -up-|> Animation
+CosineRotation -up-|> Animation
+FindingSine -up-|> Scene
+FindingCosine -up-|> Scene
+FindingSines -up-|> Scene
+FindingAll -up-|> Scene
+
+' 의존성 관계
+SineRotation ..> BaseUnitCircle : uses
+CosineRotation ..> BaseUnitCircle : uses
+
+@enduml

@@ -1,0 +1,51 @@
+@startuml "FindingAll Sequence"
+
+skinparam {
+    SequenceGroupBorderColor #grey
+    SequenceGroupBodyBackgroundColor transparent
+}
+
+participant "FindingAll\nScene" as Scene
+participant "VGroup" as VGroup
+participant "NumberPlaneGroup" as NPG
+participant "BaseUnitCircle" as Circle
+participant "SineRotation" as Sine
+participant "CosineRotation" as Cosine
+
+activate Scene
+Scene -> VGroup ++ : create pairs VGroup
+
+group Create 3 plane-circle pairs #LightGrey
+    loop 3 times
+        Scene -> NPG ++ : create(scale=1.1)
+        NPG --> Scene -- : plane
+
+        Scene -> Circle ++ : create(plane)
+        Circle --> Scene -- : circle
+
+        Scene -> VGroup : add pair(plane, circle)
+    end
+end
+
+Scene -> VGroup : arrange(RIGHT, buff=0.2)
+Scene -> VGroup : center()
+Scene -> Scene : add(pairs)
+
+group Animate all rotations
+    Scene -> Sine ++ : create(pairs[0][1])
+    Scene -> Cosine ++ : create(pairs[1][1])
+    Scene -> Sine ++ : create(pairs[2][1])
+    Scene -> Cosine ++ : create(pairs[2][1])
+
+    Scene -> Scene : play(all rotations,\nrun_time=9)
+
+    Sine --> Scene --
+    Cosine --> Scene --
+    Sine --> Scene --
+    Cosine --> Scene --
+end
+
+Scene -> Scene : wait()
+deactivate Scene
+
+@enduml
