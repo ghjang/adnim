@@ -5,28 +5,44 @@ from common.number_plane_group import *
 class UnitCircleTriangle(VGroup):
     """단위원과 삼각함수 시각화를 위한 삼각형 그룹 클래스"""
 
-    def __init__(self, planeGroup: NumberPlaneGroup, initial_angle=PI/3, **kwargs):
+    def __init__(self, planeGroup: NumberPlaneGroup, initial_angle=PI / 3, **kwargs):
         super().__init__(**kwargs)
         self.plane = planeGroup.plane
         self.plane_group = planeGroup  # NumberPlaneGroup 인스턴스 저장
+        self.initial_angle = initial_angle
 
         # 단위원 생성
         self.unit_circle = planeGroup.add_circle(
-            center_point=[0, 0], radius=1, color=PINK, stroke_width=3)
+            center_point=[0, 0],
+            radius=1,
+            color=PINK,
+            stroke_width=3
+        )
+        self.add(self.unit_circle)
+
+        # 초기에는 브레이스를 생성하지 않음
+        self.sine_brace = None
+        self.sine_label = None
+
+    def add_shapes_for_sine(self, initial_angle: float | None = None):
+        """sin(x) 삼각함수 시각화를 위한 도형 생성"""
+
+        pg = self.plane_group
+        angle = initial_angle if initial_angle is not None else self.initial_angle
 
         # 상단 삼각형 그룹 생성
-        self.upper_triangle = planeGroup.add_triangle(
+        self.upper_triangle = pg.add_triangle(
             [0, 0],
-            [np.cos(initial_angle), np.sin(initial_angle)],
-            [np.cos(initial_angle), 0],
+            [np.cos(angle), np.sin(angle)],
+            [np.cos(angle), 0]
         )
 
         # BasicShapeMixin의 메서드를 사용하여 점과 선 생성
-        circle_point = [np.cos(initial_angle), np.sin(initial_angle)]
-        x_point = [np.cos(initial_angle), 0]
+        circle_point = [np.cos(angle), np.sin(angle)]
+        x_point = [np.cos(angle), 0]
 
-        self.upper_dot = planeGroup.add_point(circle_point, color=GREEN)
-        self.upper_half_chord = planeGroup.add_line(
+        self.upper_dot = pg.add_point(circle_point, color=GREEN)
+        self.upper_half_chord = pg.add_line(
             circle_point,
             x_point,
             color=WHITE,
@@ -34,28 +50,23 @@ class UnitCircleTriangle(VGroup):
         )
 
         # 하단 삼각형 그룹 생성 (y좌표 반전)
-        lower_circle_point = [np.cos(initial_angle), -np.sin(initial_angle)]
-        self.lower_triangle = planeGroup.add_triangle(
+        lower_circle_point = [np.cos(angle), -np.sin(angle)]
+        self.lower_triangle = pg.add_triangle(
             [0, 0],
             lower_circle_point,
             x_point,
         ).set_opacity(0.1)
 
-        self.lower_dot = planeGroup.add_point(lower_circle_point, color=GREEN)
-        self.lower_half_chord = planeGroup.add_line(
+        self.lower_dot = pg.add_point(lower_circle_point, color=GREEN)
+        self.lower_half_chord = pg.add_line(
             lower_circle_point,
             x_point,
             color=WHITE,
             stroke_width=4
         ).set_opacity(0.5)
 
-        # 초기에는 브레이스를 생성하지 않음
-        self.sine_brace = None
-        self.sine_label = None
-
-        # VGroup에 모든 객체 추가 (브레이스 제외)
+        # NOTE: VGroup에 모든 객체 추가 (브레이스 제외)
         self.add(
-            self.unit_circle,
             self.upper_triangle,
             self.lower_triangle,
             self.upper_half_chord,
@@ -119,8 +130,10 @@ class CircleRotation(Animation):
 
         # 기존 브레이스 제거
         if self.unit_circle_triangle.sine_brace is not None:
-            self.unit_circle_triangle.remove(self.unit_circle_triangle.sine_brace)
-            self.unit_circle_triangle.remove(self.unit_circle_triangle.sine_label)
+            self.unit_circle_triangle.remove(
+                self.unit_circle_triangle.sine_brace)
+            self.unit_circle_triangle.remove(
+                self.unit_circle_triangle.sine_label)
             self.unit_circle_triangle.plane_group.remove_brace("sine_brace")
             self.unit_circle_triangle.sine_brace = None
             self.unit_circle_triangle.sine_label = None
@@ -131,7 +144,7 @@ class CircleRotation(Animation):
             brace_direction = RIGHT  # 1, 4분면 (x >= 0)
             if x < 0:  # 2, 3분면
                 brace_direction = LEFT
-            
+
             # 높이가 충분하면 새로운 브레이스 생성
             brace, label = self.unit_circle_triangle.plane_group.add_brace(
                 self.unit_circle_triangle.upper_half_chord,
@@ -146,12 +159,12 @@ class CircleRotation(Animation):
             # z_index 설정으로 항상 위에 표시
             brace.set_z_index(2)
             label.set_z_index(2)
-            
+
             # VGroup에 추가하기 전에 기존 객체들의 z_index 확인
             for mob in self.unit_circle_triangle.submobjects:
                 if not hasattr(mob, 'z_index'):
                     mob.set_z_index(0)
-            
+
             # VGroup에도 추가
             self.unit_circle_triangle.add(brace, label)
             self.unit_circle_triangle.sine_brace = brace
@@ -171,11 +184,12 @@ class FindingSin(Scene):
             x_length=4,
             y_length=4
         ).scale(1.9)
+        self.add(npg)
 
         unit_circle_triangle = UnitCircleTriangle(npg)
+        self.add(unit_circle_triangle)
 
-        self.add(npg, unit_circle_triangle)
-
+        unit_circle_triangle.add_shapes_for_sine()
         self.play(
             CircleRotation(unit_circle_triangle),
             run_time=9
