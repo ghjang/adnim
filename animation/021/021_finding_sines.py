@@ -21,7 +21,7 @@ class FindingSine(Scene):
         ).scale(1.9)
         self.add(npg)
 
-        unit_circle_triangle = BaseUnitCircle(npg)
+        unit_circle_triangle = BaseUnitCircle(npg, font_scale_factor=2)
         self.add(unit_circle_triangle)
 
         self.play(
@@ -51,7 +51,7 @@ class FindingCosine(Scene):
         ).scale(1.9)
         self.add(npg)
 
-        unit_circle_triangle = BaseUnitCircle(npg)
+        unit_circle_triangle = BaseUnitCircle(npg, font_scale_factor=1.75)
         self.add(unit_circle_triangle)
 
         self.play(
@@ -81,7 +81,7 @@ class FindingSines(Scene):
         ).scale(1.9)
         self.add(npg)
 
-        unit_circle_triangle = BaseUnitCircle(npg)
+        unit_circle_triangle = BaseUnitCircle(npg, font_scale_factor=1.75)
         self.add(unit_circle_triangle)
 
         self.play(

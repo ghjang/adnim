@@ -280,16 +280,35 @@ class NumberPlaneGroupBase(VGroup):
                     start_point=start_point
                 )
             elif mob.metadata.get("type") == MobjectType.POINT:
+                # 원본 점의 속성을 가져옴
+                original_dot = mob.submobjects[0]  # 첫 번째 submobject가 실제 Dot
+
+                # 스케일 변환 계수 계산
+                old_unit = abs(
+                    self.plane.c2p(1, 0)[0] - self.plane.c2p(0, 0)[0]
+                )
+                new_unit = abs(
+                    new_group.plane.c2p(1, 0)[0] - new_group.plane.c2p(0, 0)[0]
+                )
+                scale_factor = new_unit / old_unit
+
+                # 반지름을 스케일에 맞게 조정
+                new_radius = original_dot.radius * scale_factor
+
                 new_point = new_group.add_point(
                     self.plane.p2c(mob.get_center()),
                     name=mob.metadata.get("name"),
-                    color=mob.get_color(),
-                    radius=mob.radius
-                )
+                    color=original_dot.get_color(),
+                    radius=new_radius      # 스케일이 적용된 반지름 사용
+                ).set_z_index(original_dot.z_index)
+                # 라벨이 있는 경우 라벨도 복사
                 if len(mob.submobjects) > 1:
                     new_point_label = new_point[1]
-                    new_point_label.move_to(new_group.plane.c2p(
-                        *self.plane.p2c(mob.submobjects[1].get_center())))
+                    new_point_label.move_to(
+                        new_group.plane.c2p(
+                            *self.plane.p2c(mob.submobjects[1].get_center())
+                        )
+                    )
             elif mob.metadata.get("type") == MobjectType.ASYMPTOTES:
                 # TODO: 점근선 객체 복사
                 pass
@@ -335,7 +354,7 @@ class NumberPlaneGroupBase(VGroup):
                     name=mob.metadata.get("name"),
                     color=mob.get_color(),
                     stroke_width=mob.stroke_width
-                )
+                ).set_z_index(mob.z_index)
             elif mob.metadata.get("type") == MobjectType.POLYGON:
                 new_group.add_polygon(
                     [self.plane.p2c(p) for p in mob.get_vertices()],
@@ -343,7 +362,7 @@ class NumberPlaneGroupBase(VGroup):
                     color=mob.get_color(),
                     fill_opacity=mob.fill_opacity,
                     stroke_width=mob.stroke_width
-                )
+                ).set_z_index(mob.z_index)
             elif mob.metadata.get("type") == MobjectType.CIRCLE:
                 # 원의 경우, 좌표계의 단위 길이를 고려하여 처리
                 center = self.plane.p2c(mob.get_center())

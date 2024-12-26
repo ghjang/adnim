@@ -123,8 +123,12 @@ class NumberPlaneGroup(BasicShapeMixin,
         for mob in list(self.iter_mobjects(name_pattern, obj_type)):
             self.remove(mob)
 
-    def copy_with_transformed_plane(self, x_range=None, y_range=None,
-                                    x_length=None, y_length=None, **kwargs):
+    def copy_with_transformed_plane(self,
+                                    x_range=None,
+                                    y_range=None,
+                                    x_length=None,
+                                    y_length=None,
+                                    **kwargs):
         """좌표계 변환 복사 메서드 개선"""
         new_group = super().copy()
         new_group.submobjects.clear()  # 기존 submobjects 제거

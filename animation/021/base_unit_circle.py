@@ -26,6 +26,12 @@ class BaseUnitCircle(VGroup):
     left_dot: Dot
     right_dot: Dot
 
+    # 삼각함수 중 'tan(x)'를 시각화를 위한 도형들
+    point_of_tangency: Dot
+    x_axis_intercept: Dot
+    hypotenuse: Line
+    tangent_triangle: Triangle
+
     # 브레이스 관련 멤버를 딕셔너리로 관리
     decorations: dict[str, tuple[Brace | None, MathTex | None]] = {}
 
@@ -226,5 +232,96 @@ class BaseUnitCircle(VGroup):
                 self.remove(brace, label)
                 self.plane_group.remove_brace("cosine_brace")
             self.decorations.pop("cosine")
+
+        return removed_objects
+
+    def add_shapes_for_tangent(self, initial_angle: float | None = None):
+        """tan(x) 삼각함수 시각화를 위한 도형 생성"""
+        pg = self.plane_group
+        angle = initial_angle if initial_angle is not None else self.initial_angle
+
+        # 기존 브레이스 제거 (혹시 남아있을 수 있으므로)
+        if "tangent" in self.decorations:
+            brace, label = self.decorations["tangent"]
+            if brace is not None:
+                self.remove(brace, label)
+                self.plane_group.remove_brace("tangent_brace")
+            self.decorations.pop("tangent")
+
+        # 1. 단위원 위의 접점 계산 및 생성 (z_index 조정)
+        point_on_circle = [np.cos(angle), np.sin(angle)]
+        self.point_of_tangency = pg.add_point(
+            point_on_circle,
+            color=GREEN
+        ).set_z_index(4)
+
+        # 2. x축 상의 점 (접점의 x축 정사영)
+        x_projection = [np.cos(angle), 0]
+
+        # 3. 접선의 기울기를 이용하여 x축과의 교점 계산
+        # 접선의 기울기는 -x/y (단위원 위의 점에서의 법선 벡터가 (x,y)이므로)
+        if np.abs(np.sin(angle)) > 1e-10:  # divide by zero 방지
+            slope = -np.cos(angle) / np.sin(angle)
+            x_intercept = [1/np.cos(angle), 0]  # x = sec(θ)
+        else:
+            # θ가 0° 또는 180°인 경우 수직선
+            x_intercept = [1, 0] if np.cos(angle) > 0 else [-1, 0]
+
+        self.x_axis_intercept = pg.add_point(
+            x_intercept,
+            color=GREEN
+        ).set_z_index(4)
+
+        # 4. 빗변(hypotenuse) 생성
+        self.hypotenuse = pg.add_line(
+            point_on_circle,
+            x_intercept,
+            color=YELLOW,
+            stroke_width=5
+        ).set_z_index(3)
+
+        # 5. 직각 삼각형 생성
+        self.tangent_triangle = pg.add_triangle(
+            point_on_circle,  # 접점
+            x_intercept,      # x축 절편점
+            x_projection      # 접점의 x축 정사영
+        ).set_stroke(color=BLUE, width=2)\
+            .set_fill(BLUE, opacity=0.5)\
+            .set_z_index(2)
+
+        # 6. 모든 객체를 VGroup에 추가
+        self.add(
+            self.point_of_tangency,
+            self.x_axis_intercept,
+            self.hypotenuse,
+            self.tangent_triangle
+        )
+
+    def remove_shapes_for_tangent(self):
+        """tan(x) 삼각함수 시각화 도형 제거"""
+        # 도형들 제거
+        removed_objects = [
+            self.point_of_tangency,
+            self.x_axis_intercept,
+            self.hypotenuse,
+            self.tangent_triangle
+        ]
+
+        self.remove(*removed_objects)
+        self.plane_group.remove(*removed_objects)
+
+        # 멤버 변수들을 None으로 설정
+        self.point_of_tangency = None
+        self.x_axis_intercept = None
+        self.hypotenuse = None
+        self.tangent_triangle = None
+
+        # 탄젠트 브레이스와 라벨 제거
+        if "tangent" in self.decorations:
+            brace, label = self.decorations["tangent"]
+            if brace is not None:
+                self.remove(brace, label)
+                self.plane_group.remove_brace("tangent_brace")
+            self.decorations.pop("tangent")
 
         return removed_objects
