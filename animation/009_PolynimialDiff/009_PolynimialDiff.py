@@ -1,18 +1,8 @@
-# fmt: off
 import os
-import sys
-
-# Python path에 프로젝트 루트 추가
-project_dir = os.path.abspath(os.getcwd())
-sys.path.append(project_dir)
-
-# 기본 라이브러리
 from manim import *
 from sympy import symbols, diff, solve, latex
 
-# 사용자 정의 라이브러리
 from common.manim_utils import create_code_block_from_file
-# fmt: on
 
 
 class PolynimialDiff(Scene):

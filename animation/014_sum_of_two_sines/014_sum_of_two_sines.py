@@ -1,19 +1,8 @@
-# fmt: off
-import os
-import sys
-
-# Python path에 프로젝트 루트 추가
-project_dir = os.path.abspath(os.getcwd())
-sys.path.append(project_dir)
-
-# 기본 라이브러리
 from manim import *
 
-# 사용자 정의 라이브러리
 from common.number_plane_group import *
 from common.animation.create_with_tracer import *
 from common.sine_wave_components import *
-# fmt: on
 
 # 상수 정의
 MAIN_SCALE = 4
