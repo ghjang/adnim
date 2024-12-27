@@ -1,5 +1,16 @@
 from manim import *
 from common.number_plane_group import *
+from enum import IntEnum
+
+
+class ZIndexEnum(IntEnum):
+    """삼각함수 시각화에서 사용되는 z-index 값들"""
+    BACKGROUND = 0      # 기본 배경
+    GRID = 1           # 격자
+    BASE_SHAPES = 11   # 기본 도형들 (삼각형, 원 등)
+    LINES = 12         # 선들 (현, 반지름 등)
+    POINTS = 13        # 점들
+    DECORATIONS = 14   # 브레이스, 라벨 등
 
 
 class BaseUnitCircle(VGroup):
@@ -93,7 +104,7 @@ class BaseUnitCircle(VGroup):
             x_point,
             color=WHITE,
             stroke_width=4
-        ).set_z_index(3)
+        ).set_z_index(ZIndexEnum.LINES)
 
         # 하단 삼각형 그룹 생성 (y좌표 반전)
         lower_circle_point = [np.cos(angle), -np.sin(angle)]
@@ -177,7 +188,7 @@ class BaseUnitCircle(VGroup):
             y_point,
             color=WHITE,
             stroke_width=4
-        ).set_z_index(3)
+        ).set_z_index(ZIndexEnum.LINES)
 
         # 좌측 삼각형 그룹 생성 (x좌표 반전)
         left_circle_point = [-np.cos(angle), np.sin(angle)]
@@ -240,10 +251,10 @@ class BaseUnitCircle(VGroup):
 
     def calculate_tangent_line_points(self, angle: float) -> tuple[list[float], list[float], list[float]]:
         """주어진 각도에서의 접선 관련 정보를 계산합니다.
-        
+
         Args:
             angle: 라디안 단위의 각도
-            
+
         Returns:
             tuple[list[float], list[float], list[float]]: 
                 - 단위원 위의 접점 좌표
@@ -252,15 +263,15 @@ class BaseUnitCircle(VGroup):
         """
         # 단위원 위의 접점 계산
         point_on_circle = [np.cos(angle), np.sin(angle)]
-        
+
         # 접선의 방향 벡터 계산 (-y, x)
         tangent_direction = [-np.sin(angle), np.cos(angle)]
-        
+
         # 평면의 크기를 고려한 충분한 길이 계산 (대각선 길이 사용)
         plane_width = self.plane.get_width()
         plane_height = self.plane.get_height()
         line_length = np.sqrt(plane_width**2 + plane_height**2)
-        
+
         # 접점에서 양방향으로 뻗어나가는 접선의 시작점과 끝점 계산
         start_point = [
             point_on_circle[0] - tangent_direction[0] * line_length,
@@ -270,7 +281,7 @@ class BaseUnitCircle(VGroup):
             point_on_circle[0] + tangent_direction[0] * line_length,
             point_on_circle[1] + tangent_direction[1] * line_length
         ]
-        
+
         return point_on_circle, start_point, end_point
 
     def add_shapes_for_tangent(self, initial_angle: float | None = None):
@@ -287,13 +298,14 @@ class BaseUnitCircle(VGroup):
             self.decorations.pop("tangent")
 
         # 접선 관련 정보 계산
-        point_on_circle, start_point, end_point = self.calculate_tangent_line_points(angle)
+        point_on_circle, start_point, end_point = self.calculate_tangent_line_points(
+            angle)
 
         # 1. 단위원 위의 접점 생성
         self.point_of_tangency = pg.add_point(
             point_on_circle,
             color=GREEN
-        ).set_z_index(4)
+        ).set_z_index(ZIndexEnum.POINTS)
 
         # 2. x축 상의 점 (접점의 x축 정사영)
         x_projection = [np.cos(angle), 0]
@@ -310,7 +322,7 @@ class BaseUnitCircle(VGroup):
         self.x_axis_intercept = pg.add_point(
             x_intercept,
             color=GREEN
-        ).set_z_index(4)
+        ).set_z_index(ZIndexEnum.POINTS)
 
         # 4. 단위원의 반지름 생성
         self.circle_radius = pg.add_line(
@@ -318,7 +330,7 @@ class BaseUnitCircle(VGroup):
             point_on_circle,
             color=BLUE,
             stroke_width=3
-        ).set_z_index(3)
+        ).set_z_index(ZIndexEnum.LINES)
 
         # 5. 단위원의 'point_on_circle' 지점에서 접하는 접선 생성
         self.tangent_line = pg.add_line(
@@ -327,7 +339,7 @@ class BaseUnitCircle(VGroup):
             color=WHITE,
             stroke_width=2,
             stroke_opacity=0.5
-        ).set_z_index(2)
+        ).set_z_index(ZIndexEnum.BASE_SHAPES)
 
         # 6. 빗변(hypotenuse) 생성
         self.hypotenuse = pg.add_line(
@@ -335,7 +347,7 @@ class BaseUnitCircle(VGroup):
             x_intercept,
             color=WHITE,
             stroke_width=5
-        ).set_z_index(3)
+        ).set_z_index(ZIndexEnum.LINES)
 
         # 7. 단위원내 삼각형 생성
         self.inner_triangle = pg.add_triangle(
@@ -344,7 +356,7 @@ class BaseUnitCircle(VGroup):
             x_intercept
         ).set_stroke(color=BLUE, width=2, opacity=0.1)\
             .set_fill(BLUE, opacity=0.2)\
-            .set_z_index(2)
+            .set_z_index(ZIndexEnum.BASE_SHAPES)
 
         # 8. 직각 삼각형 생성
         self.tangent_triangle = pg.add_triangle(
@@ -353,7 +365,7 @@ class BaseUnitCircle(VGroup):
             x_projection      # 접점의 x축 정사영
         ).set_stroke(color=BLUE, width=2)\
             .set_fill(BLUE, opacity=0.5)\
-            .set_z_index(2)
+            .set_z_index(ZIndexEnum.BASE_SHAPES)
 
         # 9. 모든 객체를 VGroup에 추가
         self.add(

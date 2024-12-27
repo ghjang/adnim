@@ -13,7 +13,6 @@ from rotation_animation import (
 class FindingAllTrigs(Scene):
     @override
     def construct(self):
-        # 좌표계 생성
         npg = NumberPlaneGroup().scale(3.5)
         self.add(npg)
 

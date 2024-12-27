@@ -1,6 +1,6 @@
 from typing import override
 from manim import *
-from base_unit_circle import BaseUnitCircle
+from base_unit_circle import BaseUnitCircle, ZIndexEnum
 
 
 class SineRotation(Animation):
@@ -122,13 +122,13 @@ class SineRotation(Animation):
             )
 
             # z_index 설정으로 항상 위에 표시
-            brace.set_z_index(2)
-            label.set_z_index(2)
+            brace.set_z_index(ZIndexEnum.DECORATIONS)
+            label.set_z_index(ZIndexEnum.DECORATIONS)
 
             # VGroup에 추가하기 전에 기존 객체들의 z_index 확인
             for mob in self.unit_circle_triangle.submobjects:
                 if not hasattr(mob, 'z_index'):
-                    mob.set_z_index(0)
+                    mob.set_z_index(ZIndexEnum.BACKGROUND)
 
             # VGroup에도 추가
             self.unit_circle_triangle.add(brace, label)
@@ -260,13 +260,13 @@ class CosineRotation(Animation):
             )
 
             # z_index 설정
-            brace.set_z_index(2)
-            label.set_z_index(2)
+            brace.set_z_index(ZIndexEnum.DECORATIONS)
+            label.set_z_index(ZIndexEnum.DECORATIONS)
 
             # VGroup에 추가하기 전에 기존 객체들의 z_index 확인
             for mob in self.unit_circle_triangle.submobjects:
                 if not hasattr(mob, 'z_index'):
-                    mob.set_z_index(0)
+                    mob.set_z_index(ZIndexEnum.BACKGROUND)
 
             # VGroup에도 추가
             self.unit_circle_triangle.add(brace, label)
@@ -463,9 +463,8 @@ class TangentRotation(Animation):
                     self.current_brace = brace
                     self.current_label = label
 
-                    # z_index 설정으로 항상 위에 표시
-                    brace.set_z_index(4)
-                    label.set_z_index(4)
+                    brace.set_z_index(ZIndexEnum.DECORATIONS)
+                    label.set_z_index(ZIndexEnum.DECORATIONS)
 
                     # VGroup에 추가
                     self.base_unit_circle.add(brace, label)
