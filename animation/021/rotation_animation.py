@@ -373,12 +373,27 @@ class TangentRotation(Animation):
 
                 # 모든 요소 기존 상태 유지하며 업데이트
                 if self.unit_circle_triangle.x_axis_intercept:
-                    self.unit_circle_triangle.x_axis_intercept.move_to(x_intercept)
+                    self.unit_circle_triangle.x_axis_intercept.move_to(
+                        x_intercept)
+
+                if self.unit_circle_triangle.circle_radius:
+                    self.unit_circle_triangle.circle_radius.set_points_by_ends(
+                        plane.c2p(0, 0), circle_point
+                    )
 
                 if self.unit_circle_triangle.hypotenuse:
                     self.unit_circle_triangle.hypotenuse.set_points_by_ends(
                         circle_point, x_intercept
                     )
+
+                if self.unit_circle_triangle.inner_triangle:
+                    self.unit_circle_triangle.inner_triangle\
+                        .set_points_as_corners([
+                            plane.c2p(0, 0),
+                            circle_point,
+                            x_projection,
+                            plane.c2p(0, 0)
+                        ])
 
                 if self.unit_circle_triangle.tangent_triangle:
                     self.unit_circle_triangle.tangent_triangle\
@@ -391,8 +406,8 @@ class TangentRotation(Animation):
 
                 # 불연속점이 아닐 때는 원래의 opacity로 복원
                 for mob in [self.unit_circle_triangle.x_axis_intercept,
-                          self.unit_circle_triangle.hypotenuse,
-                          self.unit_circle_triangle.tangent_triangle]:
+                            self.unit_circle_triangle.hypotenuse,
+                            self.unit_circle_triangle.tangent_triangle]:
                     if mob and hasattr(mob, '_default_opacity'):
                         mob.set_opacity(mob._default_opacity)
 
@@ -402,8 +417,16 @@ class TangentRotation(Animation):
                     start_point = np.array(circle_point)
                     end_point = np.array(x_intercept)
                     direction_vector = end_point - start_point
-                    normalized_direction = direction_vector / np.linalg.norm(direction_vector)
-                    brace_direction = np.array([-normalized_direction[1], normalized_direction[0], 0])
+                    direction_length = np.linalg.norm(direction_vector)
+
+                    if direction_length == 0:
+                        # 방향 벡터가 0이면 다음 단계 건너뛰기
+                        return
+
+                    normalized_direction = direction_vector / direction_length
+
+                    brace_direction = np.array(
+                        [-normalized_direction[1], normalized_direction[0], 0])
 
                     if x < 0:
                         brace_direction = -brace_direction

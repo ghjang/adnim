@@ -24,8 +24,8 @@ class FindingTangent(Scene):
         self.add(unit_circle_triangle)
         self.wait()
 
-        self.next_section("Finding Tangent", skip_animations=False)
-        
+        self.next_section("Finding Tangent Main", skip_animations=False)
+
         new_npg = npg.copy_with_transformed_plane(
             x_range=[-20, 20, 1],
             y_range=[-20, 20, 1],

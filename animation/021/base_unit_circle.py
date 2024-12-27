@@ -29,7 +29,9 @@ class BaseUnitCircle(VGroup):
     # 삼각함수 중 'tan(x)'를 시각화를 위한 도형들
     point_of_tangency: Dot
     x_axis_intercept: Dot
+    circle_radius: Line
     hypotenuse: Line
+    inner_triangle: Triangle
     tangent_triangle: Triangle
 
     # 브레이스 관련 멤버를 딕셔너리로 관리
@@ -272,15 +274,32 @@ class BaseUnitCircle(VGroup):
             color=GREEN
         ).set_z_index(4)
 
-        # 4. 빗변(hypotenuse) 생성
+        # 4. 단위원의 반지름 생성
+        self.circle_radius = pg.add_line(
+            [0, 0],
+            point_on_circle,
+            color=BLUE,
+            stroke_width=3
+        ).set_z_index(3)
+
+        # 5. 빗변(hypotenuse) 생성
         self.hypotenuse = pg.add_line(
             point_on_circle,
             x_intercept,
-            color=YELLOW,
+            color=RED,
             stroke_width=5
         ).set_z_index(3)
 
-        # 5. 직각 삼각형 생성
+        # 6. 단위원내 삼각형 생성
+        self.inner_triangle = pg.add_triangle(
+            [0, 0],
+            point_on_circle,
+            x_intercept
+        ).set_stroke(color=BLUE, width=2, opacity=0.1)\
+            .set_fill(BLUE, opacity=0.2)\
+            .set_z_index(2)
+        
+        # 7. 직각 삼각형 생성
         self.tangent_triangle = pg.add_triangle(
             point_on_circle,  # 접점
             x_intercept,      # x축 절편점
@@ -289,11 +308,13 @@ class BaseUnitCircle(VGroup):
             .set_fill(BLUE, opacity=0.5)\
             .set_z_index(2)
 
-        # 6. 모든 객체를 VGroup에 추가
+        # 8. 모든 객체를 VGroup에 추가
         self.add(
             self.point_of_tangency,
             self.x_axis_intercept,
+            self.circle_radius,
             self.hypotenuse,
+            self.inner_triangle,
             self.tangent_triangle
         )
 
@@ -303,7 +324,9 @@ class BaseUnitCircle(VGroup):
         removed_objects = [
             self.point_of_tangency,
             self.x_axis_intercept,
+            self.circle_radius,
             self.hypotenuse,
+            self.inner_triangle,
             self.tangent_triangle
         ]
 
@@ -313,7 +336,9 @@ class BaseUnitCircle(VGroup):
         # 멤버 변수들을 None으로 설정
         self.point_of_tangency = None
         self.x_axis_intercept = None
+        self.circle_radius = None
         self.hypotenuse = None
+        self.inner_triangle = None
         self.tangent_triangle = None
 
         # 탄젠트 브레이스와 라벨 제거
