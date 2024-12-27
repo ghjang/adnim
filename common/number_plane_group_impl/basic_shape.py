@@ -111,12 +111,17 @@ class BasicShapeMixin(NumberPlaneGroupBase):
         self.add(arc)
         return arc
 
-    def add_line(self,
-                 start_point,  # (x1, y1) 좌표
-                 end_point,    # (x2, y2) 좌표
-                 name=None,
-                 color=BLUE,
-                 stroke_width=2):
+    def add_line(
+        self,
+        start_point,   # (x1, y1) 좌표
+        end_point,     # (x2, y2) 좌표
+        name=None,
+        color=BLUE,
+        stroke_width=2,
+        dashed=False,       # 추가된 옵션
+        dash_length=0.1,    # 원하는 대쉬 길이
+        stroke_opacity=1.0  # 선 불투명도 추가 (기본값 1.0)
+    ):
         """선 추가 메서드"""
         if name is None:
             name = f"line_{len([m for m in self.submobjects if m.metadata.get('type') == MobjectType.LINE])}"
@@ -126,16 +131,30 @@ class BasicShapeMixin(NumberPlaneGroupBase):
         end = self.plane.c2p(*end_point)
 
         # 선 객체 생성
-        line = Line(
-            start=start,
-            end=end,
-            color=color,
-            stroke_width=stroke_width
-        )
+        if dashed:
+            line = DashedLine(
+                start=start,
+                end=end,
+                color=color,
+                stroke_width=stroke_width,
+                dash_length=dash_length,
+                stroke_opacity=stroke_opacity  # 불투명도 적용
+            )
+        else:
+            line = Line(
+                start=start,
+                end=end,
+                color=color,
+                stroke_width=stroke_width,
+                stroke_opacity=stroke_opacity  # 불투명도 적용
+            )
 
         # 메타데이터 설정
         self._ensure_metadata(line)
-        line.metadata = {"type": MobjectType.LINE, "name": name}
+        line.metadata = {
+            "type": MobjectType.LINE,
+            "name": name,
+        }
 
         self.add(line)
         return line

@@ -30,6 +30,7 @@ class BaseUnitCircle(VGroup):
     point_of_tangency: Dot
     x_axis_intercept: Dot
     circle_radius: Line
+    tangent_line: Line
     hypotenuse: Line
     inner_triangle: Triangle
     tangent_triangle: Triangle
@@ -237,6 +238,41 @@ class BaseUnitCircle(VGroup):
 
         return removed_objects
 
+    def calculate_tangent_line_points(self, angle: float) -> tuple[list[float], list[float], list[float]]:
+        """주어진 각도에서의 접선 관련 정보를 계산합니다.
+        
+        Args:
+            angle: 라디안 단위의 각도
+            
+        Returns:
+            tuple[list[float], list[float], list[float]]: 
+                - 단위원 위의 접점 좌표
+                - 접선의 시작점 좌표
+                - 접선의 끝점 좌표
+        """
+        # 단위원 위의 접점 계산
+        point_on_circle = [np.cos(angle), np.sin(angle)]
+        
+        # 접선의 방향 벡터 계산 (-y, x)
+        tangent_direction = [-np.sin(angle), np.cos(angle)]
+        
+        # 평면의 크기를 고려한 충분한 길이 계산 (대각선 길이 사용)
+        plane_width = self.plane.get_width()
+        plane_height = self.plane.get_height()
+        line_length = np.sqrt(plane_width**2 + plane_height**2)
+        
+        # 접점에서 양방향으로 뻗어나가는 접선의 시작점과 끝점 계산
+        start_point = [
+            point_on_circle[0] - tangent_direction[0] * line_length,
+            point_on_circle[1] - tangent_direction[1] * line_length
+        ]
+        end_point = [
+            point_on_circle[0] + tangent_direction[0] * line_length,
+            point_on_circle[1] + tangent_direction[1] * line_length
+        ]
+        
+        return point_on_circle, start_point, end_point
+
     def add_shapes_for_tangent(self, initial_angle: float | None = None):
         """tan(x) 삼각함수 시각화를 위한 도형 생성"""
         pg = self.plane_group
@@ -250,8 +286,10 @@ class BaseUnitCircle(VGroup):
                 self.plane_group.remove_brace("tangent_brace")
             self.decorations.pop("tangent")
 
-        # 1. 단위원 위의 접점 계산 및 생성 (z_index 조정)
-        point_on_circle = [np.cos(angle), np.sin(angle)]
+        # 접선 관련 정보 계산
+        point_on_circle, start_point, end_point = self.calculate_tangent_line_points(angle)
+
+        # 1. 단위원 위의 접점 생성
         self.point_of_tangency = pg.add_point(
             point_on_circle,
             color=GREEN
@@ -282,15 +320,24 @@ class BaseUnitCircle(VGroup):
             stroke_width=3
         ).set_z_index(3)
 
-        # 5. 빗변(hypotenuse) 생성
+        # 5. 단위원의 'point_on_circle' 지점에서 접하는 접선 생성
+        self.tangent_line = pg.add_line(
+            start_point=start_point,
+            end_point=end_point,
+            color=YELLOW,
+            stroke_width=2,
+            stroke_opacity=0.5
+        ).set_z_index(2)
+
+        # 6. 빗변(hypotenuse) 생성
         self.hypotenuse = pg.add_line(
             point_on_circle,
             x_intercept,
-            color=RED,
+            color=YELLOW,
             stroke_width=5
         ).set_z_index(3)
 
-        # 6. 단위원내 삼각형 생성
+        # 7. 단위원내 삼각형 생성
         self.inner_triangle = pg.add_triangle(
             [0, 0],
             point_on_circle,
@@ -298,8 +345,8 @@ class BaseUnitCircle(VGroup):
         ).set_stroke(color=BLUE, width=2, opacity=0.1)\
             .set_fill(BLUE, opacity=0.2)\
             .set_z_index(2)
-        
-        # 7. 직각 삼각형 생성
+
+        # 8. 직각 삼각형 생성
         self.tangent_triangle = pg.add_triangle(
             point_on_circle,  # 접점
             x_intercept,      # x축 절편점
@@ -308,11 +355,12 @@ class BaseUnitCircle(VGroup):
             .set_fill(BLUE, opacity=0.5)\
             .set_z_index(2)
 
-        # 8. 모든 객체를 VGroup에 추가
+        # 9. 모든 객체를 VGroup에 추가
         self.add(
             self.point_of_tangency,
             self.x_axis_intercept,
             self.circle_radius,
+            self.tangent_line,
             self.hypotenuse,
             self.inner_triangle,
             self.tangent_triangle
@@ -325,6 +373,7 @@ class BaseUnitCircle(VGroup):
             self.point_of_tangency,
             self.x_axis_intercept,
             self.circle_radius,
+            self.tangent_line,
             self.hypotenuse,
             self.inner_triangle,
             self.tangent_triangle
@@ -337,6 +386,7 @@ class BaseUnitCircle(VGroup):
         self.point_of_tangency = None
         self.x_axis_intercept = None
         self.circle_radius = None
+        self.tangent_line = None
         self.hypotenuse = None
         self.inner_triangle = None
         self.tangent_triangle = None
