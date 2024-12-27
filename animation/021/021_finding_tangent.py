@@ -9,6 +9,8 @@ from rotation_animation import TangentRotation
 class FindingTangent(Scene):
     @override
     def construct(self):
+        self.next_section("Initial Setup", skip_animations=True)
+
         # 좌표계 생성
         npg = NumberPlaneGroup(
             x_range=[-2, 2, 1],
@@ -22,6 +24,8 @@ class FindingTangent(Scene):
         self.add(unit_circle_triangle)
         self.wait()
 
+        self.next_section("Finding Tangent", skip_animations=False)
+        
         new_npg = npg.copy_with_transformed_plane(
             x_range=[-20, 20, 1],
             y_range=[-20, 20, 1],
