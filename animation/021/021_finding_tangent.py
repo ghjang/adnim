@@ -20,8 +20,8 @@ class FindingTangent(Scene):
         ).scale(1.9)
         self.add(npg)
 
-        unit_circle_triangle = BaseUnitCircle(npg, font_scale_factor=2)
-        self.add(unit_circle_triangle)
+        base_unit_circle = BaseUnitCircle(npg, font_scale_factor=2)
+        self.add(base_unit_circle)
         self.wait()
 
         self.next_section("Finding Tangent Main", skip_animations=False)
@@ -34,11 +34,11 @@ class FindingTangent(Scene):
         ).scale(3.5)
 
         self.play(ReplacementTransform(npg, new_npg))
-        unit_circle_triangle.plane_group = new_npg
-        unit_circle_triangle.plane = new_npg.plane
+        base_unit_circle.plane_group = new_npg
+        base_unit_circle.plane = new_npg.plane
 
         self.play(
-            TangentRotation(unit_circle_triangle),
+            TangentRotation(base_unit_circle),
             run_time=16
         )
 

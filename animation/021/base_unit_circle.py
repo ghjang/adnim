@@ -93,7 +93,7 @@ class BaseUnitCircle(VGroup):
             x_point,
             color=WHITE,
             stroke_width=4
-        )
+        ).set_z_index(3)
 
         # 하단 삼각형 그룹 생성 (y좌표 반전)
         lower_circle_point = [np.cos(angle), -np.sin(angle)]
@@ -177,7 +177,7 @@ class BaseUnitCircle(VGroup):
             y_point,
             color=WHITE,
             stroke_width=4
-        )
+        ).set_z_index(3)
 
         # 좌측 삼각형 그룹 생성 (x좌표 반전)
         left_circle_point = [-np.cos(angle), np.sin(angle)]
@@ -324,7 +324,7 @@ class BaseUnitCircle(VGroup):
         self.tangent_line = pg.add_line(
             start_point=start_point,
             end_point=end_point,
-            color=YELLOW,
+            color=WHITE,
             stroke_width=2,
             stroke_opacity=0.5
         ).set_z_index(2)
@@ -333,7 +333,7 @@ class BaseUnitCircle(VGroup):
         self.hypotenuse = pg.add_line(
             point_on_circle,
             x_intercept,
-            color=YELLOW,
+            color=WHITE,
             stroke_width=5
         ).set_z_index(3)
 

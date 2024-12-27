@@ -21,18 +21,18 @@ class FindingSine(Scene):
         ).scale(1.9)
         self.add(npg)
 
-        unit_circle_triangle = BaseUnitCircle(npg, font_scale_factor=2)
-        self.add(unit_circle_triangle)
+        base_unit_circle = BaseUnitCircle(npg, font_scale_factor=2)
+        self.add(base_unit_circle)
 
         self.play(
-            SineRotation(unit_circle_triangle),
+            SineRotation(base_unit_circle),
             run_time=9
         )
         self.play(
             npg.animate.scale(0.5).to_edge(LEFT)
         )
         self.play(
-            SineRotation(unit_circle_triangle, show_brace=False),
+            SineRotation(base_unit_circle, show_brace=False),
             run_time=4.5
         )
 
@@ -51,18 +51,18 @@ class FindingCosine(Scene):
         ).scale(1.9)
         self.add(npg)
 
-        unit_circle_triangle = BaseUnitCircle(npg, font_scale_factor=1.75)
-        self.add(unit_circle_triangle)
+        base_unit_circle = BaseUnitCircle(npg, font_scale_factor=1.75)
+        self.add(base_unit_circle)
 
         self.play(
-            CosineRotation(unit_circle_triangle),
+            CosineRotation(base_unit_circle),
             run_time=9
         )
         self.play(
             npg.animate.scale(0.5).to_edge(LEFT)
         )
         self.play(
-            CosineRotation(unit_circle_triangle, show_brace=False),
+            CosineRotation(base_unit_circle, show_brace=False),
             run_time=4.5
         )
 
@@ -81,12 +81,12 @@ class FindingSines(Scene):
         ).scale(1.9)
         self.add(npg)
 
-        unit_circle_triangle = BaseUnitCircle(npg, font_scale_factor=1.75)
-        self.add(unit_circle_triangle)
+        base_unit_circle = BaseUnitCircle(npg, font_scale_factor=1.75)
+        self.add(base_unit_circle)
 
         self.play(
-            SineRotation(unit_circle_triangle),
-            CosineRotation(unit_circle_triangle),
+            SineRotation(base_unit_circle),
+            CosineRotation(base_unit_circle),
             run_time=9
         )
 
