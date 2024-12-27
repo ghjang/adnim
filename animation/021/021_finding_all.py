@@ -31,7 +31,7 @@ class FindingAllTrigs(Scene):
         self.play(
             SineRotation(base_unit_circle, show_brace=False),
             CosineRotation(base_unit_circle, show_brace=False),
-            TangentRotation(base_unit_circle, show_brace=False),  
+            TangentRotation(base_unit_circle, show_brace=False),
             run_time=9
         )
 

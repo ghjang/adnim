@@ -1,6 +1,7 @@
 from manim import *
 from common.number_plane_group import *
 from enum import IntEnum
+from dataclasses import dataclass
 
 
 class ZIndexEnum(IntEnum):
@@ -11,6 +12,35 @@ class ZIndexEnum(IntEnum):
     LINES = 12         # 선들 (현, 반지름 등)
     POINTS = 13        # 점들
     DECORATIONS = 14   # 브레이스, 라벨 등
+
+
+@dataclass
+class StyleConfig:
+    """삼각함수 시각화에서 사용되는 스타일 설정"""
+    # 기본 색상
+    UNIT_CIRCLE_COLOR = PINK
+    POINT_COLOR = GREEN
+    LINE_COLOR = WHITE
+    SHAPE_COLOR = BLUE
+    BRACE_COLOR = YELLOW
+    BRACE_TEXT_COLOR = YELLOW
+
+    # 선 두께
+    UNIT_CIRCLE_STROKE_WIDTH = 3
+    CHORD_STROKE_WIDTH = 4
+    RADIUS_STROKE_WIDTH = 3
+    TANGENT_STROKE_WIDTH = 2
+    HYPOTENUSE_STROKE_WIDTH = 5
+    SHAPE_STROKE_WIDTH = 2
+
+    # 투명도
+    TANGENT_LINE_OPACITY = 0.5
+    SECONDARY_SHAPE_OPACITY = 0.1  # 반전된 도형의 투명도
+    SHAPE_FILL_OPACITY = 0.2
+    TRIANGLE_FILL_OPACITY = 0.5
+
+    # 점 크기
+    DOT_RADIUS = DEFAULT_DOT_RADIUS
 
 
 class BaseUnitCircle(VGroup):
@@ -52,7 +82,8 @@ class BaseUnitCircle(VGroup):
     def __init__(self,
                  planeGroup: NumberPlaneGroup,
                  initial_angle: float = 0,
-                 font_scale_factor: float = 1.0,  # 폰트 스케일 계수
+                 base_font_size: int = 36,
+                 font_scale_factor: float = 1.0,       # 폰트 스케일 계수
                  text_buff_scale_factor: float = 0.5,  # 텍스트 버퍼 스케일 계수
                  **kwargs):
         super().__init__(**kwargs)
@@ -64,14 +95,14 @@ class BaseUnitCircle(VGroup):
         self.unit_circle = planeGroup.add_circle(
             center_point=[0, 0],
             radius=1,
-            color=PINK,
-            stroke_width=3
+            color=StyleConfig.UNIT_CIRCLE_COLOR,
+            stroke_width=StyleConfig.UNIT_CIRCLE_STROKE_WIDTH
         )
         self.add(self.unit_circle)
         self.decorations = {}  # 초기화
 
         # 폰트 크기 계산
-        self.base_font_size = 36
+        self.base_font_size = base_font_size
         self.font_scale = font_scale_factor / \
             abs(planeGroup._get_unit_length())
         self.adjusted_font_size = self.base_font_size * self.font_scale
@@ -98,12 +129,16 @@ class BaseUnitCircle(VGroup):
         circle_point = [np.cos(angle), np.sin(angle)]
         x_point = [np.cos(angle), 0]
 
-        self.upper_dot = pg.add_point(circle_point, color=GREEN)
+        self.upper_dot = pg.add_point(
+            circle_point,
+            color=StyleConfig.POINT_COLOR,
+            radius=StyleConfig.DOT_RADIUS
+        ).set_z_index(ZIndexEnum.POINTS)
         self.upper_half_chord = pg.add_line(
             circle_point,
             x_point,
-            color=WHITE,
-            stroke_width=4
+            color=StyleConfig.LINE_COLOR,
+            stroke_width=StyleConfig.CHORD_STROKE_WIDTH
         ).set_z_index(ZIndexEnum.LINES)
 
         # 하단 삼각형 그룹 생성 (y좌표 반전)
@@ -112,15 +147,18 @@ class BaseUnitCircle(VGroup):
             [0, 0],
             lower_circle_point,
             x_point,
-        ).set_opacity(0.1)
+        ).set_opacity(StyleConfig.SECONDARY_SHAPE_OPACITY)
 
-        self.lower_dot = pg.add_point(lower_circle_point, color=GREEN)
+        self.lower_dot = pg.add_point(
+            lower_circle_point,
+            color=StyleConfig.POINT_COLOR
+        ).set_z_index(ZIndexEnum.POINTS)
         self.lower_half_chord = pg.add_line(
             lower_circle_point,
             x_point,
-            color=WHITE,
-            stroke_width=4
-        ).set_opacity(0.5)
+            color=StyleConfig.LINE_COLOR,
+            stroke_width=StyleConfig.CHORD_STROKE_WIDTH
+        ).set_opacity(StyleConfig.SECONDARY_SHAPE_OPACITY)
 
         # NOTE: VGroup에 모든 객체 추가 (브레이스 제외)
         self.add(
@@ -182,7 +220,11 @@ class BaseUnitCircle(VGroup):
         circle_point = [np.cos(angle), np.sin(angle)]
         y_point = [0, np.sin(angle)]
 
-        self.right_dot = pg.add_point(circle_point, color=GREEN)
+        self.right_dot = pg.add_point(
+            circle_point,
+            color=StyleConfig.POINT_COLOR,
+            radius=StyleConfig.DOT_RADIUS
+        ).set_z_index(ZIndexEnum.POINTS)
         self.right_half_chord = pg.add_line(
             circle_point,
             y_point,
@@ -198,7 +240,11 @@ class BaseUnitCircle(VGroup):
             y_point,
         ).set_opacity(0.1)
 
-        self.left_dot = pg.add_point(left_circle_point, color=GREEN)
+        self.left_dot = pg.add_point(
+            left_circle_point,
+            color=StyleConfig.POINT_COLOR,
+            radius=StyleConfig.DOT_RADIUS
+        ).set_z_index(ZIndexEnum.POINTS)
         self.left_half_chord = pg.add_line(
             left_circle_point,
             y_point,
@@ -304,7 +350,8 @@ class BaseUnitCircle(VGroup):
         # 1. 단위원 위의 접점 생성
         self.point_of_tangency = pg.add_point(
             point_on_circle,
-            color=GREEN
+            color=StyleConfig.POINT_COLOR,
+            radius=StyleConfig.DOT_RADIUS
         ).set_z_index(ZIndexEnum.POINTS)
 
         # 2. x축 상의 점 (접점의 x축 정사영)
@@ -328,25 +375,25 @@ class BaseUnitCircle(VGroup):
         self.circle_radius = pg.add_line(
             [0, 0],
             point_on_circle,
-            color=BLUE,
-            stroke_width=3
+            color=StyleConfig.SHAPE_COLOR,
+            stroke_width=StyleConfig.RADIUS_STROKE_WIDTH
         ).set_z_index(ZIndexEnum.LINES)
 
         # 5. 단위원의 'point_on_circle' 지점에서 접하는 접선 생성
         self.tangent_line = pg.add_line(
             start_point=start_point,
             end_point=end_point,
-            color=WHITE,
-            stroke_width=2,
-            stroke_opacity=0.5
+            color=StyleConfig.LINE_COLOR,
+            stroke_width=StyleConfig.TANGENT_STROKE_WIDTH,
+            stroke_opacity=StyleConfig.TANGENT_LINE_OPACITY
         ).set_z_index(ZIndexEnum.BASE_SHAPES)
 
         # 6. 빗변(hypotenuse) 생성
         self.hypotenuse = pg.add_line(
             point_on_circle,
             x_intercept,
-            color=WHITE,
-            stroke_width=5
+            color=StyleConfig.LINE_COLOR,
+            stroke_width=StyleConfig.HYPOTENUSE_STROKE_WIDTH
         ).set_z_index(ZIndexEnum.LINES)
 
         # 7. 단위원내 삼각형 생성
@@ -354,17 +401,22 @@ class BaseUnitCircle(VGroup):
             [0, 0],
             point_on_circle,
             x_intercept
-        ).set_stroke(color=BLUE, width=2, opacity=0.1)\
-            .set_fill(BLUE, opacity=0.2)\
-            .set_z_index(ZIndexEnum.BASE_SHAPES)
+        ).set_stroke(
+            color=StyleConfig.SHAPE_COLOR,
+            width=StyleConfig.SHAPE_STROKE_WIDTH,
+            opacity=StyleConfig.SECONDARY_SHAPE_OPACITY
+        ).set_fill(
+            StyleConfig.SHAPE_COLOR,
+            opacity=StyleConfig.SHAPE_FILL_OPACITY
+        ).set_z_index(ZIndexEnum.BASE_SHAPES)
 
         # 8. 직각 삼각형 생성
         self.tangent_triangle = pg.add_triangle(
             point_on_circle,  # 접점
             x_intercept,      # x축 절편점
             x_projection      # 접점의 x축 정사영
-        ).set_stroke(color=BLUE, width=2)\
-            .set_fill(BLUE, opacity=0.5)\
+        ).set_stroke(color=StyleConfig.SHAPE_COLOR, width=StyleConfig.SHAPE_STROKE_WIDTH)\
+            .set_fill(StyleConfig.SHAPE_COLOR, opacity=StyleConfig.TRIANGLE_FILL_OPACITY)\
             .set_z_index(ZIndexEnum.BASE_SHAPES)
 
         # 9. 모든 객체를 VGroup에 추가
