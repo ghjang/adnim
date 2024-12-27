@@ -28,9 +28,7 @@ class FindingSine(Scene):
             SineRotation(base_unit_circle),
             run_time=9
         )
-        self.play(
-            npg.animate.scale(0.5).to_edge(LEFT)
-        )
+        self.play(npg.animate.scale(0.5).to_edge(LEFT))
         self.play(
             SineRotation(base_unit_circle, show_brace=False),
             run_time=4.5

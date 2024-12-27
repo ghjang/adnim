@@ -27,10 +27,10 @@ class StyleConfig:
 
     # 선 두께
     UNIT_CIRCLE_STROKE_WIDTH = 3
-    CHORD_STROKE_WIDTH = 4
+    CHORD_STROKE_WIDTH = 3
     RADIUS_STROKE_WIDTH = 3
     TANGENT_STROKE_WIDTH = 2
-    HYPOTENUSE_STROKE_WIDTH = 5
+    HYPOTENUSE_STROKE_WIDTH = 3
     SHAPE_STROKE_WIDTH = 2
 
     # 투명도
@@ -40,7 +40,7 @@ class StyleConfig:
     TRIANGLE_FILL_OPACITY = 0.5
 
     # 점 크기
-    DOT_RADIUS = DEFAULT_DOT_RADIUS
+    DOT_RADIUS = DEFAULT_DOT_RADIUS * 0.5
 
 
 class BaseUnitCircle(VGroup):
@@ -151,7 +151,8 @@ class BaseUnitCircle(VGroup):
 
         self.lower_dot = pg.add_point(
             lower_circle_point,
-            color=StyleConfig.POINT_COLOR
+            color=StyleConfig.POINT_COLOR,
+            radius=StyleConfig.DOT_RADIUS
         ).set_z_index(ZIndexEnum.POINTS)
         self.lower_half_chord = pg.add_line(
             lower_circle_point,
@@ -228,8 +229,8 @@ class BaseUnitCircle(VGroup):
         self.right_half_chord = pg.add_line(
             circle_point,
             y_point,
-            color=WHITE,
-            stroke_width=4
+            color=StyleConfig.LINE_COLOR,
+            stroke_width=StyleConfig.CHORD_STROKE_WIDTH
         ).set_z_index(ZIndexEnum.LINES)
 
         # 좌측 삼각형 그룹 생성 (x좌표 반전)
@@ -238,7 +239,7 @@ class BaseUnitCircle(VGroup):
             [0, 0],
             left_circle_point,
             y_point,
-        ).set_opacity(0.1)
+        ).set_opacity(StyleConfig.SECONDARY_SHAPE_OPACITY)
 
         self.left_dot = pg.add_point(
             left_circle_point,
@@ -248,9 +249,9 @@ class BaseUnitCircle(VGroup):
         self.left_half_chord = pg.add_line(
             left_circle_point,
             y_point,
-            color=WHITE,
-            stroke_width=4
-        ).set_opacity(0.5)
+            color=StyleConfig.LINE_COLOR,
+            stroke_width=StyleConfig.CHORD_STROKE_WIDTH
+        ).set_opacity(StyleConfig.SECONDARY_SHAPE_OPACITY)
 
         # VGroup에 모든 객체 추가
         self.add(
@@ -368,7 +369,8 @@ class BaseUnitCircle(VGroup):
 
         self.x_axis_intercept = pg.add_point(
             x_intercept,
-            color=GREEN
+            color=StyleConfig.POINT_COLOR,
+            radius=StyleConfig.DOT_RADIUS
         ).set_z_index(ZIndexEnum.POINTS)
 
         # 4. 단위원의 반지름 생성

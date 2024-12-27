@@ -9,6 +9,11 @@ from ..angle_decoration import AngleMarker  # AngleMarker 클래스 임포트
 from ..line_decoration import LineMarker  # LineMarker 클래스 임포트
 from ..animation.rotate_vector import VECTOR_STYLE  # VECTOR_STYLE 임포트 추가
 
+# FIXME
+# 'add_xxx' 함수에 'stroke_width' 같은 파라미터가 있을 경우에
+# 'plane'의 스케일 변환을 적용해 주어야함.
+#
+# 'add_point, add_line'은 적용한 상태임.      
 
 class BasicShapeMixin(NumberPlaneGroupBase):
     def __init__(self, **kwargs):
@@ -32,9 +37,14 @@ class BasicShapeMixin(NumberPlaneGroupBase):
         point_group = VGroup()
         point_group.metadata = {"type": MobjectType.POINT, "name": name}
 
+        # radius를 화면 좌표계로 변환 (x축 기준으로 변환)
+        radius_point = self.plane.c2p(radius, 0)
+        origin_point = self.plane.c2p(0, 0)
+        transformed_radius = np.linalg.norm(radius_point - origin_point)
+
         dot = Dot(
             point=self.plane.c2p(*point),
-            radius=radius,  # radius 적용
+            radius=transformed_radius,
             color=color
         )
         point_group.add(dot)
@@ -130,14 +140,24 @@ class BasicShapeMixin(NumberPlaneGroupBase):
         start = self.plane.c2p(*start_point)
         end = self.plane.c2p(*end_point)
 
+        # stroke_width를 화면 좌표계로 변환 (x축 기준으로 변환)
+        width_point = self.plane.c2p(stroke_width, 0)
+        origin_point = self.plane.c2p(0, 0)
+        transformed_stroke_width = np.linalg.norm(width_point - origin_point)
+
+        # dash_length도 변환
+        if dashed:
+            dash_point = self.plane.c2p(dash_length, 0)
+            transformed_dash_length = np.linalg.norm(dash_point - origin_point)
+
         # 선 객체 생성
         if dashed:
             line = DashedLine(
                 start=start,
                 end=end,
                 color=color,
-                stroke_width=stroke_width,
-                dash_length=dash_length,
+                stroke_width=transformed_stroke_width,
+                dash_length=transformed_dash_length,
                 stroke_opacity=stroke_opacity  # 불투명도 적용
             )
         else:
@@ -145,7 +165,7 @@ class BasicShapeMixin(NumberPlaneGroupBase):
                 start=start,
                 end=end,
                 color=color,
-                stroke_width=stroke_width,
+                stroke_width=transformed_stroke_width,
                 stroke_opacity=stroke_opacity  # 불투명도 적용
             )
 
