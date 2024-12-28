@@ -1,7 +1,7 @@
 from typing import override
 from manim import *
 
-from common.number_plane_group import *
+from common.number_plane_group import NumberPlaneGroup
 from base_unit_circle import BaseUnitCircle
 from rotation_animation import (
     SineRotation,

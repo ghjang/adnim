@@ -13,6 +13,8 @@ from .number_plane_group_impl.function import FunctionPlotMixIn
 class NumberPlaneGroup(BasicShapeMixin,
                        LabelMixIn,
                        FunctionPlotMixIn):
+    """숫자 평면 그룹 클래스"""
+    
     def __init__(self,
                  x_range=[-20, 20, 1],
                  y_range=[-20, 20, 1],
