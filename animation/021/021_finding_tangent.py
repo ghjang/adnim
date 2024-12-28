@@ -82,6 +82,8 @@ class FindingCotangent(Scene):
         )
 
         self.wait()
+
+
 class FindingAllTangents(Scene):
     @override
     def construct(self):

@@ -3,10 +3,10 @@ from manim import *
 
 from common.number_plane_group import *
 from base_unit_circle import BaseUnitCircle
-from rotation_animation import SineRotation
+from rotation_animation import CosineRotation
 
 
-class FindingSine(Scene):
+class FindingCosine(Scene):
     @override
     def construct(self):
         # 좌표계 생성
@@ -18,16 +18,18 @@ class FindingSine(Scene):
         ).scale(1.9)
         self.add(npg)
 
-        base_unit_circle = BaseUnitCircle(npg, font_scale_factor=2)
+        base_unit_circle = BaseUnitCircle(npg, font_scale_factor=1.75)
         self.add(base_unit_circle)
 
         self.play(
-            SineRotation(base_unit_circle),
+            CosineRotation(base_unit_circle),
             run_time=9
         )
-        self.play(npg.animate.scale(0.5).to_edge(LEFT))
         self.play(
-            SineRotation(base_unit_circle, show_brace=False),
+            npg.animate.scale(0.5).to_edge(LEFT)
+        )
+        self.play(
+            CosineRotation(base_unit_circle, show_brace=False),
             run_time=4.5
         )
 
