@@ -94,6 +94,15 @@ class BaseUnitCircle(VGroup):
     cosecant_outer_triangle: Triangle
     cosecant_y_projection: Dot
 
+    # 삼각함수 중 'sec(x)'를 시각화를 위한 도형들
+    secant_point: Dot
+    secant_x_axis_intercept: Dot
+    secant_radius: Line
+    secant_line: Line
+    secant_inner_triangle: Triangle
+    secant_outer_triangle: Triangle
+    secant_x_projection: Dot
+
     # 브레이스 관련 멤버를 딕셔너리로 관리
     decorations: dict[str, tuple[Brace | None, MathTex | None]] = {}
 
@@ -570,7 +579,7 @@ class BaseUnitCircle(VGroup):
         )
 
     def remove_shapes_for_cotangent(self):
-        """cot(x) 삼각함수 시각화 도형 제거"""
+        """cot(x) 삼각함수 시각화를 위한 도형 제거"""
         # 도형들 제거
         removed_objects = [
             self.cotangent_point,
@@ -715,5 +724,124 @@ class BaseUnitCircle(VGroup):
 
         # 브레이스와 라벨 제거
         self.remove_brace_by_trig_name("cosecant")
+
+        return removed_objects
+
+    def add_shapes_for_secant(self, initial_angle: float | None = None):
+        """sec(x) 삼각함수 시각화를 위한 도형 생성"""
+        pg = self.plane_group
+        angle = initial_angle if initial_angle is not None else self.initial_angle
+
+        # 기존 브레이스 제거
+        self.remove_brace_by_trig_name("secant")
+
+        # 1. 단위원 위의 점 계산
+        point_on_circle = [np.cos(angle), np.sin(angle)]
+        self.secant_point = pg.add_point(
+            point_on_circle,
+            color=StyleConfig.POINT_COLOR,
+            radius=StyleConfig.DOT_RADIUS
+        ).set_z_index(ZIndexEnum.POINTS)
+
+        # 2. x축 프로젝션 점
+        x_projection = [np.cos(angle), 0]
+        self.secant_x_projection = pg.add_point(
+            x_projection,
+            color=StyleConfig.POINT_COLOR,
+            radius=StyleConfig.DOT_RADIUS
+        ).set_z_index(ZIndexEnum.POINTS)
+
+        # 3. x축 절편 계산 (sec = 1/cos)
+        if abs(np.cos(angle)) > 1e-10:
+            x_intercept = [1/np.cos(angle), 0]
+        else:
+            x_intercept = [np.inf if np.cos(angle) > 0 else -np.inf, 0]
+
+        self.secant_x_axis_intercept = pg.add_point(
+            x_intercept,
+            color=StyleConfig.POINT_COLOR,
+            radius=StyleConfig.DOT_RADIUS
+        ).set_z_index(ZIndexEnum.POINTS)
+
+        # 4. 시컨트 반지름 생성
+        self.secant_radius = pg.add_line(
+            [0, 0],
+            point_on_circle,
+            color=StyleConfig.SHAPE_COLOR,
+            stroke_width=StyleConfig.RADIUS_STROKE_WIDTH
+        ).set_z_index(ZIndexEnum.LINES)
+
+        # 5. 시컨트 라인 생성 (원점에서 x축 절편까지)
+        self.secant_line = pg.add_line(
+            [0, 0],
+            x_intercept,
+            color=StyleConfig.LINE_COLOR,
+            stroke_width=StyleConfig.HYPOTENUSE_STROKE_WIDTH
+        ).set_z_index(ZIndexEnum.LINES)
+
+        # 6. 내부 삼각형 생성 (원점, 원 상의 점, x축 프로젝션)
+        self.secant_inner_triangle = pg.add_triangle(
+            [0, 0],
+            point_on_circle,
+            x_projection
+        ).set_stroke(
+            color=StyleConfig.SHAPE_COLOR,
+            width=StyleConfig.SHAPE_STROKE_WIDTH,
+            opacity=StyleConfig.SECONDARY_SHAPE_OPACITY
+        ).set_fill(
+            StyleConfig.SHAPE_COLOR,
+            opacity=StyleConfig.SHAPE_FILL_OPACITY
+        ).set_z_index(ZIndexEnum.BASE_SHAPES)
+
+        # 7. 외부 삼각형 생성 (원 상의 점, x축 프로젝션, x축 절편)
+        self.secant_outer_triangle = pg.add_triangle(
+            point_on_circle,
+            x_projection,
+            x_intercept
+        ).set_stroke(
+            color=StyleConfig.SHAPE_COLOR,
+            width=StyleConfig.SHAPE_STROKE_WIDTH
+        ).set_fill(
+            StyleConfig.SHAPE_COLOR,
+            opacity=StyleConfig.TRIANGLE_FILL_OPACITY
+        ).set_z_index(ZIndexEnum.BASE_SHAPES)
+
+        # 8. VGroup에 모든 객체 추가
+        self.add(
+            self.secant_point,
+            self.secant_x_axis_intercept,
+            self.secant_radius,
+            self.secant_line,
+            self.secant_inner_triangle,
+            self.secant_outer_triangle,
+            self.secant_x_projection
+        )
+
+    def remove_shapes_for_secant(self):
+        """sec(x) 삼각함수 시각화를 위한 도형 제거"""
+        removed_objects = [
+            self.secant_point,
+            self.secant_x_axis_intercept,
+            self.secant_radius,
+            self.secant_line,
+            self.secant_inner_triangle,
+            self.secant_outer_triangle,
+            self.secant_x_projection
+        ]
+
+        self.remove(*removed_objects)
+        self.plane_group.remove(*removed_objects)
+
+        # 멤버 변수들을 None으로 설정
+        self.secant_point = None
+        self.secant_x_axis_intercept = None
+        self.secant_radius = None
+        self.secant_line = None
+        self.secant_inner_triangle = None
+        self.secant_outer_triangle = None
+        self.secant_x_projection = None
+
+        # 브레이스와 라벨 제거
+        self.remove_brace_by_trig_name("secant")
 
         return removed_objects
