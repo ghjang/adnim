@@ -68,13 +68,22 @@ class BaseUnitCircle(VGroup):
     right_dot: Dot
 
     # 삼각함수 중 'tan(x)'를 시각화를 위한 도형들
-    point_of_tangency: Dot
+    tangent_point: Dot
     x_axis_intercept: Dot
-    circle_radius: Line
+    tangent_radius: Line
     tangent_line: Line
-    hypotenuse: Line
-    inner_triangle: Triangle
+    tangent_hypotenuse: Line
+    tangent_inner_triangle: Triangle
     tangent_triangle: Triangle
+
+    # 삼각함수 중 'cot(x)'를 시각화를 위한 도형들
+    cotangent_point: Dot
+    y_axis_intercept: Dot
+    cotangent_radius: Line
+    cotangent_line: Line
+    cotangent_hypotenuse: Line
+    cotangent_inner_triangle: Triangle
+    cotangent_triangle: Triangle
 
     # 브레이스 관련 멤버를 딕셔너리로 관리
     decorations: dict[str, tuple[Brace | None, MathTex | None]] = {}
@@ -171,6 +180,15 @@ class BaseUnitCircle(VGroup):
             self.lower_dot
         )
 
+    def remove_brace_by_trig_name(self, trig_name: str):
+        """특정 삼각함수의 브레이스와 라벨을 제거하는 공통 메서드"""
+        if trig_name in self.decorations:
+            brace, label = self.decorations[trig_name]
+            if brace is not None:
+                self.remove(brace, label)
+                self.plane_group.remove_brace(f"{trig_name}_brace")
+            self.decorations.pop(trig_name)
+
     def remove_shapes_for_sine(self):
         """sin(x) 삼각함수 시각화 도형 제거"""
 
@@ -195,13 +213,8 @@ class BaseUnitCircle(VGroup):
         self.upper_dot = None
         self.lower_dot = None
 
-        # 싸인 브레이스와 라벨 제거
-        if "sine" in self.decorations:
-            brace, label = self.decorations["sine"]
-            if brace is not None:
-                self.remove(brace, label)
-                self.plane_group.remove_brace("sine_brace")
-            self.decorations.pop("sine")
+        # 브레이스와 라벨 제거
+        self.remove_brace_by_trig_name("sine")
 
         return removed_objects
 
@@ -286,13 +299,8 @@ class BaseUnitCircle(VGroup):
         self.right_dot = None
         self.left_dot = None
 
-        # 코싸인 브레이스와 라벨 제거
-        if "cosine" in self.decorations:
-            brace, label = self.decorations["cosine"]
-            if brace is not None:
-                self.remove(brace, label)
-                self.plane_group.remove_brace("cosine_brace")
-            self.decorations.pop("cosine")
+        # 브레이스와 라벨 제거
+        self.remove_brace_by_trig_name("cosine")
 
         return removed_objects
 
@@ -337,19 +345,14 @@ class BaseUnitCircle(VGroup):
         angle = initial_angle if initial_angle is not None else self.initial_angle
 
         # 기존 브레이스 제거 (혹시 남아있을 수 있으므로)
-        if "tangent" in self.decorations:
-            brace, label = self.decorations["tangent"]
-            if brace is not None:
-                self.remove(brace, label)
-                self.plane_group.remove_brace("tangent_brace")
-            self.decorations.pop("tangent")
+        self.remove_brace_by_trig_name("tangent")
 
         # 접선 관련 정보 계산
-        point_on_circle, start_point, end_point = self.calculate_tangent_line_points(
-            angle)
+        point_on_circle, start_point, end_point\
+            = self.calculate_tangent_line_points(angle)
 
         # 1. 단위원 위의 접점 생성
-        self.point_of_tangency = pg.add_point(
+        self.tangent_point = pg.add_point(
             point_on_circle,
             color=StyleConfig.POINT_COLOR,
             radius=StyleConfig.DOT_RADIUS
@@ -374,7 +377,7 @@ class BaseUnitCircle(VGroup):
         ).set_z_index(ZIndexEnum.POINTS)
 
         # 4. 단위원의 반지름 생성
-        self.circle_radius = pg.add_line(
+        self.tangent_radius = pg.add_line(
             [0, 0],
             point_on_circle,
             color=StyleConfig.SHAPE_COLOR,
@@ -391,7 +394,7 @@ class BaseUnitCircle(VGroup):
         ).set_z_index(ZIndexEnum.BASE_SHAPES)
 
         # 6. 빗변(hypotenuse) 생성
-        self.hypotenuse = pg.add_line(
+        self.tangent_hypotenuse = pg.add_line(
             point_on_circle,
             x_intercept,
             color=StyleConfig.LINE_COLOR,
@@ -399,7 +402,7 @@ class BaseUnitCircle(VGroup):
         ).set_z_index(ZIndexEnum.LINES)
 
         # 7. 단위원내 삼각형 생성
-        self.inner_triangle = pg.add_triangle(
+        self.tangent_inner_triangle = pg.add_triangle(
             [0, 0],
             point_on_circle,
             x_intercept
@@ -423,12 +426,12 @@ class BaseUnitCircle(VGroup):
 
         # 9. 모든 객체를 VGroup에 추가
         self.add(
-            self.point_of_tangency,
+            self.tangent_point,
             self.x_axis_intercept,
-            self.circle_radius,
+            self.tangent_radius,
             self.tangent_line,
-            self.hypotenuse,
-            self.inner_triangle,
+            self.tangent_hypotenuse,
+            self.tangent_inner_triangle,
             self.tangent_triangle
         )
 
@@ -436,12 +439,12 @@ class BaseUnitCircle(VGroup):
         """tan(x) 삼각함수 시각화 도형 제거"""
         # 도형들 제거
         removed_objects = [
-            self.point_of_tangency,
+            self.tangent_point,
             self.x_axis_intercept,
-            self.circle_radius,
+            self.tangent_radius,
             self.tangent_line,
-            self.hypotenuse,
-            self.inner_triangle,
+            self.tangent_hypotenuse,
+            self.tangent_inner_triangle,
             self.tangent_triangle
         ]
 
@@ -449,20 +452,140 @@ class BaseUnitCircle(VGroup):
         self.plane_group.remove(*removed_objects)
 
         # 멤버 변수들을 None으로 설정
-        self.point_of_tangency = None
+        self.tangent_point = None
         self.x_axis_intercept = None
-        self.circle_radius = None
+        self.tangent_radius = None
         self.tangent_line = None
-        self.hypotenuse = None
-        self.inner_triangle = None
+        self.tangent_hypotenuse = None
+        self.tangent_inner_triangle = None
         self.tangent_triangle = None
 
-        # 탄젠트 브레이스와 라벨 제거
-        if "tangent" in self.decorations:
-            brace, label = self.decorations["tangent"]
-            if brace is not None:
-                self.remove(brace, label)
-                self.plane_group.remove_brace("tangent_brace")
-            self.decorations.pop("tangent")
+        # 브레이스와 라벨 제거
+        self.remove_brace_by_trig_name("tangent")
+
+        return removed_objects
+
+    def add_shapes_for_cotangent(self, initial_angle: float | None = None):
+        """cot(x) 삼각함수 시각화를 위한 도형 생성"""
+        pg = self.plane_group
+        angle = initial_angle if initial_angle is not None else self.initial_angle
+
+        # 기존 브레이스 제거 (혹시 남아있을 수 있으므로)
+        self.remove_brace_by_trig_name("cotangent")
+
+        # 접선 관련 정보 계산 (탄젠트와 동일한 메서드 사용)
+        point_on_circle, start_point, end_point\
+            = self.calculate_tangent_line_points(angle)
+
+        # 1. 단위원 위의 접점 생성
+        self.cotangent_point = pg.add_point(
+            point_on_circle,
+            color=StyleConfig.POINT_COLOR,
+            radius=StyleConfig.DOT_RADIUS
+        ).set_z_index(ZIndexEnum.POINTS)
+
+        # 2. y축 상의 점 (접점의 y축 정사영)
+        y_projection = [0, np.sin(angle)]
+
+        # 3. 접선의 기울기를 이용하여 y축과의 교점 계산
+        if np.abs(np.sin(angle)) > 1e-10:  # divide by zero 방지
+            slope = np.cos(angle) / np.sin(angle)
+            y_intercept = [0, 1/np.sin(angle)]  # y = csc(θ)
+        else:
+            # θ가 0° 또는 180°인 경우 수직선
+            y_intercept = [0, 1] if np.sin(angle) > 0 else [0, -1]
+
+        self.y_axis_intercept = pg.add_point(
+            y_intercept,
+            color=StyleConfig.POINT_COLOR,
+            radius=StyleConfig.DOT_RADIUS
+        ).set_z_index(ZIndexEnum.POINTS)
+
+        # 4. 단위원의 반지름 생성
+        self.cotangent_radius = pg.add_line(
+            [0, 0],
+            point_on_circle,
+            color=StyleConfig.SHAPE_COLOR,
+            stroke_width=StyleConfig.RADIUS_STROKE_WIDTH
+        ).set_z_index(ZIndexEnum.LINES)
+
+        # 5. 단위원의 'point_on_circle' 지점에서 접하는 접선 생성
+        self.cotangent_line = pg.add_line(
+            start_point=start_point,
+            end_point=end_point,
+            color=StyleConfig.LINE_COLOR,
+            stroke_width=StyleConfig.TANGENT_STROKE_WIDTH,
+            stroke_opacity=StyleConfig.TANGENT_LINE_OPACITY
+        ).set_z_index(ZIndexEnum.BASE_SHAPES)
+
+        # 6. 빗변(hypotenuse) 생성
+        self.cotangent_hypotenuse = pg.add_line(
+            point_on_circle,
+            y_intercept,
+            color=StyleConfig.LINE_COLOR,
+            stroke_width=StyleConfig.HYPOTENUSE_STROKE_WIDTH
+        ).set_z_index(ZIndexEnum.LINES)
+
+        # 7. 단위원내 삼각형 생성
+        self.cotangent_inner_triangle = pg.add_triangle(
+            [0, 0],
+            point_on_circle,
+            y_intercept
+        ).set_stroke(
+            color=StyleConfig.SHAPE_COLOR,
+            width=StyleConfig.SHAPE_STROKE_WIDTH,
+            opacity=StyleConfig.SECONDARY_SHAPE_OPACITY
+        ).set_fill(
+            StyleConfig.SHAPE_COLOR,
+            opacity=StyleConfig.SHAPE_FILL_OPACITY
+        ).set_z_index(ZIndexEnum.BASE_SHAPES)
+
+        # 8. 직각 삼각형 생성
+        self.cotangent_triangle = pg.add_triangle(
+            point_on_circle,  # 접점
+            y_intercept,      # y축 절편점
+            y_projection      # 접점의 y축 정사영
+        ).set_stroke(color=StyleConfig.SHAPE_COLOR, width=StyleConfig.SHAPE_STROKE_WIDTH)\
+            .set_fill(StyleConfig.SHAPE_COLOR, opacity=StyleConfig.TRIANGLE_FILL_OPACITY)\
+            .set_z_index(ZIndexEnum.BASE_SHAPES)
+
+        # 9. 모든 객체를 VGroup에 추가
+        self.add(
+            self.cotangent_point,
+            self.y_axis_intercept,
+            self.cotangent_radius,
+            self.cotangent_line,
+            self.cotangent_hypotenuse,
+            self.cotangent_inner_triangle,
+            self.cotangent_triangle
+        )
+
+    def remove_shapes_for_cotangent(self):
+        """cot(x) 삼각함수 시각화 도형 제거"""
+        # 도형들 제거
+        removed_objects = [
+            self.cotangent_point,
+            self.y_axis_intercept,
+            self.cotangent_radius,
+            self.cotangent_line,
+            self.cotangent_hypotenuse,
+            self.cotangent_inner_triangle,
+            self.cotangent_triangle
+        ]
+
+        self.remove(*removed_objects)
+        self.plane_group.remove(*removed_objects)
+
+        # 멤버 변수들을 None으로 설정
+        self.cotangent_point = None
+        self.y_axis_intercept = None
+        self.cotangent_radius = None
+        self.cotangent_line = None
+        self.cotangent_hypotenuse = None
+        self.cotangent_inner_triangle = None
+        self.cotangent_triangle = None
+
+        # 브레이스와 라벨 제거
+        self.remove_brace_by_trig_name("cotangent")
 
         return removed_objects
