@@ -3,13 +3,9 @@ from manim import *
 
 from common.number_plane_group import NumberPlaneGroup
 from base_unit_circle import BaseUnitCircle
-from rotation_animation import (
-    SineRotation,
-    CosineRotation,
-    TangentRotation,
-    CotangentRotation
-)
-
+from sine_rotation import SineRotation
+from cosine_rotation import CosineRotation
+from tangent_rotation import TangentRotation, CotangentRotation
 
 class FindingSinesAndCosines(Scene):
     @override

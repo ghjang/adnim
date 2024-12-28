@@ -3,7 +3,7 @@ from manim import *
 
 from common.number_plane_group import *
 from base_unit_circle import BaseUnitCircle
-from rotation_animation import TangentRotation, CotangentRotation
+from tangent_rotation import TangentRotation, CotangentRotation
 
 
 class FindingTangent(Scene):

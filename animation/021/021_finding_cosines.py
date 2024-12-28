@@ -3,7 +3,7 @@ from manim import *
 
 from common.number_plane_group import *
 from base_unit_circle import BaseUnitCircle
-from rotation_animation import CosineRotation
+from cosine_rotation import CosineRotation
 
 
 class FindingCosine(Scene):

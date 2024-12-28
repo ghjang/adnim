@@ -85,6 +85,15 @@ class BaseUnitCircle(VGroup):
     cotangent_inner_triangle: Triangle
     cotangent_triangle: Triangle
 
+    # 삼각함수 중 'csc(x)'를 시각화를 위한 도형들
+    cosecant_point: Dot
+    cosecant_y_axis_intercept: Dot
+    cosecant_radius: Line
+    cosecant_line: Line
+    cosecant_inner_triangle: Triangle
+    cosecant_outer_triangle: Triangle
+    cosecant_y_projection: Dot
+
     # 브레이스 관련 멤버를 딕셔너리로 관리
     decorations: dict[str, tuple[Brace | None, MathTex | None]] = {}
 
@@ -277,7 +286,7 @@ class BaseUnitCircle(VGroup):
         )
 
     def remove_shapes_for_cosine(self):
-        """cos(x) 삼각함수 시각화 도형 제거"""
+        """cos(x) 삼각함수 시각화를 위한 도형 제거"""
         # 도형들 제거
         removed_objects = [
             self.right_triangle,
@@ -436,7 +445,7 @@ class BaseUnitCircle(VGroup):
         )
 
     def remove_shapes_for_tangent(self):
-        """tan(x) 삼각함수 시각화 도형 제거"""
+        """tan(x) 삼각함수 시각화를 위한 도형 제거"""
         # 도형들 제거
         removed_objects = [
             self.tangent_point,
@@ -587,5 +596,124 @@ class BaseUnitCircle(VGroup):
 
         # 브레이스와 라벨 제거
         self.remove_brace_by_trig_name("cotangent")
+
+        return removed_objects
+
+    def add_shapes_for_cosecant(self, initial_angle: float | None = None):
+        """csc(x) 삼각함수 시각화를 위한 도형 생성"""
+        pg = self.plane_group
+        angle = initial_angle if initial_angle is not None else self.initial_angle
+
+        # 기존 브레이스 제거
+        self.remove_brace_by_trig_name("cosecant")
+
+        # 1. 단위원 위의 점 계산
+        point_on_circle = [np.cos(angle), np.sin(angle)]
+        self.cosecant_point = pg.add_point(
+            point_on_circle,
+            color=StyleConfig.POINT_COLOR,
+            radius=StyleConfig.DOT_RADIUS
+        ).set_z_index(ZIndexEnum.POINTS)
+
+        # 2. y축 프로젝션 점
+        y_projection = [0, np.sin(angle)]
+        self.cosecant_y_projection = pg.add_point(
+            y_projection,
+            color=StyleConfig.POINT_COLOR,
+            radius=StyleConfig.DOT_RADIUS
+        ).set_z_index(ZIndexEnum.POINTS)
+
+        # 3. y축 절편 계산 (csc = 1/sin)
+        if abs(np.sin(angle)) > 1e-10:
+            y_intercept = [0, 1/np.sin(angle)]
+        else:
+            y_intercept = [0, np.inf if np.sin(angle) > 0 else -np.inf]
+
+        self.cosecant_y_axis_intercept = pg.add_point(
+            y_intercept,
+            color=StyleConfig.POINT_COLOR,
+            radius=StyleConfig.DOT_RADIUS
+        ).set_z_index(ZIndexEnum.POINTS)
+
+        # 4. 코시컨트 반지름 생성
+        self.cosecant_radius = pg.add_line(
+            [0, 0],
+            point_on_circle,
+            color=StyleConfig.SHAPE_COLOR,
+            stroke_width=StyleConfig.RADIUS_STROKE_WIDTH
+        ).set_z_index(ZIndexEnum.LINES)
+
+        # 5. 코시컨트 라인 생성 (원점에서 y축 절편까지)
+        self.cosecant_line = pg.add_line(
+            [0, 0],
+            y_intercept,
+            color=StyleConfig.LINE_COLOR,
+            stroke_width=StyleConfig.HYPOTENUSE_STROKE_WIDTH
+        ).set_z_index(ZIndexEnum.LINES)
+
+        # 6. 내부 삼각형 생성 (원점, 원 상의 점, y축 프로젝션)
+        self.cosecant_inner_triangle = pg.add_triangle(
+            [0, 0],
+            point_on_circle,
+            y_projection
+        ).set_stroke(
+            color=StyleConfig.SHAPE_COLOR,
+            width=StyleConfig.SHAPE_STROKE_WIDTH,
+            opacity=StyleConfig.SECONDARY_SHAPE_OPACITY
+        ).set_fill(
+            StyleConfig.SHAPE_COLOR,
+            opacity=StyleConfig.SHAPE_FILL_OPACITY
+        ).set_z_index(ZIndexEnum.BASE_SHAPES)
+
+        # 7. 외부 삼각형 생성 (원 상의 점, y축 프로젝션, y축 절편)
+        self.cosecant_outer_triangle = pg.add_triangle(
+            point_on_circle,
+            y_projection,
+            y_intercept
+        ).set_stroke(
+            color=StyleConfig.SHAPE_COLOR,
+            width=StyleConfig.SHAPE_STROKE_WIDTH
+        ).set_fill(
+            StyleConfig.SHAPE_COLOR,
+            opacity=StyleConfig.TRIANGLE_FILL_OPACITY
+        ).set_z_index(ZIndexEnum.BASE_SHAPES)
+
+        # 8. VGroup에 모든 객체 추가
+        self.add(
+            self.cosecant_point,
+            self.cosecant_y_axis_intercept,
+            self.cosecant_radius,
+            self.cosecant_line,
+            self.cosecant_inner_triangle,
+            self.cosecant_outer_triangle,
+            self.cosecant_y_projection
+        )
+
+    def remove_shapes_for_cosecant(self):
+        """csc(x) 삼각함수 시각화를 위한 도형 제거"""
+        removed_objects = [
+            self.cosecant_point,
+            self.cosecant_y_axis_intercept,
+            self.cosecant_radius,
+            self.cosecant_line,
+            self.cosecant_inner_triangle,
+            self.cosecant_outer_triangle,
+            self.cosecant_y_projection
+        ]
+
+        self.remove(*removed_objects)
+        self.plane_group.remove(*removed_objects)
+
+        # 멤버 변수들을 None으로 설정
+        self.cosecant_point = None
+        self.cosecant_y_axis_intercept = None
+        self.cosecant_radius = None
+        self.cosecant_line = None
+        self.cosecant_inner_triangle = None
+        self.cosecant_outer_triangle = None
+        self.cosecant_y_projection = None
+
+        # 브레이스와 라벨 제거
+        self.remove_brace_by_trig_name("cosecant")
 
         return removed_objects
