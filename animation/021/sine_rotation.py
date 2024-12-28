@@ -139,16 +139,20 @@ class CosecantRotation(BaseRotation):
             self.base_unit_circle.cosecant_y_projection.move_to(y_projection)
 
         if self.base_unit_circle.cosecant_y_axis_intercept:
-            self.base_unit_circle.cosecant_y_axis_intercept.move_to(
-                y_intercept)
+            self.base_unit_circle\
+                .cosecant_y_axis_intercept\
+                .set_opacity(1)\
+                .move_to(y_intercept)
 
         if self.base_unit_circle.cosecant_radius:
             self.base_unit_circle.cosecant_radius.set_points_by_ends(
-                plane.c2p(0, 0), circle_point)
+                plane.c2p(0, 0), circle_point
+            )
 
         if self.base_unit_circle.cosecant_line:
             self.base_unit_circle.cosecant_line.set_points_by_ends(
-                plane.c2p(0, 0), y_intercept)
+                plane.c2p(0, 0), y_intercept
+            )
 
         if self.base_unit_circle.cosecant_inner_triangle:
             self.base_unit_circle.cosecant_inner_triangle.set_points_as_corners([

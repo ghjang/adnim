@@ -638,11 +638,19 @@ class BaseUnitCircle(VGroup):
         else:
             y_intercept = [0, np.inf if np.sin(angle) > 0 else -np.inf]
 
+        # FIXME:
+        # 초기에 추가시 '초기 각'이 '0'일 경우에 y_intercept가 [0, inf]로 계산되는
+        # 상황에서 'cosecant_y_axis_intercept'를 무한대 'y' 위치에 추가하면
+        # 이후의 애니메이션에서 적절한 값으로 'move_to'를 해도 점이 제대로 표시되지 않는
+        # 문제가 있어서 임시로 'ORIGIN'으로 설정하고 투명도를 0으로 설정함.
+        # 
+        # 이후에 회전 애니메이션 쪽에서 적절한 위치로 이동시키고 투명도를 명시적으로
+        # '1'로 설정하여 보여주도록 함.
         self.cosecant_y_axis_intercept = pg.add_point(
-            y_intercept,
+            ORIGIN,
             color=StyleConfig.POINT_COLOR,
             radius=StyleConfig.DOT_RADIUS
-        ).set_z_index(ZIndexEnum.POINTS)
+        ).set_z_index(ZIndexEnum.POINTS).set_opacity(0)
 
         # 4. 코시컨트 반지름 생성
         self.cosecant_radius = pg.add_line(
