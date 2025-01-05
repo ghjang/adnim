@@ -52,15 +52,13 @@ class ScrollingGroup(VGroup):
             current_opacity = 1.0 if self.opacity_step < 0 else (
                 self.min_opacity or 0.0)
 
-        # 위치 인덱스 기반 스텝 계산 (양수/음수 스텝 공통)
-        steps = len(self.elements) - position_index
-        step_for_element = self.opacity_step * steps
-
         if self.opacity_step < 0:
             # 음수 스텝: 현재 불투명도에서 감소
+            step_for_element = self.opacity_step * (len(self.elements) - position_index - 1)
             future_opacity = max(0.0, current_opacity + step_for_element)
         else:
             # 양수 스텝: 시작 불투명도에서 증가
+            step_for_element = self.opacity_step * position_index
             future_opacity = min(1.0, current_opacity + step_for_element)
 
         # min_opacity 처리를 음수 스텝일 때만 적용
@@ -171,14 +169,24 @@ class ScrollingGroup(VGroup):
                  *text: str,
                  text_join_char: str = " ",
                  spacing: np.ndarray | None = None,
-                 spacing_buffer: float = 0.35,
+                 spacing_buff: float = 0.35,
                  is_latex: bool = True,
                  animation_type: AddAnimation = AddAnimation.FADE_IN) -> None:
         if is_latex:
-            latex_obj: MathTex = MathTex(*text)  # 가변 인자 그대로 전달
-            self.add_element(scene, latex_obj, spacing,
-                             spacing_buffer, animation_type)
+            latex_obj: MathTex = MathTex(*text)
+            self.add_element(
+                scene=scene,
+                new_element=latex_obj,
+                spacing=spacing,
+                spacing_buff=spacing_buff,
+                add_animation=animation_type
+            )
         else:
             text_obj: Text = Text(text_join_char.join(text))
-            self.add_element(scene, text_obj, spacing,
-                             spacing_buffer, animation_type)
+            self.add_element(
+                scene=scene,
+                new_element=text_obj,
+                spacing=spacing,
+                spacing_buff=spacing_buff,
+                add_animation=animation_type
+            )
