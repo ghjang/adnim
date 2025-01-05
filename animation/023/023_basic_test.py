@@ -231,16 +231,16 @@ class ScrollingVGroupTest(Scene):
         scroller: ScrollingGroup = ScrollingGroup(
             add_position=ORIGIN + DOWN,
             opacity_gradient=True,
-            opacity_step=-0.4,
-            # min_opacity=0.3,
-            # max_lines=3  # VGroup들이 잘 보이도록 최대 라인수 증가
+            # opacity_step=-0.4,
         )
 
         # VGroup 1: 텍스트 그룹
         text_group = VGroup()
         text_group.add(
-            Text("제목", color=BLUE).scale(1.2),
-            Text("부제목", color=BLUE_B).scale(0.8)
+            # Text("제목", color=BLUE, font_size=48),
+            # Text("부제목", color=BLUE_B, font_size=32)
+            Text("제목", font_size=48),
+            Text("부제목", font_size=32)
         ).arrange(DOWN, buff=0.2)
 
         # VGroup 2: 수식 그룹
@@ -278,5 +278,44 @@ class ScrollingVGroupTest(Scene):
                 spacing_buff=0.5  # 그룹간 간격 조정
             )
             self.wait(0.5)
+
+        self.wait()
+
+
+class GreenTextGroupExample(Scene):
+    @override
+    def construct(self) -> None:
+        scroller: ScrollingGroup = ScrollingGroup(
+            add_position=ORIGIN + DOWN * 2,
+            opacity_gradient=True,
+            opacity_step=-0.35  # 페이드 아웃 효과
+        )
+
+        # 여러 줄의 녹색 텍스트 그룹들 정의
+        group1 = VGroup(
+            Text("System Status", font_size=48),
+            Text("● ONLINE", font_size=36),
+            Text("● ACTIVE", font_size=36)
+        ).arrange(DOWN, buff=0.2).set_color(GREEN)
+
+        group2 = VGroup(
+            Text("Memory Usage", font_size=48),
+            Text("RAM: 42%", font_size=36),
+            Text("CPU: 28%", font_size=36)
+        ).arrange(DOWN, buff=0.2).set_color(GREEN)
+
+        group3 = VGroup(
+            Text("Network Status", font_size=48),
+            Text("↑ 25MB/s", font_size=36),
+            Text("↓ 42MB/s", font_size=36)
+        ).arrange(DOWN, buff=0.2).set_color(GREEN)
+
+        # 각 그룹을 순차적으로 추가
+        for group in [group1, group2, group3]:
+            scroller.add_element(
+                scene=self,
+                new_element=group,
+            )
+            self.wait(0.8)
 
         self.wait()

@@ -54,11 +54,13 @@ class ScrollingGroup(VGroup):
 
         if self.opacity_step < 0:
             # 음수 스텝: 현재 불투명도에서 감소
-            step_for_element = self.opacity_step * (len(self.elements) - position_index - 1)
+            step_for_element = self.opacity_step * \
+                (len(self.elements) - position_index - 1)
             future_opacity = max(0.0, current_opacity + step_for_element)
         else:
             # 양수 스텝: 시작 불투명도에서 증가
-            step_for_element = self.opacity_step * position_index
+            step_for_element = self.opacity_step * \
+                (len(self.elements) - position_index)
             future_opacity = min(1.0, current_opacity + step_for_element)
 
         # min_opacity 처리를 음수 스텝일 때만 적용
@@ -104,24 +106,13 @@ class ScrollingGroup(VGroup):
 
         for i, existing_element in enumerate(self.elements):
             if self.opacity_gradient:
-                if isinstance(existing_element, VGroup):
-                    opacities = [
-                        self._get_safe_opacity(submob)
-                        for submob in existing_element.submobjects
-                    ]
-                    current_opacity = (
-                        sum(opacities) / len(opacities)
-                        if opacities
-                        else 1.0
-                    )
-                else:
-                    current_opacity = self._get_safe_opacity(existing_element)
-
+                current_opacity = self._get_safe_opacity(existing_element)
                 future_opacity = self._calculate_opacity(current_opacity, i)
+                print(f"future_opacity: {future_opacity}")
 
                 animations.append(
                     existing_element
-                    .animate.shift(spacing).set_opacity(future_opacity)
+                    .animate.set_opacity(future_opacity).shift(spacing)
                 )
             else:
                 animations.append(existing_element.animate.shift(spacing))
@@ -133,15 +124,21 @@ class ScrollingGroup(VGroup):
 
         return animations
 
-    def add_element(self,
-                    scene: Scene,
-                    new_element: VMobject,
-                    spacing: np.ndarray | None = None,
-                    spacing_buff: float = 0.35,
-                    add_animation: AddAnimation = AddAnimation.FADE_IN) -> None:
+    def add_element(
+        self,
+        scene: Scene,
+        new_element: VMobject,
+        # 레이아웃 관련
+        spacing: np.ndarray | None = None,
+        spacing_buff: float = 0.35,
+        # 애니메이션 타입
+        add_animation: AddAnimation = AddAnimation.FADE_IN,
+        # 애니메이션 런타임 관련
+        scroll_time: float = 0.5,
+        creation_time: float = 0.25
+    ) -> None:
         new_element.move_to(self.add_position)
 
-        # opacity_gradient가 활성화되어 있고 양수 스텝일 때는 낮은 불투명도에서 시작
         if self.opacity_gradient and self.opacity_step > 0:
             new_element.set_opacity(self.min_opacity or 0.0)
 
@@ -151,42 +148,50 @@ class ScrollingGroup(VGroup):
 
         scroll_animations = self._create_scroll_animations(spacing)
         if scroll_animations:
-            scene.play(*scroll_animations, run_time=0.3)
+            scene.play(*scroll_animations, run_time=scroll_time)
 
         self.elements.append(new_element)
 
-        # 생성 애니메이션 적용 및 scene에 추가
         match add_animation:
             case AddAnimation.FADE_IN:
-                scene.play(FadeIn(new_element), run_time=0.2)
+                scene.play(FadeIn(new_element), run_time=creation_time)
             case AddAnimation.CREATE:
-                scene.play(Create(new_element), run_time=0.2)
+                scene.play(Create(new_element), run_time=creation_time)
             case AddAnimation.NONE:
-                scene.add(new_element)  # 애니메이션 없이 즉시 추가
+                scene.add(new_element)
 
-    def add_text(self,
-                 scene: Scene,
-                 *text: str,
-                 text_join_char: str = " ",
-                 spacing: np.ndarray | None = None,
-                 spacing_buff: float = 0.35,
-                 is_latex: bool = True,
-                 animation_type: AddAnimation = AddAnimation.FADE_IN) -> None:
+    def add_text(
+        self,
+        scene: Scene,
+        *text: str,
+        # 텍스트 스타일 관련
+        font_size: float = 36,
+        color: str | None = None,
+        is_latex: bool = True,
+        # 레이아웃 관련
+        spacing: np.ndarray | None = None,
+        spacing_buff: float = 0.35,
+        # 애니메이션 관련
+        animation_type: AddAnimation = AddAnimation.FADE_IN,
+        # 기타 옵션
+        text_join_char: str = " "
+    ) -> None:
         if is_latex:
-            latex_obj: MathTex = MathTex(*text)
-            self.add_element(
-                scene=scene,
-                new_element=latex_obj,
-                spacing=spacing,
-                spacing_buff=spacing_buff,
-                add_animation=animation_type
-            )
+            latex_obj: MathTex = MathTex(*text, font_size=font_size)
+            if color is not None:
+                latex_obj.set_color(color)
+            text_obj = latex_obj
         else:
-            text_obj: Text = Text(text_join_char.join(text))
-            self.add_element(
-                scene=scene,
-                new_element=text_obj,
-                spacing=spacing,
-                spacing_buff=spacing_buff,
-                add_animation=animation_type
+            text_obj: Text = Text(
+                text_join_char.join(text),
+                font_size=font_size,
+                color=color if color is not None else WHITE
             )
+
+        self.add_element(
+            scene=scene,
+            new_element=text_obj,
+            spacing=spacing,
+            spacing_buff=spacing_buff,
+            add_animation=animation_type
+        )
