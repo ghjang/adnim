@@ -69,16 +69,61 @@ class ScrollingGroup(VGroup):
 
         return future_opacity
 
+    def _get_safe_opacity(self, mob: VMobject) -> float:
+        """객체의 불투명도를 안전하게 가져오는 헬퍼 메소드"""
+        try:
+            # 1. get_opacity 메소드 체크
+            if hasattr(mob, 'get_opacity'):
+                opacity = mob.get_opacity()
+                if opacity is not None:
+                    return opacity
+
+            # 2. stroke와 fill 불투명도 체크
+            opacities = []
+            if hasattr(mob, 'get_stroke_opacity'):
+                stroke_opacity = mob.get_stroke_opacity()
+                if stroke_opacity is not None:
+                    opacities.append(stroke_opacity)
+
+            if hasattr(mob, 'get_fill_opacity'):
+                fill_opacity = mob.get_fill_opacity()
+                if fill_opacity is not None:
+                    opacities.append(fill_opacity)
+
+            if opacities:
+                return sum(opacities) / len(opacities)
+
+            # 3. opacity 속성 체크
+            if hasattr(mob, 'opacity'):
+                return float(mob.opacity)
+
+            return 1.0
+        except:
+            return 1.0
+
     def _create_scroll_animations(self, spacing: np.ndarray) -> list[Animation]:
         animations: list[Animation] = []
 
         for i, existing_element in enumerate(self.elements):
             if self.opacity_gradient:
-                current_opacity = existing_element.get_opacity()
+                if isinstance(existing_element, VGroup):
+                    opacities = [
+                        self._get_safe_opacity(submob)
+                        for submob in existing_element.submobjects
+                    ]
+                    current_opacity = (
+                        sum(opacities) / len(opacities)
+                        if opacities
+                        else 1.0
+                    )
+                else:
+                    current_opacity = self._get_safe_opacity(existing_element)
+
                 future_opacity = self._calculate_opacity(current_opacity, i)
+
                 animations.append(
-                    existing_element.animate.shift(
-                        spacing).set_opacity(future_opacity)
+                    existing_element
+                    .animate.shift(spacing).set_opacity(future_opacity)
                 )
             else:
                 animations.append(existing_element.animate.shift(spacing))
