@@ -1,0 +1,139 @@
+from enum import Enum, auto
+from manim import *
+
+
+class ScrollDirection(Enum):
+    UP = "up"
+    DOWN = "down"
+
+    def to_vector(self) -> np.ndarray:
+        return {
+            ScrollDirection.UP: UP,
+            ScrollDirection.DOWN: DOWN
+        }[self]
+
+
+class AddAnimation(Enum):
+    FADE_IN = auto()    # 기본값: 페이드인
+    CREATE = auto()     # manim의 Create 애니메이션
+    NONE = auto()       # 애니메이션 없이 바로 추가
+
+
+class ScrollingGroup(VGroup):
+    max_lines: int
+    add_position: np.ndarray
+    elements: list[VMobject]
+    direction: ScrollDirection
+    opacity_gradient: bool
+    opacity_step: float
+    min_opacity: float | None
+
+    def __init__(
+        self,
+        max_lines: int = 3,
+        add_position: np.ndarray = ORIGIN,
+        direction: ScrollDirection = ScrollDirection.UP,
+        opacity_gradient: bool = False,
+        opacity_step: float = -0.25,
+        min_opacity: float | None = None,
+        **kwargs
+    ) -> None:
+        super().__init__(**kwargs)
+        self.max_lines = max_lines
+        self.add_position = add_position
+        self.direction = direction
+        self.opacity_gradient = opacity_gradient
+        self.opacity_step = opacity_step
+        self.min_opacity = min_opacity
+        self.elements = []
+
+    def _calculate_opacity(self, current_opacity: float | None, position_index: int) -> float:
+        if current_opacity is None:
+            current_opacity = 1.0 if self.opacity_step < 0 else (
+                self.min_opacity or 0.0)
+
+        # 위치 인덱스 기반 스텝 계산 (양수/음수 스텝 공통)
+        steps = len(self.elements) - position_index
+        step_for_element = self.opacity_step * steps
+
+        if self.opacity_step < 0:
+            # 음수 스텝: 현재 불투명도에서 감소
+            future_opacity = max(0.0, current_opacity + step_for_element)
+        else:
+            # 양수 스텝: 시작 불투명도에서 증가
+            future_opacity = min(1.0, current_opacity + step_for_element)
+
+        # min_opacity 처리를 음수 스텝일 때만 적용
+        if self.min_opacity is not None and self.opacity_step < 0:
+            future_opacity = max(future_opacity, self.min_opacity)
+
+        return future_opacity
+
+    def _create_scroll_animations(self, spacing: np.ndarray) -> list[Animation]:
+        animations: list[Animation] = []
+
+        for i, existing_element in enumerate(self.elements):
+            if self.opacity_gradient:
+                current_opacity = existing_element.get_opacity()
+                future_opacity = self._calculate_opacity(current_opacity, i)
+                animations.append(
+                    existing_element.animate.shift(
+                        spacing).set_opacity(future_opacity)
+                )
+            else:
+                animations.append(existing_element.animate.shift(spacing))
+
+        if len(self.elements) >= self.max_lines:
+            oldest_element: VMobject = self.elements[0]
+            animations.append(FadeOut(oldest_element))
+            self.elements.pop(0)
+
+        return animations
+
+    def add_element(self,
+                    scene: Scene,
+                    new_element: VMobject,
+                    spacing: np.ndarray | None = None,
+                    spacing_buff: float = 0.35,
+                    add_animation: AddAnimation = AddAnimation.FADE_IN) -> None:
+        new_element.move_to(self.add_position)
+
+        # opacity_gradient가 활성화되어 있고 양수 스텝일 때는 낮은 불투명도에서 시작
+        if self.opacity_gradient and self.opacity_step > 0:
+            new_element.set_opacity(self.min_opacity or 0.0)
+
+        if spacing is None:
+            element_height = new_element.height + spacing_buff
+            spacing = self.direction.to_vector() * element_height
+
+        scroll_animations = self._create_scroll_animations(spacing)
+        if scroll_animations:
+            scene.play(*scroll_animations, run_time=0.3)
+
+        self.elements.append(new_element)
+
+        # 생성 애니메이션 적용 및 scene에 추가
+        match add_animation:
+            case AddAnimation.FADE_IN:
+                scene.play(FadeIn(new_element), run_time=0.2)
+            case AddAnimation.CREATE:
+                scene.play(Create(new_element), run_time=0.2)
+            case AddAnimation.NONE:
+                scene.add(new_element)  # 애니메이션 없이 즉시 추가
+
+    def add_text(self,
+                 scene: Scene,
+                 *text: str,
+                 text_join_char: str = " ",
+                 spacing: np.ndarray | None = None,
+                 spacing_buffer: float = 0.35,
+                 is_latex: bool = True,
+                 animation_type: AddAnimation = AddAnimation.FADE_IN) -> None:
+        if is_latex:
+            latex_obj: MathTex = MathTex(*text)  # 가변 인자 그대로 전달
+            self.add_element(scene, latex_obj, spacing,
+                             spacing_buffer, animation_type)
+        else:
+            text_obj: Text = Text(text_join_char.join(text))
+            self.add_element(scene, text_obj, spacing,
+                             spacing_buffer, animation_type)
