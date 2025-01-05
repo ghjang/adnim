@@ -493,3 +493,6 @@ media/
 
 # 워크스페이스 베이스 폴더에 'handy-man' VSCode 확장으로 생성했을 수도 있는 'manim.cfg'는 제외한다.
 manim.cfg
+
+# .env
+.env

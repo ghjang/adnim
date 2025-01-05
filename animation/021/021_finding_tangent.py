@@ -9,7 +9,7 @@ from tangent_rotation import TangentRotation, CotangentRotation
 class FindingTangent(Scene):
     @override
     def construct(self):
-        self.next_section("Initial Setup", skip_animations=True)
+        self.next_section("Initial Setup", skip_animations=False)
 
         # 좌표계 생성
         npg = NumberPlaneGroup(
@@ -48,7 +48,7 @@ class FindingTangent(Scene):
 class FindingCotangent(Scene):
     @override
     def construct(self):
-        self.next_section("Initial Setup", skip_animations=True)
+        self.next_section("Initial Setup", skip_animations=False)
 
         # 좌표계 생성
         npg = NumberPlaneGroup(
@@ -87,7 +87,7 @@ class FindingCotangent(Scene):
 class FindingAllTangents(Scene):
     @override
     def construct(self):
-        self.next_section("Initial Setup", skip_animations=True)
+        self.next_section("Initial Setup", skip_animations=False)
 
         # 좌표계 생성
         npg = NumberPlaneGroup(

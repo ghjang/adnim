@@ -86,7 +86,8 @@ class QuadraticFormulaDerivation(Scene):
                 self.wait(2)
 
         # 최종 공식 강조 (이미 크기가 조절되어 있으므로 추가 확대는 하지 않음)
-        self.play(current_eq.animate.set_color(GREEN).scale(1.5))
+        self.play(current_eq.animate.set_color(GREEN).scale(1.25))
         if current_exp:
             self.play(FadeOut(current_exp))
+
         self.wait(3)
