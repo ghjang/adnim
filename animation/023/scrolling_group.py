@@ -48,36 +48,31 @@ class ScrollingGroup(VGroup):
 
     def _calculate_element_next_opacity(
         self,
-        elem_curr_index: int
+        elem_curr_index: int,
+        new_elem_index: int
     ) -> float:
-        scroll_window_size = self.max_lines
+        # 새로운 요소와의 거리 계산
+        distance = new_elem_index - elem_curr_index
 
-        curr_added_elem_cnt = len(self.submobjects)
-        elem_next_index = elem_curr_index
-
-        if curr_added_elem_cnt >= scroll_window_size:
-            elem_next_index = elem_curr_index - 1
-
-        # NOTE:
-        # '음수 스텝'의 경우 새로 추가되는 항목이 가장 밝게 표시되고,
-        # 기존에 먼저 추가된 항목들이 더 흐리게 표시되어야 함.
-        #
-        # '양수 스텝'의 경우 새로 추가되는 항목이 가장 흐리게 표시되고,
-        # 기존에 먼저 추가된 항목들이 더 밝게 표시되어야 함.
-        step_factor = curr_added_elem_cnt - elem_next_index
         if self.opacity_step < 0:
+            # 음수 스텝:
+            # 새로운 요소가 가장 밝음.
+            # 거리가 멀수록 더 어두워짐.
             base_opacity = 1.0
         else:
-            if curr_added_elem_cnt < scroll_window_size:
-                step_factor += 1
+            # 양수 스텝:
+            # 새로운 요소가 가장 어두움.
+            # 거리가 멀수록 더 밝아짐 (스텝을 바로 거리에 곱함).
             base_opacity = self.min_opacity or 0.0
-        future_opacity = base_opacity + (self.opacity_step * step_factor)
 
-        # min_opacity 처리를 음수 스텝일 때만 적용
+        future_opacity = base_opacity + (self.opacity_step * distance)
+
+        # min_opacity 처리 (음수 스텝일 때만)
         if self.min_opacity is not None and self.opacity_step < 0:
             future_opacity = max(future_opacity, self.min_opacity)
 
-        return future_opacity
+        # 최종 불투명도는 0.0과 1.0 사이로 제한
+        return max(0.0, min(1.0, future_opacity))
 
     def _create_scroll_animations(
         self,
@@ -88,9 +83,11 @@ class ScrollingGroup(VGroup):
         animations: list[Animation] = []
         shift_direction = self.direction.to_vector()
 
+        # 신규 요소의 인덱스 계산
+        new_elem_index = len(self.submobjects)
+
         # 모든 기존 요소들을 동일하게 이동
         if v_spacing is None and new_element is not None:
-            # 신규 요소의 높이와 버퍼값을 이용
             shift_delta = shift_direction * \
                 (new_element.height + v_spacing_buff)
         else:
@@ -100,7 +97,8 @@ class ScrollingGroup(VGroup):
         # 모든 기존 요소에 동일한 이동값 적용
         for i, existing_element in enumerate(self.submobjects):
             if self.opacity_gradient:
-                elem_opacity = self._calculate_element_next_opacity(i)
+                elem_opacity = self._calculate_element_next_opacity(
+                    i, new_elem_index)
                 animations.append(
                     existing_element
                     .animate.shift(shift_delta).set_opacity(elem_opacity)
