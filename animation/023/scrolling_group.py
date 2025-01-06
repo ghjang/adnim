@@ -22,7 +22,6 @@ class AddAnimation(Enum):
 class ScrollingGroup(VGroup):
     max_lines: int
     add_position: np.ndarray
-    elements: list[VMobject]
     direction: ScrollDirection
     opacity_gradient: bool
     opacity_step: float
@@ -45,7 +44,6 @@ class ScrollingGroup(VGroup):
         self.opacity_gradient = opacity_gradient
         self.opacity_step = opacity_step
         self.min_opacity = min_opacity
-        self.elements = []
 
     def _calculate_opacity(self, current_opacity: float | None, position_index: int) -> float:
         if current_opacity is None:
@@ -55,12 +53,12 @@ class ScrollingGroup(VGroup):
         if self.opacity_step < 0:
             # 음수 스텝: 현재 불투명도에서 감소
             step_for_element = self.opacity_step * \
-                (len(self.elements) - position_index - 1)
+                (len(self.submobjects) - position_index - 1)
             future_opacity = max(0.0, current_opacity + step_for_element)
         else:
             # 양수 스텝: 시작 불투명도에서 증가
             step_for_element = self.opacity_step * \
-                (len(self.elements) - position_index)
+                (len(self.submobjects) - position_index)
             future_opacity = min(1.0, current_opacity + step_for_element)
 
         # min_opacity 처리를 음수 스텝일 때만 적용
@@ -104,23 +102,23 @@ class ScrollingGroup(VGroup):
     def _create_scroll_animations(self, spacing: np.ndarray) -> list[Animation]:
         animations: list[Animation] = []
 
-        for i, existing_element in enumerate(self.elements):
+        for i, existing_element in enumerate(self.submobjects):
             if self.opacity_gradient:
                 current_opacity = self._get_safe_opacity(existing_element)
                 future_opacity = self._calculate_opacity(current_opacity, i)
-                print(f"future_opacity: {future_opacity}")
+                print(f"current: {current_opacity}, future: {future_opacity}")
 
                 animations.append(
                     existing_element
-                    .animate.set_opacity(future_opacity).shift(spacing)
+                    .animate.shift(spacing).set_opacity(future_opacity)
                 )
             else:
                 animations.append(existing_element.animate.shift(spacing))
 
-        if len(self.elements) >= self.max_lines:
-            oldest_element: VMobject = self.elements[0]
+        if len(self.submobjects) >= self.max_lines:
+            oldest_element: VMobject = self.submobjects[0]
             animations.append(FadeOut(oldest_element))
-            self.elements.pop(0)
+            self.remove(oldest_element)
 
         return animations
 
@@ -137,8 +135,6 @@ class ScrollingGroup(VGroup):
         scroll_time: float = 0.5,
         creation_time: float = 0.25
     ) -> None:
-        new_element.move_to(self.add_position)
-
         if self.opacity_gradient and self.opacity_step > 0:
             new_element.set_opacity(self.min_opacity or 0.0)
 
@@ -150,7 +146,8 @@ class ScrollingGroup(VGroup):
         if scroll_animations:
             scene.play(*scroll_animations, run_time=scroll_time)
 
-        self.elements.append(new_element)
+        self.add(new_element)
+        new_element.move_to(self.add_position)
 
         match add_animation:
             case AddAnimation.FADE_IN:

@@ -288,34 +288,51 @@ class GreenTextGroupExample(Scene):
         scroller: ScrollingGroup = ScrollingGroup(
             add_position=ORIGIN + DOWN * 2,
             opacity_gradient=True,
-            opacity_step=-0.35  # 페이드 아웃 효과
+            max_lines=4,
+            opacity_step=-0.3  # 페이드 아웃 효과
         )
 
         # 여러 줄의 녹색 텍스트 그룹들 정의
         group1 = VGroup(
             Text("System Status", font_size=48),
-            Text("● ONLINE", font_size=36),
-            Text("● ACTIVE", font_size=36)
+            # Text("● ONLINE", font_size=36),
+            # Text("● ACTIVE", font_size=36)
         ).arrange(DOWN, buff=0.2).set_color(GREEN)
 
         group2 = VGroup(
             Text("Memory Usage", font_size=48),
-            Text("RAM: 42%", font_size=36),
-            Text("CPU: 28%", font_size=36)
+            # Text("RAM: 42%", font_size=36),
+            # Text("CPU: 28%", font_size=36)
         ).arrange(DOWN, buff=0.2).set_color(GREEN)
 
         group3 = VGroup(
             Text("Network Status", font_size=48),
-            Text("↑ 25MB/s", font_size=36),
-            Text("↓ 42MB/s", font_size=36)
+            # Text("↑ 25MB/s", font_size=36),
+            # Text("↓ 42MB/s", font_size=36)
         ).arrange(DOWN, buff=0.2).set_color(GREEN)
 
+        group4 = VGroup(
+            Text("Test Status", font_size=48),
+            # Text("↑ 25MB/s", font_size=36),
+            # Text("↓ 42MB/s", font_size=36)
+        ).arrange(DOWN, buff=0.2).set_color(GREEN)
+
+        group5 = VGroup(
+            Text("Test1 Status", font_size=48),
+            # Text("↑ 25MB/s", font_size=36),
+            # Text("↓ 42MB/s", font_size=36)
+        ).arrange(DOWN, buff=0.2).set_color(GREEN)
+
+        group4_copy = group4.copy().set_opacity(0.7)
+        group5_copy = group5.copy().set_opacity(1)
+        self.add(VGroup(group4_copy, group5_copy).arrange(DOWN, buff=0.2).to_edge(UL))
+
         # 각 그룹을 순차적으로 추가
-        for group in [group1, group2, group3]:
+        for group in [group1, group2, group3, group4, group5]:
             scroller.add_element(
                 scene=self,
                 new_element=group,
             )
-            self.wait(0.8)
+            self.wait(0.5)
 
         self.wait()
