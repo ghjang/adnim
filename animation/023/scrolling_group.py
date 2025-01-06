@@ -135,7 +135,7 @@ class ScrollingGroup(VGroup):
 
         self.add(new_element)
 
-        # 기본 위치 설정 (수평 오프셋 적용)
+        # 기본 위치 설정 (수평/수직 오프셋 적용)
         base_position = self.add_position + RIGHT * h_offset
         new_element.move_to(base_position)
 
