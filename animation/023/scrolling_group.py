@@ -99,7 +99,10 @@ class ScrollingGroup(VGroup):
         except:
             return 1.0
 
-    def _create_scroll_animations(self, spacing: np.ndarray) -> list[Animation]:
+    def _create_scroll_animations(
+        self,
+        shift_delta: np.ndarray
+    ) -> list[Animation]:
         animations: list[Animation] = []
 
         for i, existing_element in enumerate(self.submobjects):
@@ -110,10 +113,10 @@ class ScrollingGroup(VGroup):
 
                 animations.append(
                     existing_element
-                    .animate.shift(spacing).set_opacity(future_opacity)
+                    .animate.shift(shift_delta).set_opacity(future_opacity)
                 )
             else:
-                animations.append(existing_element.animate.shift(spacing))
+                animations.append(existing_element.animate.shift(shift_delta))
 
         if len(self.submobjects) >= self.max_lines:
             oldest_element: VMobject = self.submobjects[0]
@@ -126,23 +129,24 @@ class ScrollingGroup(VGroup):
         self,
         scene: Scene,
         new_element: VMobject,
-        # 레이아웃 관련
         spacing: np.ndarray | None = None,
         spacing_buff: float = 0.35,
-        # 애니메이션 타입
         add_animation: AddAnimation = AddAnimation.FADE_IN,
-        # 애니메이션 런타임 관련
         scroll_time: float = 0.5,
         creation_time: float = 0.25
     ) -> None:
+        # NOTE:
+        # 신규로 추가된 항목이 가장 흐리게 표시되고,
+        # 기존에 먼저 추가된 항목들이 더 밝아지도록 'self.opacity_step'이 '양수'로 설정된 경우
         if self.opacity_gradient and self.opacity_step > 0:
             new_element.set_opacity(self.min_opacity or 0.0)
 
+        # 신규로 추가된 항목의 '높이' 정보(spacing)가 명시되지 않은 경우
         if spacing is None:
             element_height = new_element.height + spacing_buff
             spacing = self.direction.to_vector() * element_height
 
-        scroll_animations = self._create_scroll_animations(spacing)
+        scroll_animations = self._create_scroll_animations(shift_delta=spacing)
         if scroll_animations:
             scene.play(*scroll_animations, run_time=scroll_time)
 
@@ -161,17 +165,13 @@ class ScrollingGroup(VGroup):
         self,
         scene: Scene,
         *text: str,
-        # 텍스트 스타일 관련
+        text_join_char: str = " ",
         font_size: float = 36,
         color: str | None = None,
         is_latex: bool = True,
-        # 레이아웃 관련
         spacing: np.ndarray | None = None,
         spacing_buff: float = 0.35,
-        # 애니메이션 관련
-        animation_type: AddAnimation = AddAnimation.FADE_IN,
-        # 기타 옵션
-        text_join_char: str = " "
+        animation_type: AddAnimation = AddAnimation.FADE_IN
     ) -> None:
         if is_latex:
             latex_obj: MathTex = MathTex(*text, font_size=font_size)
