@@ -275,7 +275,7 @@ class ScrollingVGroupTest(Scene):
             scroller.add_element(
                 scene=self,
                 new_element=group,
-                spacing_buff=0.5  # 그룹간 간격 조정
+                v_spacing_buff=0.5  # 그룹간 간격 조정
             )
             self.wait(0.5)
 
@@ -331,13 +331,72 @@ class GreenTextGroupExample(Scene):
         # group4_copy = group4.copy().set_opacity(0.7)
         group4_copy = group4.copy().set_opacity(1)
         group5_copy = group5.copy().set_opacity(1)
-        self.add(VGroup(group4_copy, group5_copy).arrange(DOWN, buff=0.2).to_edge(UL))
+        self.add(VGroup(group4_copy, group5_copy).arrange(
+            DOWN, buff=0.2).to_edge(UL))
 
         # 각 그룹을 순차적으로 추가
         for group in [group1, group2, group3, group4, group5]:
             scroller.add_element(
                 scene=self,
                 new_element=group,
+            )
+            self.wait(0.5)
+
+        self.wait()
+
+
+class LargeGreenTextGroupExample(Scene):
+    @override
+    def construct(self) -> None:
+        # NOTE:
+        # 'max_lines, opacity_step, min_opacity'의 설정에 따라서
+        # 스크롤 애니메이션후에 가장 먼저 추가된 요소의 불투명도가 너무 낮아져
+        # 제대로 보이지 않을 수 있으니 테스트를 통해서 응용에서 적당히 값을 정해야함.
+        scroller: ScrollingGroup = ScrollingGroup(
+            add_position=ORIGIN + DOWN * 2,
+            opacity_gradient=True,
+            max_lines=4,
+            opacity_step=-0.25,
+            min_opacity=0.15
+        )
+
+        # 여러 줄의 녹색 텍스트 그룹들 정의
+        group1 = VGroup(
+            Text("System Status", font_size=72),
+            # Text("● ONLINE", font_size=72),
+            # Text("● ACTIVE", font_size=72)
+        ).arrange(DOWN, buff=0.2).set_color(GREEN)
+
+        group2 = VGroup(
+            Text("Memory Usage", font_size=72),
+            # Text("RAM: 42%", font_size=72),
+            # Text("CPU: 28%", font_size=72)
+        ).arrange(DOWN, buff=0.2).set_color(GREEN)
+
+        group3 = VGroup(
+            Text("Network Status", font_size=72),
+            # Text("↑ 25MB/s", font_size=72),
+            # Text("↓ 42MB/s", font_size=72)
+        ).arrange(DOWN, buff=0.2).set_color(GREEN)
+
+        group4 = VGroup(
+            Text("Test Status", font_size=72),
+            # Text("↑ 25MB/s", font_size=72),
+            # Text("↓ 42MB/s", font_size=72)
+        ).arrange(DOWN, buff=0.2).set_color(GREEN)
+
+        group5 = VGroup(
+            Text("Test1 Status", font_size=72),
+            # Text("↑ 25MB/s", font_size=72),
+            # Text("↓ 42MB/s", font_size=72)
+        ).arrange(DOWN, buff=0.2).set_color(GREEN)
+
+        # 각 그룹을 순차적으로 추가
+        for group in [group1, group2, group3, group4, group5]:
+            scroller.add_element(
+                scene=self,
+                new_element=group,
+                h_offset=LEFT * 2
             )
             self.wait(0.5)
 

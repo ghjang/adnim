@@ -1,4 +1,5 @@
 from enum import Enum, auto
+from numpy import ndarray
 from manim import *
 
 
@@ -106,8 +107,11 @@ class ScrollingGroup(VGroup):
         self,
         scene: Scene,
         new_element: VMobject,
-        spacing: np.ndarray | None = None,
-        spacing_buff: float = 0.35,
+        v_spacing: np.ndarray | None = None,
+        v_spacing_buff: float = 0.35,
+        h_offset: float = 0.0,            # 수평 위치 조정값
+        h_align: ndarray | None = None,   # 수평 정렬 방향 (LEFT/RIGHT/None)
+        h_align_buff: float = 0.0,        # 수평 정렬시 여백
         add_animation: AddAnimation = AddAnimation.FADE_IN,
         scroll_time: float = 0.5,
         creation_time: float = 0.25
@@ -119,16 +123,25 @@ class ScrollingGroup(VGroup):
             new_element.set_opacity(self.min_opacity or 0.0)
 
         # 신규로 추가된 항목의 '높이' 정보(spacing)가 명시되지 않은 경우
-        if spacing is None:
-            element_height = new_element.height + spacing_buff
-            spacing = self.direction.to_vector() * element_height
+        if v_spacing is None:
+            element_height = new_element.height + v_spacing_buff
+            v_spacing = self.direction.to_vector() * element_height
 
-        scroll_animations = self._create_scroll_animations(shift_delta=spacing)
+        scroll_animations = self._create_scroll_animations(
+            shift_delta=v_spacing
+        )
         if scroll_animations:
             scene.play(*scroll_animations, run_time=scroll_time)
 
         self.add(new_element)
-        new_element.move_to(self.add_position)
+
+        # 기본 위치 설정 (수평 오프셋 적용)
+        base_position = self.add_position + RIGHT * h_offset
+        new_element.move_to(base_position)
+
+        # 수평 정렬이 지정된 경우 to_edge 적용
+        if h_align is not None:
+            new_element.to_edge(h_align, buff=h_align_buff)
 
         match add_animation:
             case AddAnimation.FADE_IN:
@@ -146,8 +159,11 @@ class ScrollingGroup(VGroup):
         font_size: float = 36,
         color: str | None = None,
         is_latex: bool = True,
-        spacing: np.ndarray | None = None,
-        spacing_buff: float = 0.35,
+        v_spacing: np.ndarray | None = None,
+        v_spacing_buff: float = 0.35,
+        h_offset: float = 0.0,
+        h_align: ndarray | None = None,
+        h_align_buff: float = 0.0,
         animation_type: AddAnimation = AddAnimation.FADE_IN
     ) -> None:
         if is_latex:
@@ -165,7 +181,10 @@ class ScrollingGroup(VGroup):
         self.add_element(
             scene=scene,
             new_element=text_obj,
-            spacing=spacing,
-            spacing_buff=spacing_buff,
+            v_spacing=v_spacing,
+            v_spacing_buff=v_spacing_buff,
+            h_offset=h_offset,
+            h_align=h_align,
+            h_align_buff=h_align_buff,
             add_animation=animation_type
         )
