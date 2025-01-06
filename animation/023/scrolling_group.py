@@ -81,14 +81,26 @@ class ScrollingGroup(VGroup):
 
     def _create_scroll_animations(
         self,
-        shift_delta: np.ndarray
+        v_spacing: np.ndarray | None = None,
+        v_spacing_buff: float = 0.35,
+        new_element: VMobject | None = None
     ) -> list[Animation]:
         animations: list[Animation] = []
+        shift_direction = self.direction.to_vector()
 
+        # 모든 기존 요소들을 동일하게 이동
+        if v_spacing is None and new_element is not None:
+            # 신규 요소의 높이와 버퍼값을 이용
+            shift_delta = shift_direction * \
+                (new_element.height + v_spacing_buff)
+        else:
+            # 고정 간격이 지정된 경우
+            shift_delta = shift_direction * (v_spacing + v_spacing_buff)
+
+        # 모든 기존 요소에 동일한 이동값 적용
         for i, existing_element in enumerate(self.submobjects):
             if self.opacity_gradient:
                 elem_opacity = self._calculate_element_next_opacity(i)
-
                 animations.append(
                     existing_element
                     .animate.shift(shift_delta).set_opacity(elem_opacity)
@@ -122,14 +134,13 @@ class ScrollingGroup(VGroup):
         if self.opacity_gradient and self.opacity_step > 0:
             new_element.set_opacity(self.min_opacity or 0.0)
 
-        # 신규로 추가된 항목의 '높이' 정보(spacing)가 명시되지 않은 경우
-        if v_spacing is None:
-            element_height = new_element.height + v_spacing_buff
-            v_spacing = self.direction.to_vector() * element_height
-
+        # 신규 요소를 전달하여 스크롤 애니메이션 생성
         scroll_animations = self._create_scroll_animations(
-            shift_delta=v_spacing
+            v_spacing=v_spacing,
+            v_spacing_buff=v_spacing_buff,
+            new_element=new_element
         )
+
         if scroll_animations:
             scene.play(*scroll_animations, run_time=scroll_time)
 
