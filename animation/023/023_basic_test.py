@@ -102,8 +102,8 @@ class ScrollingFadeInGradientExample(Scene):
         scroller: ScrollingGroup = ScrollingGroup(
             add_position=ORIGIN,
             opacity_gradient=True,
-            opacity_step=0.3,      # 각 스텝마다 30%씩 밝아짐
-            min_opacity=0.25        # 10% 불투명도에서 시작
+            opacity_step=0.25,
+            min_opacity=0.15
         )
 
         texts: list[str] = [
@@ -285,11 +285,16 @@ class ScrollingVGroupTest(Scene):
 class GreenTextGroupExample(Scene):
     @override
     def construct(self) -> None:
+        # NOTE:
+        # 'max_lines, opacity_step, min_opacity'의 설정에 따라서
+        # 스크롤 애니메이션후에 가장 먼저 추가된 요소의 불투명도가 너무 낮아져
+        # 제대로 보이지 않을 수 있으니 테스트를 통해서 응용에서 적당히 값을 정해야함.
         scroller: ScrollingGroup = ScrollingGroup(
             add_position=ORIGIN + DOWN * 2,
             opacity_gradient=True,
             max_lines=4,
-            opacity_step=-0.3  # 페이드 아웃 효과
+            opacity_step=-0.25,
+            min_opacity=0.15
         )
 
         # 여러 줄의 녹색 텍스트 그룹들 정의
@@ -323,7 +328,8 @@ class GreenTextGroupExample(Scene):
             # Text("↓ 42MB/s", font_size=36)
         ).arrange(DOWN, buff=0.2).set_color(GREEN)
 
-        group4_copy = group4.copy().set_opacity(0.7)
+        # group4_copy = group4.copy().set_opacity(0.7)
+        group4_copy = group4.copy().set_opacity(1)
         group5_copy = group5.copy().set_opacity(1)
         self.add(VGroup(group4_copy, group5_copy).arrange(DOWN, buff=0.2).to_edge(UL))
 

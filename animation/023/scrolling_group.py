@@ -45,59 +45,38 @@ class ScrollingGroup(VGroup):
         self.opacity_step = opacity_step
         self.min_opacity = min_opacity
 
-    def _calculate_opacity(self, current_opacity: float | None, position_index: int) -> float:
-        if current_opacity is None:
-            current_opacity = 1.0 if self.opacity_step < 0 else (
-                self.min_opacity or 0.0)
+    def _calculate_element_next_opacity(
+        self,
+        elem_curr_index: int
+    ) -> float:
+        scroll_window_size = self.max_lines
 
+        curr_added_elem_cnt = len(self.submobjects)
+        elem_next_index = elem_curr_index
+
+        if curr_added_elem_cnt >= scroll_window_size:
+            elem_next_index = elem_curr_index - 1
+
+        # NOTE:
+        # '음수 스텝'의 경우 새로 추가되는 항목이 가장 밝게 표시되고,
+        # 기존에 먼저 추가된 항목들이 더 흐리게 표시되어야 함.
+        #
+        # '양수 스텝'의 경우 새로 추가되는 항목이 가장 흐리게 표시되고,
+        # 기존에 먼저 추가된 항목들이 더 밝게 표시되어야 함.
+        step_factor = curr_added_elem_cnt - elem_next_index
         if self.opacity_step < 0:
-            # 음수 스텝: 현재 불투명도에서 감소
-            step_for_element = self.opacity_step * \
-                (len(self.submobjects) - position_index - 1)
-            future_opacity = max(0.0, current_opacity + step_for_element)
+            base_opacity = 1.0
         else:
-            # 양수 스텝: 시작 불투명도에서 증가
-            step_for_element = self.opacity_step * \
-                (len(self.submobjects) - position_index)
-            future_opacity = min(1.0, current_opacity + step_for_element)
+            if curr_added_elem_cnt < scroll_window_size:
+                step_factor += 1
+            base_opacity = self.min_opacity or 0.0
+        future_opacity = base_opacity + (self.opacity_step * step_factor)
 
         # min_opacity 처리를 음수 스텝일 때만 적용
         if self.min_opacity is not None and self.opacity_step < 0:
             future_opacity = max(future_opacity, self.min_opacity)
 
         return future_opacity
-
-    def _get_safe_opacity(self, mob: VMobject) -> float:
-        """객체의 불투명도를 안전하게 가져오는 헬퍼 메소드"""
-        try:
-            # 1. get_opacity 메소드 체크
-            if hasattr(mob, 'get_opacity'):
-                opacity = mob.get_opacity()
-                if opacity is not None:
-                    return opacity
-
-            # 2. stroke와 fill 불투명도 체크
-            opacities = []
-            if hasattr(mob, 'get_stroke_opacity'):
-                stroke_opacity = mob.get_stroke_opacity()
-                if stroke_opacity is not None:
-                    opacities.append(stroke_opacity)
-
-            if hasattr(mob, 'get_fill_opacity'):
-                fill_opacity = mob.get_fill_opacity()
-                if fill_opacity is not None:
-                    opacities.append(fill_opacity)
-
-            if opacities:
-                return sum(opacities) / len(opacities)
-
-            # 3. opacity 속성 체크
-            if hasattr(mob, 'opacity'):
-                return float(mob.opacity)
-
-            return 1.0
-        except:
-            return 1.0
 
     def _create_scroll_animations(
         self,
@@ -107,13 +86,11 @@ class ScrollingGroup(VGroup):
 
         for i, existing_element in enumerate(self.submobjects):
             if self.opacity_gradient:
-                current_opacity = self._get_safe_opacity(existing_element)
-                future_opacity = self._calculate_opacity(current_opacity, i)
-                print(f"current: {current_opacity}, future: {future_opacity}")
+                elem_opacity = self._calculate_element_next_opacity(i)
 
                 animations.append(
                     existing_element
-                    .animate.shift(shift_delta).set_opacity(future_opacity)
+                    .animate.shift(shift_delta).set_opacity(elem_opacity)
                 )
             else:
                 animations.append(existing_element.animate.shift(shift_delta))
