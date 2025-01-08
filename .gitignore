@@ -496,3 +496,6 @@ manim.cfg
 
 # .env
 .env
+
+# .handy-man folder
+.handy-man/
