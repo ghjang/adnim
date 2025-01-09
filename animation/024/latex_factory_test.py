@@ -37,18 +37,33 @@ def sympy_matrix() -> sp.Expr:
     return sp.Matrix([[1, 2], [3, 4]])
 
 
+@latex_factory(auto_latex_str=False)
+def test_expr_original() -> sp.Expr:
+    y = sp.Symbol('y')
+    return sp.Limit(sp.sin(y)/y, y, 0)
+
+
+@latex_factory()
+def test_expr_auto() -> str:
+    return "f(x) = x^2"
+
+
 class LatexFactoryTest(Scene):
     def construct(self):
-        # sympy 표현식을 LaTeX 문자열로 변환 후 MathTex 생성
-        equations = VGroup(
-            MathTex(test_expr()),
-            MathTex(sp.latex(simple_fraction())),
-            MathTex(sp.latex(sympy_fraction())),
-            MathTex(sp.latex(sympy_integral())),
-            MathTex(sp.latex(sympy_limit())),
-            MathTex(sp.latex(sympy_matrix()))
-        ).arrange(DOWN, buff=0.5)
+        original = MathTex(sp.latex(test_expr_original()))
 
-        # Add all equations to the scene
+        auto = MathTex(test_expr_auto())
+
+        # 나머지 예제들
+        equations = VGroup(
+            original,
+            auto,
+            MathTex(simple_fraction()),
+            MathTex(sympy_fraction()),
+            MathTex(sympy_integral()),
+            MathTex(sympy_limit()),
+            MathTex(sympy_matrix())
+        ).arrange_in_grid(3, 3, buff=1)
+
         self.add(equations)
         self.wait()

@@ -32,7 +32,7 @@ def convert_to_latex(result: Any) -> str:
 def load_json_data(json_path: Path) -> Dict[str, Any]:
     """Loads existing JSON data or returns empty dict."""
     try:
-        if json_path.exists():
+        if (json_path.exists()):
             with open(json_path, 'r', encoding='utf-8') as f:
                 try:
                     return json.load(f)
@@ -52,7 +52,7 @@ def save_json_data(json_path: Path, data: Dict[str, Any]) -> None:
         logger.error(f"Failed to save JSON file: {e}")
 
 
-def latex_factory(save_dir: Union[str, Path, None] = None) -> Callable:
+def latex_factory(save_dir: Union[str, Path, None] = None, auto_latex_str: bool = True) -> Callable:
     """
     A decorator that saves LaTeX strings or SymPy expressions to JSON file.
     When save_dir is None and ENV_VAR_NAME is not set, acts as a pass-through decorator.
@@ -60,6 +60,7 @@ def latex_factory(save_dir: Union[str, Path, None] = None) -> Callable:
     Args:
         save_dir: Directory path to save JSON file. If None, checks environment variable
                  first, only passes through if environment variable is also not set.
+        auto_latex_str: If True, returns LaTeX string instead of original function result.
     """
     # Determine the save directory
     save_path = None
@@ -78,7 +79,8 @@ def latex_factory(save_dir: Union[str, Path, None] = None) -> Callable:
             def simple_decorator(func: Callable) -> Callable:
                 @wraps(func)
                 def wrapper(*args, **kwargs):
-                    return func(*args, **kwargs)
+                    result = func(*args, **kwargs)
+                    return convert_to_latex(result) if auto_latex_str else result
                 return wrapper
             return simple_decorator
 
@@ -122,7 +124,7 @@ def latex_factory(save_dir: Union[str, Path, None] = None) -> Callable:
                 data[func.__name__] = entry
                 save_json_data(json_path, data)
 
-                return result
+                return latex_str if auto_latex_str else result
 
             except Exception as e:
                 logger.error(f"Decorator execution failed: {e}")
