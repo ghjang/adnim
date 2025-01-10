@@ -50,6 +50,8 @@ def test_expr_auto() -> str:
 
 class LatexFactoryTest(Scene):
     def construct(self):
+        test_expr()
+        
         original = MathTex(sp.latex(test_expr_original()))
 
         auto = MathTex(test_expr_auto())

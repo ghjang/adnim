@@ -99,7 +99,8 @@ def latex_factory(save_dir: Union[str, Path, None] = None, auto_latex_str: bool 
             json_path = save_path / JSON_FILENAME
 
             try:
-                # Execute function and convert result
+                # Get the file path of the decorated function
+                file_path = os.path.abspath(func.__code__.co_filename)
                 result = func(*args, **kwargs)
 
                 # Load existing data before modification
@@ -120,8 +121,12 @@ def latex_factory(save_dir: Union[str, Path, None] = None, auto_latex_str: bool 
                 if kwargs:
                     entry['kwargs'] = str(kwargs)
 
+                # Initialize file path in data if not exists
+                if file_path not in data:
+                    data[file_path] = {}
+
                 # Update data and save
-                data[func.__name__] = entry
+                data[file_path][func.__name__] = entry
                 save_json_data(json_path, data)
 
                 return latex_str if auto_latex_str else result
@@ -131,7 +136,9 @@ def latex_factory(save_dir: Union[str, Path, None] = None, auto_latex_str: bool 
                 try:
                     # Load existing data for error entry
                     data = load_json_data(json_path)
-                    data[func.__name__] = {
+                    if file_path not in data:
+                        data[file_path] = {}
+                    data[file_path][func.__name__] = {
                         'timestamp': datetime.datetime.now().isoformat(),
                         'error': str(e)
                     }
