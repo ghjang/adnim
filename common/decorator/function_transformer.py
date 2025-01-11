@@ -1,0 +1,212 @@
+import ast
+import astor
+import inspect
+import types
+from typing import Callable, Any, Dict, Union, List, TypeVar, Optional
+
+T = TypeVar('T')
+AssignValue = Union[T, List[T]]  # 일반 값 또는 리스트 값
+CallbackFunc = Callable[[AssignValue, str], None]  # 콜백 함수 타입 정의
+
+
+class FunctionInfo:
+    """함수/메서드 정보를 저장하는 클래스"""
+
+    def __init__(self, func: Callable):
+        self.func = func
+        self.is_class_method = False
+        self.is_bound_method = False
+        self.is_static_method = False
+        self.instance: Optional[Any] = None
+        self.cls: Optional[type] = None
+        self.source = ""
+        self._analyze_function()
+
+    def _analyze_function(self):
+        """함수 타입을 분석하고 관련 정보를 설정"""
+        if isinstance(self.func, classmethod):
+            self.is_class_method = True
+            self.cls = self.func.__get__(None, type)
+            self.source = inspect.getsource(self.func.__func__)
+        elif inspect.ismethod(self.func) and isinstance(self.func.__self__, type):
+            self.is_class_method = True
+            self.cls = self.func.__self__
+            self.source = inspect.getsource(self.func.__func__)
+        else:
+            self.is_bound_method = hasattr(self.func, '__self__')
+            self.is_static_method = isinstance(self.func, staticmethod)
+
+            if self.is_bound_method:
+                self.instance = getattr(self.func, '__self__', None)
+                self.source = inspect.getsource(self.func.__func__)
+            elif self.is_static_method:
+                self.source = inspect.getsource(self.func.__func__)
+            else:
+                self.source = inspect.getsource(self.func)
+
+    def get_func_name(self) -> str:
+        """함수의 이름을 반환"""
+        return (self.func.__func__.__name__
+                if hasattr(self.func, '__func__')
+                else self.func.__name__)
+
+
+class AssignmentVisitor(ast.NodeTransformer):
+    """대입문을 변환하는 AST 방문자"""
+
+    def __init__(self, callback_name: str):
+        self.callback_name = callback_name
+        self.source_lines: List[str] = []
+
+    def set_source(self, source: str) -> None:
+        """소스 코드 설정"""
+        self.source_lines = source.splitlines()
+
+    def get_node_source(self, node: ast.AST) -> str:
+        """AST 노드의 소스 코드 추출"""
+        if not (hasattr(node, 'lineno') and hasattr(node, 'end_lineno')):
+            return ""
+
+        start = node.lineno - 1
+        end = node.end_lineno
+        lines = self.source_lines[start:end]
+        return '\n'.join(line.strip() for line in lines)
+
+    def visit_Assign(self, node):
+        # 기존 노드 방문
+        self.generic_visit(node)
+        return self._create_nodes(node)
+
+    def visit_FunctionDef(self, node):
+        # 함수 정의 노드 방문
+        self.generic_visit(node)
+        return node
+
+    def _create_nodes(self, node) -> list:
+        """노드 변환 로직"""
+        var_name = node.targets[0].id
+        source_text = self.get_node_source(node)
+        result_nodes = [node]
+
+        # 단순히 콜백 호출만 추가 (리스트 여부는 콜백에서 처리)
+        result_nodes.append(self._create_callback_node(var_name, source_text))
+        return result_nodes
+
+    def _create_callback_node(self, var_name: str, source_text: str) -> ast.Expr:
+        """콜백 함수 호출 노드 생성"""
+        return ast.Expr(
+            value=ast.Call(
+                func=ast.Name(id=self.callback_name, ctx=ast.Load()),
+                args=[
+                    ast.Name(id=var_name, ctx=ast.Load()),
+                    ast.Constant(value=source_text)
+                ],
+                keywords=[]
+            )
+        )
+
+
+def add_func_call_after_assign(
+    func_to_modify: Callable,
+    callback_func: CallbackFunc
+) -> Callable:
+    """
+    함수/메서드의 모든 대입문 다음에 콜백 함수를 호출하도록 변환합니다.
+
+    Args:
+        func_to_modify: 변환할 함수 또는 메서드
+        callback_func: 대입문 다음에 호출될 콜백 함수.
+                     시그너처: (value: Union[Any, List[Any]], source: str) -> None
+
+    Returns:
+        변환된 함수를 반환합니다.
+
+    Notes:
+        - 이 함수는 @staticmethod, @classmethod를 제외한 커스텀 데코레이터를 지원하지 않습니다.
+        - 커스텀 데코레이터가 적용된 함수를 변환하면 해당 데코레이터의 기능은 무시됩니다.
+        - 대상 함수에 커스텀 데코레이터가 필요한 경우, 변환된 함수를 다시 데코레이터로 감싸서 사용해야 합니다.
+
+    Examples:
+        >>> @my_decorator  # 이 데코레이터는 무시됨
+        >>> def test_func():
+        ...     x = 42
+        ...     return x
+        ...
+        >>> modified = add_func_call_after_assign(test_func, callback)
+        >>> # 필요한 경우 다음과 같이 다시 적용
+        >>> modified = my_decorator(modified)
+    """
+    # 함수 분석
+    func_info = FunctionInfo(func_to_modify)
+
+    # 소스 코드 들여쓰기 처리
+    func_info.source = _normalize_indentation(func_info.source)
+
+    # AST 변환 및 코드 생성
+    modified_source = _transform_source(
+        func_info.source, callback_func.__name__)
+
+    # 실행 컨텍스트 준비
+    namespace = _prepare_namespace(callback_func, func_info, modified_source)
+
+    # 변환된 함수 실행을 위한 래퍼 생성
+    return _create_wrapper(func_info, namespace)
+
+
+def _transform_source(source: str, callback_name: str) -> str:
+    """소스 코드 AST 변환"""
+    tree = ast.parse(source)
+    transformer = AssignmentVisitor(callback_name)
+    transformer.set_source(source)  # 소스 코드 설정
+    modified_tree = transformer.visit(tree)
+    ast.fix_missing_locations(modified_tree)  # 노드 위치 정보 수정
+    return astor.to_source(modified_tree)
+
+
+def _prepare_namespace(callback_func: Callable, func_info: FunctionInfo, modified_source: str) -> Dict:
+    """실행을 위한 네임스페이스 준비"""
+    namespace = {
+        callback_func.__name__: callback_func,
+        callback_func.__qualname__: callback_func
+    }
+
+    if func_info.is_class_method:
+        namespace['cls'] = func_info.cls
+    elif func_info.is_bound_method:
+        namespace['self'] = func_info.instance
+
+    globals_copy = globals().copy()
+    globals_copy.update(namespace)
+
+    exec(modified_source, globals_copy, namespace)
+    return namespace
+
+
+def _normalize_indentation(source: str) -> str:
+    """소스 코드의 들여쓰기를 정규화"""
+    lines = source.splitlines()
+    first_line = lines[0]
+    indent = len(first_line) - len(first_line.lstrip())
+    return '\n'.join(
+        line[indent:] if line[:indent].isspace() else line
+        for line in lines
+    )
+
+
+def _create_wrapper(func_info: FunctionInfo, namespace: Dict) -> Callable:
+    """함수 타입에 따른 적절한 래퍼 함수 생성"""
+    def wrapper(*args, **kwargs):
+        func_name = func_info.get_func_name()
+
+        if func_info.is_class_method:
+            method = classmethod(namespace[func_name])
+            return method.__get__(None, func_info.cls)(*args, **kwargs)
+        elif func_info.is_bound_method:
+            method = types.MethodType(namespace[func_name], func_info.instance)
+            return method(*args, **kwargs)
+        elif func_info.is_static_method:
+            return namespace[func_name](*args, **kwargs)
+        else:
+            return namespace[func_name](*args, **kwargs)
+
+    return wrapper
