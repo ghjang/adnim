@@ -2,6 +2,7 @@ import ast
 import astor
 import inspect
 import types
+import sys
 from typing import Callable, Any, Dict, Union, List, TypeVar, Optional
 
 T = TypeVar('T')
@@ -24,25 +25,34 @@ class FunctionInfo:
 
     def _analyze_function(self):
         """함수 타입을 분석하고 관련 정보를 설정"""
-        if isinstance(self.func, classmethod):
-            self.is_class_method = True
-            self.cls = self.func.__get__(None, type)
-            self.source = inspect.getsource(self.func.__func__)
-        elif inspect.ismethod(self.func) and isinstance(self.func.__self__, type):
-            self.is_class_method = True
-            self.cls = self.func.__self__
-            self.source = inspect.getsource(self.func.__func__)
-        else:
-            self.is_bound_method = hasattr(self.func, '__self__')
-            self.is_static_method = isinstance(self.func, staticmethod)
-
-            if self.is_bound_method:
-                self.instance = getattr(self.func, '__self__', None)
+        try:
+            if isinstance(self.func, classmethod):
+                self.is_class_method = True
+                self.cls = self.func.__get__(None, type)
                 self.source = inspect.getsource(self.func.__func__)
-            elif self.is_static_method:
+            elif inspect.ismethod(self.func) and isinstance(self.func.__self__, type):
+                self.is_class_method = True
+                self.cls = self.func.__self__
                 self.source = inspect.getsource(self.func.__func__)
             else:
-                self.source = inspect.getsource(self.func)
+                self.is_bound_method = hasattr(self.func, '__self__')
+                self.is_static_method = isinstance(self.func, staticmethod)
+
+                if self.is_bound_method:
+                    self.instance = getattr(self.func, '__self__', None)
+                    self.source = inspect.getsource(self.func.__func__)
+                elif self.is_static_method:
+                    self.source = inspect.getsource(self.func.__func__)
+                else:
+                    self.source = inspect.getsource(self.func)
+        except OSError:
+            # exec으로 생성된 함수의 경우 소스를 직접 생성
+            self.source = self._create_simple_function_source()
+
+    def _create_simple_function_source(self) -> str:
+        """exec으로 생성된 함수를 위한 기본 소스 코드 생성"""
+        func_name = self.get_func_name()
+        return f"def {func_name}(*args, **kwargs):\n    return func(*args, **kwargs)"
 
     def get_func_name(self) -> str:
         """함수의 이름을 반환"""
@@ -82,14 +92,36 @@ class AssignmentVisitor(ast.NodeTransformer):
         self.generic_visit(node)
         return node
 
+    def _get_target_ids(self, target: ast.AST) -> List[str]:
+        """대입문의 타겟 변수 이름들을 추출"""
+        if isinstance(target, ast.Name):
+            return [target.id]
+        elif isinstance(target, ast.Tuple):
+            ids = []
+            for elt in target.elts:
+                if isinstance(elt, ast.Name):
+                    ids.append(elt.id)
+            return ids
+        return []
+
     def _create_nodes(self, node) -> list:
         """노드 변환 로직"""
-        var_name = node.targets[0].id
-        source_text = self.get_node_source(node)
         result_nodes = [node]
+        source_text = self.get_node_source(node)
 
-        # 단순히 콜백 호출만 추가 (리스트 여부는 콜백에서 처리)
-        result_nodes.append(self._create_callback_node(var_name, source_text))
+        # 모든 타겟 변수에 대해 콜백 생성
+        for target in node.targets:
+            for var_name in self._get_target_ids(target):
+                result_nodes.append(
+                    self._create_callback_node(var_name, source_text))
+
+        # 리스트인 경우에만 리스트 순회 추가
+        if isinstance(node.value, ast.List):
+            for target in node.targets:
+                for var_name in self._get_target_ids(target):
+                    result_nodes.append(
+                        self._create_callback_node(var_name, source_text))
+
         return result_nodes
 
     def _create_callback_node(self, var_name: str, source_text: str) -> ast.Expr:
@@ -104,6 +136,13 @@ class AssignmentVisitor(ast.NodeTransformer):
                 keywords=[]
             )
         )
+
+
+class RemoveDecoratorTransformer(ast.NodeTransformer):
+    def visit_FunctionDef(self, node: ast.FunctionDef) -> ast.FunctionDef:
+        # 데코레이터 리스트를 비움
+        node.decorator_list = []
+        return node
 
 
 def add_func_call_after_assign(
@@ -156,10 +195,16 @@ def add_func_call_after_assign(
 def _transform_source(source: str, callback_name: str) -> str:
     """소스 코드 AST 변환"""
     tree = ast.parse(source)
+
+    # 데코레이터 제거
+    tree = RemoveDecoratorTransformer().visit(tree)
+
+    # 대입문 변환
     transformer = AssignmentVisitor(callback_name)
-    transformer.set_source(source)  # 소스 코드 설정
+    transformer.set_source(source)
     modified_tree = transformer.visit(tree)
-    ast.fix_missing_locations(modified_tree)  # 노드 위치 정보 수정
+
+    ast.fix_missing_locations(modified_tree)
     return astor.to_source(modified_tree)
 
 
@@ -167,8 +212,18 @@ def _prepare_namespace(callback_func: Callable, func_info: FunctionInfo, modifie
     """실행을 위한 네임스페이스 준비"""
     namespace = {
         callback_func.__name__: callback_func,
-        callback_func.__qualname__: callback_func
+        callback_func.__qualname__: callback_func,
+        'func': func_info.func  # 원본 함수를 네임스페이스에 추가
     }
+
+    if hasattr(func_info.func, '__module__'):
+        try:
+            module = sys.modules[func_info.func.__module__]
+            module_dict = {k: v for k, v in module.__dict__.items()
+                           if not k.startswith('_')}
+            namespace.update(module_dict)
+        except (KeyError, AttributeError):
+            pass
 
     if func_info.is_class_method:
         namespace['cls'] = func_info.cls

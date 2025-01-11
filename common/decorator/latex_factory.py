@@ -7,6 +7,7 @@ from typing import Callable, Dict, Any, Union
 import datetime
 from json.decoder import JSONDecodeError
 import os
+from .function_transformer import add_func_call_after_assign
 
 # Configuration constants
 DEFAULT_OUTPUT_DIR = "latex_outputs"
@@ -52,6 +53,15 @@ def save_json_data(json_path: Path, data: Dict[str, Any]) -> None:
         logger.error(f"Failed to save JSON file: {e}")
 
 
+def print_latex_var(var: Any, source: str):
+    """LaTeX 관련 변수 출력을 위한 콜백 함수"""
+    print(f"\nLatex Factory Variable:")
+    print(f"Value: {var}")
+    print(f"Source: {source}")
+    if isinstance(var, sp.Basic):
+        print(f"LaTeX: {sp.latex(var)}")
+
+
 def latex_factory(save_dir: Union[str, Path, None] = None, auto_latex_str: bool = True) -> Callable:
     """
     A decorator that saves LaTeX strings or SymPy expressions to JSON file.
@@ -92,42 +102,49 @@ def latex_factory(save_dir: Union[str, Path, None] = None, auto_latex_str: bool 
         raise RuntimeError(f"Failed to create directory: {save_path}")
 
     def decorator(func: Callable) -> Callable:
+        # 변환된 함수 생성
+        transformed_func = add_func_call_after_assign(func, print_latex_var)
+
         @wraps(func)
         def wrapper(*args, **kwargs):
             # Initialize data dict
             data = {}
-            json_path = save_path / JSON_FILENAME
+            json_path = save_path / JSON_FILENAME if save_path else None
 
             try:
                 # Get the file path of the decorated function
                 file_path = os.path.abspath(func.__code__.co_filename)
-                result = func(*args, **kwargs)
 
-                # Load existing data before modification
-                data = load_json_data(json_path)
+                # 변환된 함수 호출
+                result = transformed_func(*args, **kwargs)
 
-                # Convert result to LaTeX
-                latex_str = convert_to_latex(result)
+                # 나머지 로직은 그대로 유지
+                if json_path:
+                    # Load existing data before modification
+                    data = load_json_data(json_path)
 
-                # Prepare entry data
-                entry = {
-                    'timestamp': datetime.datetime.now().isoformat(),
-                    'latex': latex_str
-                }
+                    # Convert result to LaTeX
+                    latex_str = convert_to_latex(result)
 
-                # Add args and kwargs only if they exist
-                if args:
-                    entry['args'] = str(args)
-                if kwargs:
-                    entry['kwargs'] = str(kwargs)
+                    # Prepare entry data
+                    entry = {
+                        'timestamp': datetime.datetime.now().isoformat(),
+                        'latex': latex_str
+                    }
 
-                # Initialize file path in data if not exists
-                if file_path not in data:
-                    data[file_path] = {}
+                    # Add args and kwargs only if they exist
+                    if args:
+                        entry['args'] = str(args)
+                    if kwargs:
+                        entry['kwargs'] = str(kwargs)
 
-                # Update data and save
-                data[file_path][func.__name__] = entry
-                save_json_data(json_path, data)
+                    # Initialize file path in data if not exists
+                    if file_path not in data:
+                        data[file_path] = {}
+
+                    # Update data and save
+                    data[file_path][func.__name__] = entry
+                    save_json_data(json_path, data)
 
                 return latex_str if auto_latex_str else result
 
