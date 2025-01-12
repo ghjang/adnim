@@ -47,6 +47,7 @@ def test_expr_original() -> sp.Expr:
 def test_expr_auto() -> str:
     return "f(x) = x^2"
 
+
 @latex_factory()
 def test_list_assignment() -> str:
     x = 100
@@ -62,7 +63,7 @@ class LatexFactoryTest(Scene):
     def construct(self):
         test_expr()
         test_list_assignment()
-        
+
         original = MathTex(sp.latex(test_expr_original()))
 
         auto = MathTex(test_expr_auto())
