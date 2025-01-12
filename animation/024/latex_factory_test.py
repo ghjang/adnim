@@ -3,7 +3,7 @@ from manim import *
 from common.decorator.latex_factory import latex_factory
 
 
-@latex_factory()
+# @latex_factory()
 def test_expr() -> str:
     return "f(x) = x^2"
 
@@ -20,7 +20,7 @@ def sympy_fraction() -> sp.Expr:
     return (x + y)/(x - y)
 
 
-# @latex_factory()
+@latex_factory()
 def sympy_integral() -> sp.Expr:
     x = sp.Symbol('x')
     return sp.Integral(x**2, (x, 0, sp.oo))

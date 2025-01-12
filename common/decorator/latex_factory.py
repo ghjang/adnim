@@ -116,7 +116,7 @@ def latex_factory(save_dir: Union[str, Path, None] = None, auto_latex_str: bool 
                 file_path = os.path.abspath(func.__code__.co_filename)
 
                 # 변환된 함수 호출
-                result = transformed_func(*args, **kwargs)
+                return_value = transformed_func(*args, **kwargs)
 
                 # 나머지 로직은 그대로 유지
                 if json_path:
@@ -124,12 +124,12 @@ def latex_factory(save_dir: Union[str, Path, None] = None, auto_latex_str: bool 
                     data = load_json_data(json_path)
 
                     # Convert result to LaTeX
-                    latex_str = convert_to_latex(result)
+                    return_latex_str = convert_to_latex(return_value)
 
                     # Prepare entry data
                     entry = {
                         'timestamp': datetime.datetime.now().isoformat(),
-                        'latex': latex_str
+                        'return_latex': return_latex_str
                     }
 
                     # Add args and kwargs only if they exist
@@ -146,7 +146,7 @@ def latex_factory(save_dir: Union[str, Path, None] = None, auto_latex_str: bool 
                     data[file_path][func.__name__] = entry
                     save_json_data(json_path, data)
 
-                return latex_str if auto_latex_str else result
+                return return_latex_str if auto_latex_str else return_value
 
             except Exception as e:
                 logger.error(f"Decorator execution failed: {e}")
