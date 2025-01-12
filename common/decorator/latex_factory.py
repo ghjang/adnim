@@ -53,15 +53,6 @@ def save_json_data(json_path: Path, data: Dict[str, Any]) -> None:
         logger.error(f"Failed to save JSON file: {e}")
 
 
-def print_latex_var(var: Any, source: str):
-    """LaTeX 관련 변수 출력을 위한 콜백 함수"""
-    print(f"\nLatex Factory Variable:")
-    print(f"Value: {var}")
-    print(f"Source: {source}")
-    if isinstance(var, sp.Basic):
-        print(f"LaTeX: {sp.latex(var)}")
-
-
 def latex_factory(save_dir: Union[str, Path, None] = None, auto_latex_str: bool = True) -> Callable:
     """
     A decorator that saves LaTeX strings or SymPy expressions to JSON file.
@@ -101,52 +92,97 @@ def latex_factory(save_dir: Union[str, Path, None] = None, auto_latex_str: bool 
         logger.error(f"Failed to create directory: {e}")
         raise RuntimeError(f"Failed to create directory: {save_path}")
 
+    def _sanitize_source_key(source: str) -> str:
+        """소스 코드를 JSON 키로 사용하기 위한 전처리"""
+        # 개행 문자를 \\n으로 변환
+        source = source.replace('\n', '\\n')
+        # 탭을 스페이스로 변환
+        source = source.replace('\t', '    ')
+        # 연속된 공백을 하나로
+        source = ' '.join(source.split())
+        return source
+
+    def _sanitize_source_code(source: str) -> str:
+        """소스 코드의 특수 문자를 JSON 저장에 적합하게 처리"""
+        return source.replace('\n', '\\n').replace('\t', '\\t')
+
     def decorator(func: Callable) -> Callable:
-        # 변환된 함수 생성
-        transformed_func = add_func_call_after_assign(func, print_latex_var)
+        # 대입문 데이터를 누적할 클로저 변수
+        assignment_data = {'assignments': {}}
+
+        def save_assignment_data(var: Any | list[Any], source: str) -> None:
+            try:
+                sanitized_key = _sanitize_source_key(source)
+                sanitized_source = _sanitize_source_code(source)
+
+                # 대입문 타입에 따라 메모리에 누적
+                if isinstance(var, list):
+                    # 리스트 대입문인 경우
+                    assignment_data['assignments'][sanitized_key] = {
+                        'type': 'list',
+                        'source': sanitized_source,
+                        'items': [
+                            {'index': idx, 'latex': convert_to_latex(item)}
+                            for idx, item in enumerate(var)
+                        ]
+                    }
+                else:
+                    # 일반 대입문인 경우
+                    assignment_data['assignments'][sanitized_key] = {
+                        'type': 'single',
+                        'source': sanitized_source,
+                        'latex': convert_to_latex(var)
+                    }
+
+            except Exception as e:
+                logger.error(f"Failed to save assignment data: {e}")
+                logger.error(f"Exception details:", exc_info=True)
+
+        transformed_func = add_func_call_after_assign(
+            func,
+            save_assignment_data
+        )
 
         @wraps(func)
         def wrapper(*args, **kwargs):
-            # Initialize data dict
-            data = {}
-            json_path = save_path / JSON_FILENAME if save_path else None
-
             try:
-                # Get the file path of the decorated function
-                file_path = os.path.abspath(func.__code__.co_filename)
-
                 # 변환된 함수 호출
                 return_value = transformed_func(*args, **kwargs)
 
-                # 나머지 로직은 그대로 유지
+                json_path = save_path / JSON_FILENAME if save_path else None
+
+                # 리턴값과 대입문 데이터를 함께 저장
                 if json_path:
-                    # Load existing data before modification
                     data = load_json_data(json_path)
+                    file_path = os.path.abspath(func.__code__.co_filename)
 
-                    # Convert result to LaTeX
-                    return_latex_str = convert_to_latex(return_value)
-
-                    # Prepare entry data
-                    entry = {
-                        'timestamp': datetime.datetime.now().isoformat(),
-                        'return_latex': return_latex_str
-                    }
-
-                    # Add args and kwargs only if they exist
-                    if args:
-                        entry['args'] = str(args)
-                    if kwargs:
-                        entry['kwargs'] = str(kwargs)
-
-                    # Initialize file path in data if not exists
                     if file_path not in data:
                         data[file_path] = {}
 
-                    # Update data and save
-                    data[file_path][func.__name__] = entry
+                    # 함수 데이터 준비
+                    func_data = {
+                        'timestamp': datetime.datetime.now().isoformat(),
+                        'return_latex': convert_to_latex(return_value)
+                    }
+
+                    # 누적된 대입문 데이터 병합
+                    func_data.update(assignment_data)
+
+                    # Add args and kwargs only if they exist
+                    if args:
+                        func_data['args'] = str(args)
+                    if kwargs:
+                        func_data['kwargs'] = str(kwargs)
+
+                    # 전체 데이터 저장
+                    data[file_path][func.__name__] = func_data
                     save_json_data(json_path, data)
 
-                return return_latex_str if auto_latex_str else return_value
+                    # 다음 호출을 위해 대입문 데이터 초기화
+                    assignment_data.clear()
+                    assignment_data['assignments'] = {}
+
+                return convert_to_latex(return_value) if auto_latex_str else return_value
 
             except Exception as e:
                 logger.error(f"Decorator execution failed: {e}")

@@ -3,11 +3,13 @@ import astor
 import inspect
 import types
 import sys
-from typing import Callable, Any, Dict, Union, List, TypeVar, Optional
+from typing import Callable, Any, Dict, Union, List, TypeVar, Optional, get_args
 
 T = TypeVar('T')
-AssignValue = Union[T, List[T]]  # 일반 값 또는 리스트 값
-CallbackFunc = Callable[[AssignValue, str], None]  # 콜백 함수 타입 정의
+# 콜백 함수 타입을 더 명확하게 정의
+AssignValue = Union[Any, List[Any]]  # 일반 값 또는 리스트 값 전체
+# (value: Any | list[Any], source: str) -> None
+CallbackFunc = Callable[[AssignValue, str], None]
 
 
 class FunctionInfo:
@@ -109,18 +111,11 @@ class AssignmentVisitor(ast.NodeTransformer):
         result_nodes = [node]
         source_text = self.get_node_source(node)
 
-        # 모든 타겟 변수에 대해 콜백 생성
+        # 모든 타겟 변수에 대해 콜백 생성 (리스트도 전체를 한번에 전달)
         for target in node.targets:
             for var_name in self._get_target_ids(target):
                 result_nodes.append(
                     self._create_callback_node(var_name, source_text))
-
-        # 리스트인 경우에만 리스트 순회 추가
-        if isinstance(node.value, ast.List):
-            for target in node.targets:
-                for var_name in self._get_target_ids(target):
-                    result_nodes.append(
-                        self._create_callback_node(var_name, source_text))
 
         return result_nodes
 
