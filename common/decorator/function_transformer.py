@@ -108,29 +108,15 @@ class AssignmentVisitor(ast.NodeTransformer):
         self.source_lines = source.splitlines()
 
     def get_node_source(self, node: ast.AST) -> str:
-        """AST 노드의 소스 코드와 위치 정보를 추출"""
+        """AST 노드의 소스 코드를 추출"""
         if not (hasattr(node, 'lineno') and hasattr(node, 'end_lineno')):
             return ""
 
         start = node.lineno - 1
         end = node.end_lineno
 
-        # 열 위치도 포함
-        start_col = node.col_offset
-        end_col = node.end_col_offset
-
-        # 해당 줄들 추출
         lines = self.source_lines[start:end]
-
-        # 첫 줄과 마지막 줄은 열 위치를 고려하여 자름
-        if len(lines) == 1:
-            return lines[0][start_col:end_col]
-
-        result = [lines[0][start_col:]]  # 첫 줄
-        result.extend(lines[1:-1])       # 중간 줄들
-        result.append(lines[-1][:end_col])  # 마지막 줄
-
-        return '\n'.join(line.strip() for line in result)
+        return '\n'.join(line.strip() for line in lines)
 
     def visit_Assign(self, node):
         self.current_node = node  # 현재 처리 중인 노드 저장
@@ -173,9 +159,7 @@ class AssignmentVisitor(ast.NodeTransformer):
         # 현재 대입문 노드의 위치 정보
         location = {
             'start_line': self.current_node.lineno,
-            'start_col': self.current_node.col_offset,
-            'end_line': self.current_node.end_lineno,
-            'end_col': self.current_node.end_col_offset
+            'end_line': self.current_node.end_lineno
         }
 
         return ast.Expr(
@@ -186,8 +170,7 @@ class AssignmentVisitor(ast.NodeTransformer):
                     ast.Constant(value=source_text),
                     ast.Dict(
                         keys=[ast.Constant(value=k) for k in location.keys()],
-                        values=[ast.Constant(value=v)
-                                for v in location.values()]
+                        values=[ast.Constant(value=v) for v in location.values()]
                     )
                 ],
                 keywords=[]

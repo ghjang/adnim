@@ -317,15 +317,9 @@ class FunctionInfo:
             source_file = inspect.getsourcefile(self.func)
             lines, start_line = inspect.getsourcelines(self.func)
 
-            # AST를 통해 더 상세한 위치 정보 획득
-            tree = ast.parse(''.join(lines))
-            func_node = tree.body[0]  # 첫 번째 노드가 함수 정의일 것으로 가정
-
             return {
                 'start_line': start_line,
                 'end_line': start_line + len(lines) - 1,
-                'start_col': func_node.col_offset,
-                'end_col': func_node.end_col_offset,
                 'source': ''.join(lines)
             }
         except Exception as e:
@@ -336,24 +330,21 @@ class FunctionInfo:
         """함수 시그너처의 위치 정보를 추출"""
         try:
             # 데코레이터가 있는 경우 시작 위치 조정
-            if (func_node.decorator_list):
+            if func_node.decorator_list:
                 sig_start_line = func_node.decorator_list[-1].end_lineno + 1
             else:
                 sig_start_line = func_node.lineno
 
-            sig_start_col = func_node.col_offset
-
-            # 함수 본문 시작 위치 확인
-            body_start = func_node.body[0].lineno
-
-            # 시그너처 소스 추출
+            # Extract signature text
             sig_source = self._extract_signature_text(func_node)
+
+            # 줄 수 계산
+            sig_lines = sig_source.count('\n') + 1
+            sig_end_line = sig_start_line + (sig_lines - 1)
 
             return {
                 'start_line': sig_start_line,
-                'end_line': body_start - 1,  # 본문 시작 직전 줄까지가 시그너처
-                'start_col': sig_start_col,
-                'end_col': func_node.end_col_offset,
+                'end_line': sig_end_line,
                 'source': sig_source
             }
         except Exception as e:

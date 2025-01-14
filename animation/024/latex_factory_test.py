@@ -11,6 +11,8 @@ def diff_expr() -> sp.Expr:
     return sp.diff(expand, x)
 
 
+
+
 @latex_factory()
 def test_expr() -> str:
     return "f(x) = x^2"
