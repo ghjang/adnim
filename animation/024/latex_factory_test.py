@@ -4,6 +4,14 @@ from common.decorator.latex_factory import latex_factory
 
 
 @latex_factory()
+def diff_expr() -> sp.Expr:
+    x = sp.Symbol('x')
+    eq = (x + 1)**2 - x**2 + sp.sin(x)
+    expand = sp.expand(eq)
+    return sp.diff(expand, x)
+
+
+@latex_factory()
 def test_expr() -> str:
     return "f(x) = x^2"
 
@@ -27,7 +35,9 @@ def sympy_integral() -> sp.Expr:
 
 
 @latex_factory()
-def sympy_limit() -> sp.Expr:
+def sympy_limit(
+        dummy: int = 0
+) -> sp.Expr:
     x = sp.Symbol('x')
     return sp.Limit(sp.sin(x)/x, x, 0)
 
@@ -37,7 +47,7 @@ def sympy_matrix() -> sp.Expr:
     return sp.Matrix([[1, 2], [3, 4]])
 
 
-# @latex_factory(auto_latex_str=False)
+@latex_factory(auto_latex_str=False)
 def test_expr_original() -> sp.Expr:
     y = sp.Symbol('y')
     return sp.Limit(sp.sin(y)/y, y, 0)
@@ -61,6 +71,7 @@ def test_list_assignment() -> str:
 
 class LatexFactoryTest(Scene):
     def construct(self):
+        diff_expr()
         test_expr()
         test_list_assignment()
 
