@@ -11,6 +11,30 @@ def diff_expr() -> sp.Expr:
     return sp.diff(expand, x)
 
 
+@latex_factory()
+def test_list_assignment() -> str:
+    x = 100
+    values = [
+        x,
+        x + 1,
+        x + 2
+    ]
+    return "x = 42"
+
+
+@latex_factory()
+def test_list_assignment_1() -> str:
+    x = 100
+    values = [x, x + 1, x + 2]
+    return "x = 42"
+
+
+@latex_factory()
+def test_list_assignment_2() -> str:
+    x = 100
+    values = [x,
+              x + 1, x + 2]
+    return "x = 42"
 
 
 @latex_factory()
@@ -55,20 +79,9 @@ def test_expr_original() -> sp.Expr:
     return sp.Limit(sp.sin(y)/y, y, 0)
 
 
-@latex_factory()
+# @latex_factory()
 def test_expr_auto() -> str:
     return "f(x) = x^2"
-
-
-@latex_factory()
-def test_list_assignment() -> str:
-    x = 100
-    values = [
-        x,
-        x + 1,
-        x + 2
-    ]
-    return "x = 42"
 
 
 class LatexFactoryTest(Scene):
@@ -76,6 +89,8 @@ class LatexFactoryTest(Scene):
         diff_expr()
         test_expr()
         test_list_assignment()
+        test_list_assignment_1()
+        test_list_assignment_2()
 
         original = MathTex(sp.latex(test_expr_original()))
 
