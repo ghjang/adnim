@@ -3,19 +3,15 @@ import json
 import logging
 from pathlib import Path
 from functools import wraps
-from typing import Callable, Dict, Any, Union, Optional
+from typing import Callable, Dict, Any, Union
 import datetime
 from json.decoder import JSONDecodeError
 import os
-from .function_transformer import (
-    add_func_call_after_assign,
-    FunctionInfo
-)
 from threading import Lock
 from contextlib import contextmanager
 from typing import Generator
-import inspect
-import ast
+from .function_info import FunctionInfo
+from .function_transformer import add_func_call_after_assign
 
 # Configuration constants
 DEFAULT_OUTPUT_DIR = "latex_outputs"
@@ -30,8 +26,14 @@ logger = logging.getLogger(__name__)
 def convert_to_latex(result: Any) -> str:
     """Converts result to LaTeX string safely."""
     try:
-        if isinstance(result, sp.Expr):
+        if isinstance(result, (sp.Basic, sp.matrices.MatrixBase)):
             return sp.latex(result)
+        elif isinstance(result, (int, float)):
+            return str(result)
+        elif isinstance(result, bool):
+            return r"\texttt{True}" if result else r"\texttt{False}"
+        elif result is None:
+            return r"\texttt{None}"
         return str(result)
     except Exception as e:
         logger.error(f"LaTeX conversion failed: {e}")
@@ -212,7 +214,11 @@ class LatexFactory:
 
                     # 원본 함수의 리턴 타입을 보존하면서 latex 변환
                     if effective_auto_latex_str:
-                        if isinstance(return_value, (str, sp.Expr)):
+                        is_convertible = (
+                            isinstance(return_value, (str, sp.Basic, sp.matrices.MatrixBase, int, float, bool)) or
+                            return_value is None
+                        )
+                        if is_convertible:
                             return convert_to_latex(return_value)
                         logger.warning(
                             f"Unexpected return type {type(return_value)} from {func.__name__}, "
@@ -258,161 +264,6 @@ class LatexFactory:
     def _sanitize_source_code(self, source: str) -> str:
         """소스 코드의 특수 문자를 JSON 저장에 적합하게 처리"""
         return source.replace('\n', '\\n').replace('\t', '\\t')
-
-
-class FunctionInfo:
-    def __init__(self, func: Callable):
-        """
-        Args:
-            func: 분석할 함수 객체
-        """
-        self.func = func
-        self.is_class_method = False
-        self.is_bound_method = False
-        self.is_static_method = False
-        self.instance: Optional[Any] = None
-        self.cls: Optional[type] = None
-        self.source = ""
-        # 순서 변경: _analyze_function을 먼저 호출하여 source 등의 정보를 설정
-        self._analyze_function()
-        # source 정보가 설정된 후에 location 정보 획득
-        self.location = self._get_location()
-
-    def _analyze_function(self):
-        """함수 타입을 분석하고 관련 정보를 설정"""
-        try:
-            if isinstance(self.func, classmethod):
-                self.is_class_method = True
-                self.cls = self.func.__get__(None, type)
-                self.source = inspect.getsource(self.func.__func__)
-            elif inspect.ismethod(self.func) and isinstance(self.func.__self__, type):
-                self.is_class_method = True
-                self.cls = self.func.__self__
-                self.source = inspect.getsource(self.func.__func__)
-            else:
-                self.is_bound_method = hasattr(self.func, '__self__')
-                self.is_static_method = isinstance(self.func, staticmethod)
-
-                if self.is_bound_method:
-                    self.instance = getattr(self.func, '__self__', None)
-                    self.source = inspect.getsource(self.func.__func__)
-                elif self.is_static_method:
-                    self.source = inspect.getsource(self.func.__func__)
-                else:
-                    self.source = inspect.getsource(self.func)
-        except OSError:
-            # exec으로 생성된 함수의 경우 소스를 직접 생성
-            self.source = self._create_simple_function_source()
-
-    def _create_simple_function_source(self) -> str:
-        """exec으로 생성된 함수를 위한 기본 소스 코드 생성"""
-        func_name = self.get_func_name()
-        return f"def {func_name}(*args, **kwargs):\n    return func(*args, **kwargs)"
-
-    def get_func_name(self) -> str:
-        """함수의 이름을 반환"""
-        return (self.func.__func__.__name__
-                if hasattr(self.func, '__func__')
-                else self.func.__name__)
-
-    def _get_location(self) -> Dict[str, Any]:
-        """함수의 소스 코드 위치 정보를 반환"""
-        try:
-            source_file = inspect.getsourcefile(self.func)
-            lines, start_line = inspect.getsourcelines(self.func)
-
-            return {
-                'start_line': start_line,
-                'end_line': start_line + len(lines) - 1,
-                'source': ''.join(lines)
-            }
-        except Exception as e:
-            logger.error(f"Could not get function location: {e}")
-            return {}
-
-    def _get_signature_location(self, func_node: ast.FunctionDef) -> Dict[str, Any]:
-        """함수 시그너처의 위치 정보를 추출"""
-        try:
-            # 데코레이터가 있는 경우 시작 위치 조정
-            if func_node.decorator_list:
-                sig_start_line = func_node.decorator_list[-1].end_lineno + 1
-            else:
-                sig_start_line = func_node.lineno
-
-            # Extract signature text
-            sig_source = self._extract_signature_text(func_node)
-
-            # 줄 수 계산
-            sig_lines = sig_source.count('\n') + 1
-            sig_end_line = sig_start_line + (sig_lines - 1)
-
-            return {
-                'start_line': sig_start_line,
-                'end_line': sig_end_line,
-                'source': sig_source
-            }
-        except Exception as e:
-            logger.error(f"Failed to get signature location: {e}")
-            return {}
-
-    def _extract_signature_text(self, func_node: ast.FunctionDef) -> str:
-        """함수 시그너처 텍스트를 추출"""
-        try:
-            # 전체 소스 코드 가져오기
-            source_lines, first_line = inspect.getsourcelines(self.func)
-
-            # 함수 정의 라인 찾기 (def로 시작하는 부분)
-            sig_text = []
-            started = False
-            paren_count = 0
-
-            for line in source_lines:
-                stripped = line.lstrip()
-                if not started and stripped.startswith('def '):
-                    started = True
-
-                if started:
-                    sig_text.append(line)
-                    paren_count += line.count('(') - line.count(')')
-
-                    # 괄호가 닫히고 콜론이 나오면 시그너처 끝
-                    if paren_count == 0 and line.rstrip().endswith(':'):
-                        break
-
-            # 마지막 콜론 제거
-            sig_text[-1] = sig_text[-1].rstrip()[:-1]
-
-            return ''.join(sig_text)
-
-        except Exception as e:
-            logger.error(f"Failed to extract signature text: {e}")
-            return ""
-
-    def get_signature_info(self) -> Dict[str, Any]:
-        """함수의 시그너처 정보를 추출"""
-        try:
-            sig = inspect.signature(self.func)
-            # AST를 통해 함수 노드 얻기
-            source = inspect.getsource(self.func)
-            tree = ast.parse(source)
-            func_node = tree.body[0]  # 첫 번째 노드가 함수 정의일 것으로 가정
-
-            return {
-                'parameters': {
-                    name: {
-                        'kind': str(param.kind),
-                        'default': str(param.default) if param.default is not param.empty else None,
-                        'annotation': str(param.annotation) if param.annotation is not param.empty else None
-                    }
-                    for name, param in sig.parameters.items()
-                },
-                'return_annotation': str(sig.return_annotation) if sig.return_annotation is not inspect.Signature.empty else None,
-                # 시그너처 위치 정보 추가
-                'relative_location': self._get_signature_location(func_node)
-            }
-        except Exception as e:
-            logger.error(f"Failed to get signature info: {e}")
-            return {}
 
 
 # 전역 싱글톤 인스턴스 - 기본 디렉토리 사용

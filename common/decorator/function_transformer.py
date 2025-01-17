@@ -1,10 +1,10 @@
 import sys
 import types
-import inspect
 import ast
 import astor
 import logging
-from typing import Callable, Any, Dict, Union, List, TypeVar, Optional, get_args
+from typing import Callable, Any, Dict, Union, List, TypeVar
+from .function_info import FunctionInfo
 
 T = TypeVar('T')
 # 콜백 함수 타입을 더 명확하게 정의
@@ -16,84 +16,6 @@ CallbackFunc = Callable[[AssignValue, str,
 # Logging configuration
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
-
-class FunctionInfo:
-    """함수/메서드 정보를 저장하는 클래스"""
-
-    def __init__(self, func: Callable):
-        self.func = func
-        self.is_class_method = False
-        self.is_bound_method = False
-        self.is_static_method = False
-        self.instance: Optional[Any] = None
-        self.cls: Optional[type] = None
-        self.source = ""
-        self.location = self._get_location()
-        self._analyze_function()
-
-    def _analyze_function(self):
-        """함수 타입을 분석하고 관련 정보를 설정"""
-        try:
-            if isinstance(self.func, classmethod):
-                self.is_class_method = True
-                self.cls = self.func.__get__(None, type)
-                self.source = inspect.getsource(self.func.__func__)
-            elif inspect.ismethod(self.func) and isinstance(self.func.__self__, type):
-                self.is_class_method = True
-                self.cls = self.func.__self__
-                self.source = inspect.getsource(self.func.__func__)
-            else:
-                self.is_bound_method = hasattr(self.func, '__self__')
-                self.is_static_method = isinstance(self.func, staticmethod)
-
-                if self.is_bound_method:
-                    self.instance = getattr(self.func, '__self__', None)
-                    self.source = inspect.getsource(self.func.__func__)
-                elif self.is_static_method:
-                    self.source = inspect.getsource(self.func.__func__)
-                else:
-                    self.source = inspect.getsource(self.func)
-        except OSError:
-            # exec으로 생성된 함수의 경우 소스를 직접 생성
-            self.source = self._create_simple_function_source()
-
-    def _create_simple_function_source(self) -> str:
-        """exec으로 생성된 함수를 위한 기본 소스 코드 생성"""
-        func_name = self.get_func_name()
-        return f"def {func_name}(*args, **kwargs):\n    return func(*args, **kwargs)"
-
-    def get_func_name(self) -> str:
-        """함수의 이름을 반환"""
-        return (self.func.__func__.__name__
-                if hasattr(self.func, '__func__')
-                else self.func.__name__)
-
-    def _get_location(self) -> Dict[str, Any]:
-        """함수의 소스 코드 위치 정보를 반환"""
-        try:
-            # NOTE:
-            # 함수가 포함된 소스 '.py' 파일 경로 정보는 별도 상위 '키'에서 저장하기 때문에
-            # 이 정보에서는 중복해서 저장할 필요가 없음. 참고를 위해서 코드는 남김.
-            source_file = inspect.getsourcefile(self.func)
-
-            lines, start_line = inspect.getsourcelines(self.func)
-
-            # AST를 통해 더 상세한 위치 정보 획득
-            tree = ast.parse(''.join(lines))
-            func_node = tree.body[0]  # 첫 번째 노드가 함수 정의일 것으로 가정
-
-            return {
-                # 'file': source_file,
-                'start_line': start_line,
-                'end_line': start_line + len(lines) - 1,
-                'start_col': func_node.col_offset,
-                'end_col': func_node.end_col_offset,
-                'source': ''.join(lines)
-            }
-        except Exception as e:
-            logger.exception(f"Could not get function location: {e}")
-            return {}
 
 
 class AssignmentVisitor(ast.NodeTransformer):
@@ -170,7 +92,8 @@ class AssignmentVisitor(ast.NodeTransformer):
                     ast.Constant(value=source_text),
                     ast.Dict(
                         keys=[ast.Constant(value=k) for k in location.keys()],
-                        values=[ast.Constant(value=v) for v in location.values()]
+                        values=[ast.Constant(value=v)
+                                for v in location.values()]
                     )
                 ],
                 keywords=[]
