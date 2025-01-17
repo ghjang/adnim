@@ -84,6 +84,11 @@ def test_expr_auto() -> str:
     return "f(x) = x^2"
 
 
+@latex_factory()
+def test_args(x: int, y: int) -> int:
+    return x + y
+
+
 class LatexFactoryTest(Scene):
     def construct(self):
         diff_expr()
@@ -91,6 +96,7 @@ class LatexFactoryTest(Scene):
         test_list_assignment()
         test_list_assignment_1()
         test_list_assignment_2()
+        test_args(1, 2)
 
         original = MathTex(sp.latex(test_expr_original()))
 

@@ -188,6 +188,10 @@ class LatexFactory:
                                 'timestamp': datetime.datetime.now().isoformat(),
                                 'location': func_info.location,
                                 'signature': func_info.get_signature_info(),
+                                'arguments': {
+                                    'args': [str(arg) for arg in args] if args else [],
+                                    'kwargs': {k: str(v) for k, v in kwargs.items()} if kwargs else {}
+                                },
                                 'assignments': assignment_data.get('assignments', {}),
                                 'return_latex': convert_to_latex(return_value)
                             }
