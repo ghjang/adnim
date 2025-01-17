@@ -4,18 +4,6 @@ from common.decorator.latex_factory import latex_factory
 from base_proof_scene import BaseProofScene
 
 
-@latex_factory()
-def _get_proof_steps() -> List[str]:
-    steps = [
-        r"\left\{c \cdot f(x)\right\}' = \lim_{h \to 0} \frac{c \cdot f(x+h) - c \cdot f(x)}{h}",
-        r"= \lim_{h \to 0} \frac{c \cdot \left\{f(x+h) - f(x)\right\}}{h}",
-        r"= \lim_{h \to 0} c \cdot \left\{\frac{f(x+h) - f(x)}{h}\right\}",
-        r"= c \cdot \lim_{h \to 0} \frac{f(x+h) - f(x)}{h}",
-        r"= c \cdot f'(x)"
-    ]
-    return steps
-
-
 class ConstantMultipleRuleProof(BaseProofScene):
     @override
     def construct(self):
@@ -30,5 +18,13 @@ class ConstantMultipleRuleProof(BaseProofScene):
         return r"\left\{c \cdot f(x)\right\}' = c \cdot f'(x)"
 
     @override
+    @latex_factory()
     def get_proof_steps(self) -> List[str]:
-        return _get_proof_steps()
+        steps = [
+            r"\left\{c \cdot f(x)\right\}' = \lim_{h \to 0} \frac{c \cdot f(x+h) - c \cdot f(x)}{h}",
+            r"= \lim_{h \to 0} \frac{c \cdot \left\{f(x+h) - f(x)\right\}}{h}",
+            r"= \lim_{h \to 0} c \cdot \left\{\frac{f(x+h) - f(x)}{h}\right\}",
+            r"= c \cdot \lim_{h \to 0} \frac{f(x+h) - f(x)}{h}",
+            r"= c \cdot f'(x)"
+        ]
+        return steps

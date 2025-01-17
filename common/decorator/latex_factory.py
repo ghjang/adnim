@@ -198,12 +198,6 @@ class LatexFactory:
                                 'return_latex': convert_to_latex(return_value)
                             }
 
-                            # Add args and kwargs only if they exist
-                            if args:
-                                func_data['args'] = str(args)
-                            if kwargs:
-                                func_data['kwargs'] = str(kwargs)
-
                             # 전체 데이터 저장
                             data[file_path][func.__name__] = func_data
                             save_json_data(json_path, data)
