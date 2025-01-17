@@ -90,6 +90,11 @@ def test_args(x: int, y: int) -> int:
 
 
 class LatexFactoryTest(Scene):
+    @latex_factory()
+    def instance_method_test(self) -> str:
+        x = sp.Symbol('x')
+        return "f'(x) = 2x"
+
     def construct(self):
         diff_expr()
         test_expr()
@@ -97,6 +102,8 @@ class LatexFactoryTest(Scene):
         test_list_assignment_1()
         test_list_assignment_2()
         test_args(1, 2)
+
+        self.instance_method_test()
 
         original = MathTex(sp.latex(test_expr_original()))
 

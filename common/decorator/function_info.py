@@ -81,13 +81,39 @@ class FunctionInfo:
             logger.error(f"Could not get function location: {e}")
             return {}
 
+    def _normalize_indentation(self, source: str) -> str:
+        """소스 코드의 들여쓰기를 최소 레벨로 정규화"""
+        lines = source.splitlines()
+        non_empty_lines = [line for line in lines if line.strip()]
+
+        if not non_empty_lines:
+            return source
+
+        # 공통된 들여쓰기 레벨 찾기
+        min_indent = min(
+            len(line) - len(line.lstrip())
+            for line in non_empty_lines
+        )
+
+        # 최소 들여쓰기만큼만 제거
+        normalized_lines = [
+            line[min_indent:] if line[:min_indent].isspace() else line
+            for line in lines
+        ]
+
+        return '\n'.join(normalized_lines)
+
     def get_signature_info(self) -> Dict[str, Any]:
         """함수의 시그너처 정보를 추출"""
         try:
             sig = inspect.signature(self.func)
             source = inspect.getsource(self.func)
-            tree = ast.parse(source)
-            func_node = tree.body[0]  # 첫 번째 노드가 함수 정의일 것으로 가정
+
+            # '메쏘드' 형태의 함수등을 처리하기 위해 들여쓰기 정규화 적용
+            source = self._normalize_indentation(source)
+
+            tree = ast.parse(source)  # mode='exec'가 기본값
+            func_node = tree.body[0]  # 첫 번째 노드가 함수 정의라고 가정
 
             return {
                 'parameters': {
