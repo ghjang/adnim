@@ -1,5 +1,6 @@
 from typing import override, List
 from sympy import cos, sqrt, symbols, S
+from sympy.abc import x
 from manim import *
 from common.decorator.latex_factory import latex_factory
 from common.template.proof_sequence.base_proof_scene import BaseProofScene, ProofSceneConfig
@@ -32,5 +33,4 @@ class FreeWifiPasswordDefiniteIntegration(BaseProofScene):
     @override
     @latex_factory()
     def after_qed(self) -> None:
-        x = symbols('x')
         integrand = (x**3 * cos(x/2) + S(1)/2) * sqrt(4 - x**2)
