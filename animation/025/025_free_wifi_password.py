@@ -8,10 +8,6 @@ from common.template.proof_sequence.base_proof_scene import BaseProofScene, Proo
 
 class FreeWifiPasswordDefiniteIntegration(BaseProofScene):
     @override
-    def construct(self):
-        return super().construct()
-
-    @override
     def get_title(self) -> str:
         return "Finding the FREE Wi-Fi Password"
 
