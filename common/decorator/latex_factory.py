@@ -67,37 +67,18 @@ def save_json_data(json_path: Path, data: Dict[str, Any]) -> None:
 
 
 class LatexFactory:
-    def __init__(self, save_dir: Union[str, Path, None] = None, auto_latex_str: bool = True):
-        """
-        Args:
-            save_dir: Directory path to save JSON file. If None, checks environment variable
-                     first, then uses default directory.
-            auto_latex_str: If True, returns LaTeX string instead of original function result.
-        """
-        # 설정값 저장
-        self.auto_latex_str = auto_latex_str
-
-        # 저장 디렉토리 결정
-        if save_dir is not None:
-            self.save_dir = Path(save_dir)
-        else:
-            env_dir = os.getenv(ENV_VAR_NAME)
-            if env_dir:
-                self.save_dir = Path(env_dir)
-            else:
-                self.save_dir = None  # pass-through 모드로 동작하도록 None 설정
-                logger.info(
-                    f"No save_dir specified and {ENV_VAR_NAME} not set. "
-                    "Decorator will pass through function calls without saving outputs."
-                )
-                return  # 초기화 중단 - pass-through 모드
-
-        # 저장 디렉토리 생성 (pass-through 모드가 아닐 때만)
-        try:
-            self.save_dir.mkdir(parents=True, exist_ok=True)
-        except Exception as e:
-            logger.error(f"Failed to create directory: {e}")
-            raise RuntimeError(f"Failed to create directory: {self.save_dir}")
+    def __init__(self):
+        """기본 초기화"""
+        self.save_dir = None
+        env_dir = os.getenv(ENV_VAR_NAME)
+        if env_dir:
+            self.save_dir = Path(env_dir)
+            try:
+                self.save_dir.mkdir(parents=True, exist_ok=True)
+            except Exception as e:
+                logger.error(f"Failed to create directory: {e}")
+                raise RuntimeError(
+                    f"Failed to create directory: {self.save_dir}")
 
         self.file_lock = Lock()
         self.config = self._load_config()
@@ -112,22 +93,33 @@ class LatexFactory:
         # Configuration loading logic here
         return {}
 
-    def __call__(self, auto_latex_str: bool | None = None) -> Callable:
+    def __call__(
+        self,
+        save_dir: Union[str, Path, None] = None,
+        auto_latex_str: bool = True
+    ) -> Callable:
         """
-        데코레이터 호출. auto_latex_str이 None이면 인스턴스의 기본값 사용
+        데코레이터 호출
+
+        Args:
+            save_dir: JSON 파일을 저장할 디렉토리 경로
+            auto_latex_str: True면 LaTeX 문자열로 변환하여 반환
         """
-        # 실제 사용할 auto_latex_str 값 결정
-        effective_auto_latex_str = (
-            self.auto_latex_str if auto_latex_str is None else auto_latex_str
-        )
+        effective_save_dir = Path(save_dir) if save_dir else self.save_dir
+        if effective_save_dir:
+            try:
+                effective_save_dir.mkdir(parents=True, exist_ok=True)
+            except Exception as e:
+                logger.error(f"Failed to create directory: {e}")
+                effective_save_dir = None
 
         # pass-through 모드 체크
-        if self.save_dir is None:
+        if effective_save_dir is None:
             def simple_decorator(func: Callable) -> Callable:
                 @wraps(func)
                 def wrapper(*args, **kwargs):
                     result = func(*args, **kwargs)
-                    return convert_to_latex(result) if effective_auto_latex_str else result
+                    return convert_to_latex(result) if auto_latex_str else result
                 return wrapper
             return simple_decorator
 
@@ -175,8 +167,8 @@ class LatexFactory:
                     # 변환된 함수 호출
                     return_value = transformed_func(*args, **kwargs)
 
-                    json_path = Path(self.save_dir) / \
-                        JSON_FILENAME if self.save_dir else None
+                    json_path = Path(effective_save_dir) / \
+                        JSON_FILENAME if effective_save_dir else None
 
                     # 리턴값과 대입문 데이터를 함께 저장
                     if json_path:
@@ -210,7 +202,7 @@ class LatexFactory:
                             assignment_data['assignments'] = {}
 
                     # 원본 함수의 리턴 타입을 보존하면서 latex 변환
-                    if effective_auto_latex_str:
+                    if auto_latex_str:
                         is_convertible = (
                             isinstance(return_value, (str, sp.Basic, sp.matrices.MatrixBase, int, float, bool)) or
                             return_value is None
