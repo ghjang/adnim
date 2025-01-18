@@ -23,11 +23,14 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-def convert_to_latex(result: Any) -> str:
+def convert_to_latex(result: Any, include_mul_dot_symbol=True) -> str:
     """Converts result to LaTeX string safely."""
     try:
         if isinstance(result, (sp.Basic, sp.matrices.MatrixBase)):
-            return sp.latex(result)
+            # mul_symbol='dot'를 사용하여 곱셈을 \cdot으로 표시
+            latex_options = {
+                'mul_symbol': 'dot'} if include_mul_dot_symbol else {}
+            return sp.latex(result, **latex_options)
         elif isinstance(result, (int, float)):
             return str(result)
         elif isinstance(result, bool):
