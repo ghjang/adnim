@@ -1,7 +1,7 @@
 from typing import List, override
 from manim import *
 from common.decorator.latex_factory import latex_factory
-from common.template.proof_sequence.base_proof_scene import BaseProofScene
+from common.template.proof_sequence.base_proof_scene import BaseProofScene, ProofSceneConfig
 
 
 class ConstantMultipleRuleProof(BaseProofScene):
@@ -10,10 +10,16 @@ class ConstantMultipleRuleProof(BaseProofScene):
         return super().construct()
 
     @override
+    def configure(self, config: ProofSceneConfig) -> ProofSceneConfig:
+        config.scene_end_pause += 1
+        return config
+
+    @override
     def get_title(self) -> str:
         return "Proof of Constant Multiple Rule"
 
     @override
+    @latex_factory()
     def get_intro_formula(self) -> str:
         return r"\left\{c \cdot f(x)\right\}' = c \cdot f'(x)"
 
