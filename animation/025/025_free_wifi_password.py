@@ -34,3 +34,21 @@ class FreeWifiPasswordDefiniteIntegration(BaseProofScene):
     @latex_factory()
     def after_qed(self) -> None:
         integrand = (x**3 * cos(x/2) + S(1)/2) * sqrt(4 - x**2)
+
+        def f(x): return float(integrand.subs('x', x))
+
+        plane = NumberPlane(
+            y_range=[-3.5, 4.5],
+            background_line_style={
+                "stroke_opacity": 0.4
+            }
+        ).add_coordinates()
+
+        graph = plane.plot(f, x_range=[-2, 2], color=GREEN)
+
+        self.add(plane)
+        self.play(
+            Create(graph),
+            run_time=2
+        )
+        self.wait()
