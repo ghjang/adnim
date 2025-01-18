@@ -26,6 +26,13 @@ class BaseProofScene(Scene, ABC):
         """증명 단계별 수식 리스트 반환"""
         pass
 
+    def after_qed(self) -> None:
+        """QED 박스 표시 후 추가 액션을 위한 훅 메소드
+
+        하위 클래스에서 이 메서드를 오버라이드하여 QED 박스 표시 후 추가 액션을 수행할 수 있습니다.
+        """
+        pass
+
     def configure(self, config: ProofSceneConfig) -> ProofSceneConfig:
         """설정 커스터마이징을 위한 템플릿 메소드
 
@@ -224,3 +231,5 @@ class BaseProofScene(Scene, ABC):
         # 마지막 수식이 존재하는 경우에만 결론 강조
         self._emphasize_conclusion(formula_groups[-1])
         self.wait(self.config.scene_end_pause)
+
+        self.after_qed()
