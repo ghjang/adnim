@@ -96,7 +96,8 @@ class LatexFactory:
     def __call__(
         self,
         save_dir: Union[str, Path, None] = None,
-        auto_latex_str: bool = True
+        auto_latex_str: bool = True,
+        show_mul_dot: bool = True
     ) -> Callable:
         """
         데코레이터 호출
@@ -119,7 +120,7 @@ class LatexFactory:
                 @wraps(func)
                 def wrapper(*args, **kwargs):
                     result = func(*args, **kwargs)
-                    return convert_to_latex(result) if auto_latex_str else result
+                    return convert_to_latex(result, show_mul_dot) if auto_latex_str else result
                 return wrapper
             return simple_decorator
 
@@ -144,11 +145,11 @@ class LatexFactory:
 
                     if isinstance(var, list):
                         assign_entry['items'] = [
-                            {'index': idx, 'latex': convert_to_latex(item)}
+                            {'index': idx, 'latex': convert_to_latex(item, show_mul_dot)}
                             for idx, item in enumerate(var)
                         ]
                     else:
-                        assign_entry['latex'] = convert_to_latex(var)
+                        assign_entry['latex'] = convert_to_latex(var, show_mul_dot)
 
                     assignment_data['assignments'][sanitized_key] = assign_entry
 
@@ -190,7 +191,7 @@ class LatexFactory:
                                     'kwargs': {k: str(v) for k, v in kwargs.items()} if kwargs else {}
                                 },
                                 'assignments': assignment_data.get('assignments', {}),
-                                'return_latex': convert_to_latex(return_value)
+                                'return_latex': convert_to_latex(return_value, show_mul_dot)
                             }
 
                             # 전체 데이터 저장
@@ -208,7 +209,7 @@ class LatexFactory:
                             return_value is None
                         )
                         if is_convertible:
-                            return convert_to_latex(return_value)
+                            return convert_to_latex(return_value, show_mul_dot)
                         logger.warning(
                             f"Unexpected return type {type(return_value)} from {func.__name__}, "
                             "auto_latex_str will be ignored"
