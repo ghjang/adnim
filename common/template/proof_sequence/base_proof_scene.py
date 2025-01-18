@@ -1,8 +1,8 @@
 from typing import List, override
 from abc import ABC, abstractmethod
 from manim import *
-from scrolling_group import ScrollingGroup
-from proof_scene_config import ProofSceneConfig
+from .scrolling_group import ScrollingGroup
+from .proof_scene_config import ProofSceneConfig
 
 
 class BaseProofScene(Scene, ABC):

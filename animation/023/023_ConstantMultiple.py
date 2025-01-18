@@ -1,7 +1,7 @@
 from typing import List, override
 from manim import *
 from common.decorator.latex_factory import latex_factory
-from base_proof_scene import BaseProofScene
+from common.template.proof_sequence.base_proof_scene import BaseProofScene
 
 
 class ConstantMultipleRuleProof(BaseProofScene):
