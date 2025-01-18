@@ -202,34 +202,26 @@ class BaseProofScene(Scene, ABC):
         self.next_section("Proof Steps")
         proof_steps = self.get_proof_steps()
 
-        # 증명 단계가 없는 경우 early return
-        if not proof_steps:
-            self.wait(self.config.scene_end_pause)
-            return
+        if proof_steps:
+            formula_groups, max_height, equal_x_pos = self._prepare_formula_groups(
+                proof_steps
+            )
 
-        formula_groups, max_height, equal_x_pos = self._prepare_formula_groups(
-            proof_steps
-        )
+            scroller = ScrollingGroup(
+                add_position=self.config.start_position,
+                opacity_gradient=True
+            )
 
-        # formula_groups가 비어있는 경우
-        if not formula_groups:
-            self.wait(self.config.scene_end_pause)
-            return
+            self._add_formulas_to_scroller(
+                scroller,
+                formula_groups,
+                max_height,
+                equal_x_pos
+            )
 
-        scroller = ScrollingGroup(
-            add_position=self.config.start_position,
-            opacity_gradient=True
-        )
+            # 마지막 수식이 존재하는 경우에만 결론 강조
+            self._emphasize_conclusion(formula_groups[-1])
 
-        self._add_formulas_to_scroller(
-            scroller,
-            formula_groups,
-            max_height,
-            equal_x_pos
-        )
-
-        # 마지막 수식이 존재하는 경우에만 결론 강조
-        self._emphasize_conclusion(formula_groups[-1])
         self.wait(self.config.scene_end_pause)
 
         self.after_qed()
