@@ -23,6 +23,23 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
+def _escape_latex(s):
+    # LaTeX 특수문자 이스케이프
+    chars = {
+        '&': r'\&',
+        '%': r'\%',
+        '$': r'\$',
+        '#': r'\#',
+        '_': r'\_',
+        '{': r'\{',
+        '}': r'\}',
+        '~': r'\textasciitilde{}',
+        '^': r'\^{}',
+        '\\': r'\textbackslash{}',
+    }
+    return ''.join(chars.get(c, c) for c in str(s))
+
+
 def convert_to_latex(result: Any, include_mul_dot_symbol=True) -> str:
     """Converts result to LaTeX string safely."""
     try:
@@ -37,7 +54,11 @@ def convert_to_latex(result: Any, include_mul_dot_symbol=True) -> str:
             return r"\texttt{True}" if result else r"\texttt{False}"
         elif result is None:
             return r"\texttt{None}"
-        return str(result)
+        elif isinstance(result, str):
+            return result
+        
+        # 기타 일반 적인 '객체'등의 경우 처리
+        return rf"\texttt{{{_escape_latex(result)}}}"
     except Exception as e:
         logger.error(f"LaTeX conversion failed: {e}")
         return "LaTeX conversion failed"
@@ -145,11 +166,13 @@ class LatexFactory:
 
                     if isinstance(var, list):
                         assign_entry['items'] = [
-                            {'index': idx, 'latex': convert_to_latex(item, show_mul_dot)}
+                            {'index': idx, 'latex': convert_to_latex(
+                                item, show_mul_dot)}
                             for idx, item in enumerate(var)
                         ]
                     else:
-                        assign_entry['latex'] = convert_to_latex(var, show_mul_dot)
+                        assign_entry['latex'] = convert_to_latex(
+                            var, show_mul_dot)
 
                     assignment_data['assignments'][sanitized_key] = assign_entry
 
