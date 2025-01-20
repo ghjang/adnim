@@ -37,6 +37,7 @@ class ProofSceneConfig:
     title_vertical_offset: np.ndarray = field(
         default_factory=lambda: DOWN * 0.5
     )
+    skip_intro_title: bool = False
 
     # 결론 설정
     conclusion_color: ManimColor = field(default_factory=lambda: PINK)

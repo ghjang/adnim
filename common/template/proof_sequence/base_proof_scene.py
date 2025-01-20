@@ -6,6 +6,8 @@ from .proof_scene_config import ProofSceneConfig
 
 
 class BaseProofScene(Scene, ABC):
+    config: ProofSceneConfig
+
     def __init__(self):
         super().__init__()
         base_config = ProofSceneConfig()
@@ -197,7 +199,8 @@ class BaseProofScene(Scene, ABC):
         self.next_section("Initial Setup")
 
         self.next_section("Proof Intro")
-        self._show_intro_title()
+        if not self.config.skip_intro_title:
+            self._show_intro_title()
 
         self.next_section("Proof Steps")
         proof_steps = self.get_proof_steps()
@@ -222,6 +225,7 @@ class BaseProofScene(Scene, ABC):
             # 마지막 수식이 존재하는 경우에만 결론 강조
             self._emphasize_conclusion(formula_groups[-1])
 
-        self.wait(self.config.scene_end_pause)
+        if self.config.scene_end_pause > 0:
+            self.wait(self.config.scene_end_pause)
 
         self.after_qed()
