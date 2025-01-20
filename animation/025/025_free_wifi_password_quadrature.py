@@ -223,7 +223,7 @@ class FreeWifiPasswordQuadrature(BaseProofScene):
 
         integrand = (x**3 * cos(x/2) + S(1)/2) * sqrt(4 - x**2)
         if self.intro_formula:
-            integrand_latex = f"f(x) = {self.intro_formula}"
+            integrand_latex = r"f(x) = \left( x^3 \cdot \cos\frac{x}{2} + \frac{1}{2} \right) \cdot \sqrt{4 - x^2}"
         else:
             integrand_latex = f"f(x) = {latex(integrand, **{'mul_symbol': 'dot'})}"
 
@@ -234,7 +234,7 @@ class FreeWifiPasswordQuadrature(BaseProofScene):
             integrand_latex,
             font_size=26,
             color=GREEN
-        ).next_to(graph, RIGHT, buff=0.1).align_to(graph, UP)
+        ).next_to(graph, RIGHT, buff=0.5).align_to(graph, UP)
 
         self.play(Create(graph), FadeIn(f_latex), run_time=2)
         self.wait()
