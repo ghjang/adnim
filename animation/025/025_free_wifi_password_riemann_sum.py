@@ -6,28 +6,28 @@ from common.decorator.latex_factory import latex_factory
 from common.template.proof_sequence.base_proof_scene import BaseProofScene, ProofSceneConfig
 
 
-class FreeWifiPasswordQuadrature(BaseProofScene):
+class FreeWifiPasswordMidPointRiemannSum(BaseProofScene):
     @override
     def get_title(self) -> str:
-        # return "Finding the FREE Wi-Fi Password"
         return "An Example of a Midpoint Riemann Sum"
 
     @override
     def configure(self, config: ProofSceneConfig) -> ProofSceneConfig:
-        self.intro_formula = None
+        self.integrand_f = (x**3 * cos(x/2) + S(1)/2) * sqrt(4 - x**2)
+        self.integrand_f_latex = latex(
+            self.integrand_f, **{'mul_symbol': 'dot'})
 
         # config.skip_intro_title = True
         config.title_font_size = 54
+
         config.scene_end_pause = 0
+
         return config
 
     @override
     @latex_factory()
     def get_intro_formula(self) -> str:
-        self.intro_formula = r"""
-        \int_{-2}^{2} \left( x^3 \cdot \cos\frac{x}{2} + \frac{1}{2} \right) \cdot \sqrt{4 - x^2} \; dx
-        """
-        return self.intro_formula
+        return rf"\int_{{-2}}^{{2}} {self.integrand_f_latex} \; dx"
 
     @override
     @latex_factory()
@@ -36,33 +36,32 @@ class FreeWifiPasswordQuadrature(BaseProofScene):
         ]
         return steps
 
-    def _visualize_quadrature(
+    def _visualize_riemann_sum(
         self,
-        func,
-        x_range: tuple[float, float],
-        num_iterations: int = 5,
-        clear_after_iteration: bool = True
+        integrand,
+        domain: tuple[float, float],
+        iteration_count: int = 5,
+        remove_after: bool = True
     ) -> tuple[VGroup, VGroup]:
-        """구분구적법 시각화
+        """Midpoint Riemann Sum 시각화
 
         Args:
-            func: 적분 대상 함수
-            x_range: 적분 구간 (시작값, 끝값)
-            num_iterations: 반복 횟수 (2^n 분할)
-            clear_after_iteration: 마지막 이터레이션 후 결과를 지울지 여부
+            integrand: 적분 대상 함수
+            domain: 적분 구간 (시작값, 끝값)
+            iteration_count: 반복 횟수 (2^n 분할)
+            remove_after: 마지막 이터레이션 후 결과를 지울지 여부
 
         Returns:
             rectangles: 마지막 사각형들
             value_text: 마지막 텍스트 그룹
         """
-        x_start, x_end = x_range
+        x_start, x_end = domain
         total_width = x_end - x_start
 
         approx_formula = MathTex(
             r"\int_a^b f(x) \, dx \approx \sum_{i=1}^n f(x_i^{\text{mid}}) \cdot \Delta x",
             font_size=26
         )
-        x_0_formula = MathTex(r"x_0 = a", font_size=26)
         x_i_formula = MathTex(
             r"x_i = a + i \cdot \Delta x \quad \text{(for } i = 0, 1, 2, \dots, n \text{)}",
             font_size=26
@@ -76,7 +75,6 @@ class FreeWifiPasswordQuadrature(BaseProofScene):
         formulas = VGroup(
             approx_formula,
             delta_x_formula,
-            x_0_formula,
             x_i_formula,
             x_i_mid_formula
         ).arrange(
@@ -84,10 +82,11 @@ class FreeWifiPasswordQuadrature(BaseProofScene):
         ).to_corner(UL, buff=0.5).shift(LEFT * 0.15).set_color(YELLOW)
         self.play(Write(formulas))
 
-        result_approx = MathTex(
-            r"\int_{-2}^{2} f(x) \, dx", font_size=36, color=YELLOW)
-        result_approx.to_edge(RIGHT).shift(DOWN * 2.25 + LEFT)
-        self.play(Write(result_approx))
+        approx_value = MathTex(
+            r"\int_{-2}^{2} f(x) \, dx", font_size=36, color=YELLOW
+        )
+        approx_value.to_edge(RIGHT).shift(DOWN * 2.25 + LEFT)
+        self.play(Write(approx_value))
 
         # 왼쪽 하단 정보 표시: n값과 델타x
         iter_n_str = MathTex("n = 1", font_size=36, color=YELLOW_A)
@@ -114,22 +113,24 @@ class FreeWifiPasswordQuadrature(BaseProofScene):
         prev_rectangles = None
         prev_dots = None
 
-        for iteration in range(num_iterations):
+        for step in range(iteration_count):
             integral_value.become(MathTex("", font_size=48, color=YELLOW))
 
-            n = 2 ** iteration
-            dx = total_width / n
-            x_points = [x_start + i * dx for i in range(n + 1)]
+            subinterval_count = 2 ** step
+            subinterval_width = total_width / subinterval_count
+            subinterval_bounds = [
+                x_start + i * subinterval_width for i in range(subinterval_count + 1)
+            ]
 
-            rectangles = VGroup()
-            dots = VGroup()  # 중점 위치의 점들을 담을 그룹
-            total_area = 0
+            subinterval_rects = VGroup()
+            dot_group = VGroup()
+            accumulated_area = 0
 
-            for i in range(n):
-                x_left = x_points[i]
-                x_right = x_points[i + 1]
+            for i in range(subinterval_count):
+                x_left = subinterval_bounds[i]
+                x_right = subinterval_bounds[i + 1]
                 x_mid = (x_left + x_right) / 2
-                height = func(x_mid)
+                height = integrand(x_mid)
 
                 # 점 추가 (높이에 상관없이 동일한 색상)
                 dot = Dot(
@@ -137,10 +138,10 @@ class FreeWifiPasswordQuadrature(BaseProofScene):
                     color=PINK,
                     radius=0.05
                 ).set_z_index(10)
-                dots.add(dot)
+                dot_group.add(dot)
 
                 rect = Rectangle(
-                    width=dx,
+                    width=subinterval_width,
                     height=abs(height),
                     fill_opacity=0.3,
                     stroke_width=1,
@@ -153,11 +154,11 @@ class FreeWifiPasswordQuadrature(BaseProofScene):
                 else:
                     rect.move_to(self.plane.c2p(x_mid, 0), aligned_edge=UP)
 
-                rectangles.add(rect)
-                total_area += height * dx
+                subinterval_rects.add(rect)
+                accumulated_area += height * subinterval_width
 
-            formatted_area = f"{total_area:.6f}".rstrip('0').rstrip('.')
-            formatted_dx = f"{dx:.6f}".rstrip('0').rstrip('.')
+            formatted_area = f"{accumulated_area:.6f}".rstrip('0').rstrip('.')
+            formatted_dx = f"{subinterval_width:.6f}".rstrip('0').rstrip('.')
 
             # n값 업데이트 (이터레이션 텍스트만)
             if prev_rectangles:
@@ -165,7 +166,7 @@ class FreeWifiPasswordQuadrature(BaseProofScene):
                     FadeOut(prev_rectangles),
                     FadeOut(prev_dots),
                     Transform(iter_n_str,
-                              MathTex(f"n = {2 ** iteration}",
+                              MathTex(f"n = {2 ** step}",
                                       font_size=36, color=YELLOW_A)
                               .move_to(iter_n_str)),
                     Transform(delta_x,
@@ -182,20 +183,20 @@ class FreeWifiPasswordQuadrature(BaseProofScene):
                 self.play(FadeIn(iter_info_text))
 
             # 사각형과 점들 생성
-            self.play(Create(rectangles), Create(dots))
+            self.play(Create(subinterval_rects), Create(dot_group))
 
             # 적분값 업데이트 (오른쪽 중앙)
             integral_value.become(
                 MathTex(f"\\approx {formatted_area}",
                         font_size=36, color=YELLOW)
-            ).next_to(result_approx, DOWN, buff=0.25).shift(RIGHT * 0.5)
+            ).next_to(approx_value, DOWN, buff=0.25).shift(RIGHT * 0.5)
 
-            prev_rectangles = rectangles
-            prev_dots = dots
+            prev_rectangles = subinterval_rects
+            prev_dots = dot_group
             self.wait()
 
         # 마지막 상태 처리
-        if clear_after_iteration:
+        if remove_after:
             self.play(
                 FadeOut(prev_rectangles),
                 FadeOut(prev_dots),  # 점들도 함께 제거
@@ -221,17 +222,11 @@ class FreeWifiPasswordQuadrature(BaseProofScene):
         ).add_coordinates()
         self.add(self.plane)
 
-        integrand = (x**3 * cos(x/2) + S(1)/2) * sqrt(4 - x**2)
-        if self.intro_formula:
-            integrand_latex = r"f(x) = \left( x^3 \cdot \cos\frac{x}{2} + \frac{1}{2} \right) \cdot \sqrt{4 - x^2}"
-        else:
-            integrand_latex = f"f(x) = {latex(integrand, **{'mul_symbol': 'dot'})}"
-
-        def f(x): return float(integrand.subs('x', x))
+        def f(x): return float(self.integrand_f.subs('x', x))
 
         graph = self.plane.plot(f, x_range=[-2, 2], color=GREEN)
         f_latex = MathTex(
-            integrand_latex,
+            f"f(x) = {self.integrand_f_latex}",
             font_size=26,
             color=GREEN
         ).next_to(graph, RIGHT, buff=0.5).align_to(graph, UP)
@@ -240,12 +235,13 @@ class FreeWifiPasswordQuadrature(BaseProofScene):
         self.wait()
 
         self.next_section(
-            "Calculating the Definite Integration Value by Quadrature")
+            "Calculating the Definite Integration Value by Midpoint Riemann Sum")
 
-        self._visualize_quadrature(
-            f, (-2, 2),
-            num_iterations=6,
-            clear_after_iteration=False
+        self._visualize_riemann_sum(
+            f,
+            (-2, 2),
+            iteration_count=6,
+            remove_after=False
         )
 
         self.wait(2)
