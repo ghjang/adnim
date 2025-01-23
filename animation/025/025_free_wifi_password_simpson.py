@@ -30,11 +30,19 @@ class FreeWifiPasswordSimpsonRule(BaseProofScene):
         return rf"\int_{{-2}}^{{2}} {self.integrand_f_latex} \; dx"
 
     @override
+    def before_steps(self) -> int:
+        return 1
+
+    @override
     @latex_factory()
-    def get_proof_steps(self) -> List[str]:
+    def get_proof_steps(self, step_group_index: int) -> List[str]:
         steps = [
         ]
         return steps
+
+    @override
+    def after_step(self, step_group_index: int) -> None:
+        pass
 
     @override
     @latex_factory()

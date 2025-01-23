@@ -25,7 +25,7 @@ class ConstantMultipleRuleProof(BaseProofScene):
 
     @override
     @latex_factory()
-    def get_proof_steps(self) -> List[str]:
+    def get_proof_steps(self, step_group_index: int) -> List[str]:
         steps = [
             r"\left\{c \cdot f(x)\right\}' = \lim_{h \to 0} \frac{c \cdot f(x+h) - c \cdot f(x)}{h}",
             r"= \lim_{h \to 0} \frac{c \cdot \left\{f(x+h) - f(x)\right\}}{h}",

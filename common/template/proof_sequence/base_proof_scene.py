@@ -24,8 +24,22 @@ class BaseProofScene(Scene, ABC):
         pass
 
     @abstractmethod
-    def get_proof_steps(self) -> List[str]:
+    def get_proof_steps(self, step_group_index: int = 0) -> List[str]:
         """증명 단계별 수식 리스트 반환"""
+        pass
+
+    def before_steps(self) -> int:
+        """증명 단계 실행 전 추가 액션을 위한 훅 메소드
+
+        하위 클래스에서 이 메서드를 오버라이드하여 증명 단계 실행 전 추가 액션을 수행할 수 있습니다.
+        """
+        return 1
+
+    def after_step(self, step_group_index: int) -> None:
+        """증명 단계 실행 후 추가 액션을 위한 훅 메소드
+
+        하위 클래스에서 이 메서드를 오버라이드하여 증명 단계 실행 후 추가 액션을 수행할 수 있습니다.
+        """
         pass
 
     def after_qed(self) -> None:
@@ -199,33 +213,40 @@ class BaseProofScene(Scene, ABC):
         self.next_section("Initial Setup")
 
         self.next_section("Proof Intro")
+
         if not self.config.skip_intro_title:
             self._show_intro_title()
 
         self.next_section("Proof Steps")
-        proof_steps = self.get_proof_steps()
 
-        if proof_steps:
-            formula_groups, max_height, equal_x_pos = self._prepare_formula_groups(
-                proof_steps
-            )
+        num_of_steps_group = self.before_steps()
 
-            scroller = ScrollingGroup(
-                add_position=self.config.start_position,
-                opacity_gradient=True
-            )
+        for i in range(num_of_steps_group):
+            proof_steps = self.get_proof_steps(i)
 
-            self._add_formulas_to_scroller(
-                scroller,
-                formula_groups,
-                max_height,
-                equal_x_pos
-            )
+            if proof_steps:
+                formula_groups, max_height, equal_x_pos = self._prepare_formula_groups(
+                    proof_steps
+                )
 
-            # 마지막 수식이 존재하는 경우에만 결론 강조
-            self._emphasize_conclusion(formula_groups[-1])
+                scroller = ScrollingGroup(
+                    add_position=self.config.start_position,
+                    opacity_gradient=True
+                )
 
-        if self.config.scene_end_pause > 0:
-            self.wait(self.config.scene_end_pause)
+                self._add_formulas_to_scroller(
+                    scroller,
+                    formula_groups,
+                    max_height,
+                    equal_x_pos
+                )
+
+                # 마지막 수식이 존재하는 경우에만 결론 강조
+                self._emphasize_conclusion(formula_groups[-1])
+
+            if self.config.scene_end_pause > 0:
+                self.wait(self.config.scene_end_pause)
+
+            self.after_step(i)
 
         self.after_qed()

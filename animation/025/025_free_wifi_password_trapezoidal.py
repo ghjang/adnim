@@ -31,7 +31,7 @@ class FreeWifiPasswordTrapezoidalRule(BaseProofScene):
 
     @override
     @latex_factory()
-    def get_proof_steps(self) -> List[str]:
+    def get_proof_steps(self, step_group_index: int) -> List[str]:
         steps = [
         ]
         return steps
