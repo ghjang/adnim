@@ -29,8 +29,10 @@ class TreeNode:
         self.pos = None
 
 
-def build_factor_tree(n: int) -> TreeNode:
-    factors = factorize(n)
+# 수정된 build_factor_tree: 미리 계산된 factor 리스트를 인자로 받을 수 있음.
+def build_factor_tree(n: int, factors: list = None) -> TreeNode:
+    if factors is None:
+        factors = factorize(n)
     queue = deque([TreeNode(f) for f in factors])
     if not queue:
         return TreeNode(n)
@@ -74,8 +76,9 @@ def create_node(text, pos):
 
 class FactorizationTreeAnimation(Scene):
     def construct(self):
-        # 트리 생성 및 높이 계산
-        tree_root = build_factor_tree(TARGET_NUMBER)
+        # 미리 factorize를 한 번 호출
+        factors = factorize(TARGET_NUMBER)
+        tree_root = build_factor_tree(TARGET_NUMBER, factors)
         height = get_tree_height(tree_root)
 
         # 화면 크기와 여백을 고려한 동적 간격 계산
@@ -135,8 +138,7 @@ class FactorizationTreeAnimation(Scene):
             current_level = next_level
             self.wait(0.5)
 
-        result_str = f"{TARGET_NUMBER} = " + \
-            factors_to_latex(factorize(TARGET_NUMBER))
+        result_str = f"{TARGET_NUMBER} = " + factors_to_latex(factors)
         result_text = MathTex(result_str, font_size=64)
         result_text.to_edge(DOWN)
         self.play(FadeIn(result_text))
