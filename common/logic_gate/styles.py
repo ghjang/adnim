@@ -34,3 +34,9 @@ class LogicGateStyle:
     # AND 게이트 관련 상수 추가
     AND_GATE_WIDTH_RATIO = 0.3     # 전체 크기 대비 사각형 부분 너비 비율
     AND_GATE_ARC_RATIO = 0.5      # 전체 크기 대비 반원 반지름 비율
+
+    # OR 게이트 관련 상수 수정
+    OR_GATE_WIDTH_RATIO = 0.25      # 너비 비율 조정 (조금 더 좁게)
+    OR_GATE_CURVE_DEPTH = 0.2       # 곡선의 깊이 증가
+    # 입력 포트 간격 비율 (기존 PORT_VERTICAL_SPACING의 1.9배)
+    OR_GATE_PORT_SPACING = 1.9
