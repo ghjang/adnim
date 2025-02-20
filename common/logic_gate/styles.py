@@ -55,3 +55,14 @@ class LogicGateStyle:
     XOR_GATE_PORT_SPACING = 1.9        # OR 게이트와 동일한 포트 간격
     XOR_GATE_EXTRA_CURVE_OFFSET = 0.08  # 추가 곡선의 오프셋 비율 (0.15 -> 0.08로 축소)
     XOR_GATE_EXTRA_CURVE_WIDTH = 3.0   # 추가 곡선의 선 두께
+
+    # 조합 게이트 관련 상수
+    COMPOSITE_GATE_SPACING = 1.2  # 조합 게이트 내부의 게이트 간 수직 간격 비율
+
+    # 복합 게이트 바운딩 박스 관련 상수
+    COMPOSITE_GATE_BOX_COLOR = GREEN
+    COMPOSITE_GATE_BOX_STROKE_WIDTH = 1.0
+    COMPOSITE_GATE_BOX_STROKE_OPACITY = 0.85
+    COMPOSITE_GATE_BOX_PADDING = 0.2
+    COMPOSITE_GATE_BOX_DASH_NUM = 30
+    COMPOSITE_GATE_BOX_DASH_RATIO = 0.75

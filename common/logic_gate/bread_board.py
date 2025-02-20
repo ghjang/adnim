@@ -1,4 +1,5 @@
-from typing import Tuple
+from typing import Tuple, Optional, List
+import numpy as np
 from manim import *
 from common.logic_gate.logic_gate import LogicGate
 from common.logic_gate.not_gate import NotGate
@@ -46,10 +47,10 @@ class BreadBoardPlane(NumberPlane):
         return super().scale(factor, **kwargs)
 
     def _create_gate_common(self,
-                          pos: tuple[float, float] | tuple[float, float, float],
-                          gate_class: type,
-                          **kwargs) -> LogicGate:
-        """논리 게이트 생성을 위한 공통 메서드"""
+                            pos: tuple[float, float] | tuple[float, float, float],
+                            gate_class: type,
+                            **kwargs) -> LogicGate:
+        """기본 논리 게이트 생성을 위한 공통 메서드"""
         scaled_size = kwargs.get(
             'size', LogicGateStyle.DEFAULT_SIZE) * self.scale_factor
         kwargs['size'] = scaled_size
@@ -61,40 +62,23 @@ class BreadBoardPlane(NumberPlane):
         self.add(gate)
         return gate
 
-    def create_not_gate(self,
-                       pos: tuple[float, float] | tuple[float, float, float],
-                       **kwargs) -> NotGate:
-        """빵판 좌표계 상의 위치에 NOT 게이트 생성"""
+    # 기본 게이트 생성 메서드들만 유지
+    def create_not_gate(self, pos, **kwargs) -> NotGate:
         return self._create_gate_common(pos, NotGate, **kwargs)
 
-    def create_and_gate(self,
-                       pos: tuple[float, float] | tuple[float, float, float],
-                       **kwargs) -> AndGate:
-        """빵판 좌표계 상의 위치에 AND 게이트 생성"""
+    def create_and_gate(self, pos, **kwargs) -> AndGate:
         return self._create_gate_common(pos, AndGate, **kwargs)
 
-    def create_or_gate(self,
-                      pos: tuple[float, float] | tuple[float, float, float],
-                      **kwargs) -> OrGate:
-        """빵판 좌표계 상의 위치에 OR 게이트 생성"""
+    def create_or_gate(self, pos, **kwargs) -> OrGate:
         return self._create_gate_common(pos, OrGate, **kwargs)
 
-    def create_nand_gate(self,
-                        pos: tuple[float, float] | tuple[float, float, float],
-                        **kwargs) -> NandGate:
-        """빵판 좌표계 상의 위치에 NAND 게이트 생성"""
+    def create_nand_gate(self, pos, **kwargs) -> NandGate:
         return self._create_gate_common(pos, NandGate, **kwargs)
 
-    def create_nor_gate(self,
-                       pos: tuple[float, float] | tuple[float, float, float],
-                       **kwargs) -> NorGate:
-        """빵판 좌표계 상의 위치에 NOR 게이트 생성"""
+    def create_nor_gate(self, pos, **kwargs) -> NorGate:
         return self._create_gate_common(pos, NorGate, **kwargs)
 
-    def create_xor_gate(self,
-                       pos: tuple[float, float] | tuple[float, float, float],
-                       **kwargs) -> XorGate:
-        """빵판 좌표계 상의 위치에 XOR 게이트 생성"""
+    def create_xor_gate(self, pos, **kwargs) -> XorGate:
         return self._create_gate_common(pos, XorGate, **kwargs)
 
     def connect_gates(self,
@@ -147,6 +131,7 @@ class BreadBoardPlane(NumberPlane):
     def create_wire(self,
                     start_pos: tuple[float, float] | tuple[float, float, float],
                     end_pos: tuple[float, float] | tuple[float, float, float],
+                    mid_points: Optional[List[np.ndarray]] = None,
                     color: ManimColor = LogicGateStyle.WIRE_COLOR) -> Wire:
         """빵판 좌표계 상의 두 점을 연결하는 와이어 생성"""
         # 좌표계 변환
@@ -155,27 +140,52 @@ class BreadBoardPlane(NumberPlane):
         end_screen_pos = self.c2p(
             *end_pos) if len(end_pos) == 3 else self.c2p(end_pos[0], end_pos[1], 0)
 
+        # 중간점들도 좌표계 변환
+        transformed_mid_points = None
+        if mid_points:
+            transformed_mid_points = [
+                self.c2p(*p) if len(p) == 3 else self.c2p(p[0], p[1], 0)
+                for p in mid_points
+            ]
+
         # Wire 객체 생성 및 스케일 적용
-        wire = Wire(start_screen_pos, end_screen_pos, color=color)
+        wire = Wire(
+            start_screen_pos, 
+            end_screen_pos, 
+            mid_points=transformed_mid_points,
+            color=color
+        )
         wire.scale_stroke_width(self.scale_factor)
 
         self.add(wire)
         return wire
+
+    def create_label(self, text: str, pos: tuple[float, float], font_size: int = 24, offset: np.ndarray = None) -> Text:
+        """빵판 좌표계 상의 위치에 텍스트 레이블 생성 (팩토리 메서드)
+
+        Args:
+            text: 레이블 텍스트
+            pos: (x, y) 튜플 좌표
+            font_size: 폰트 크기 (기본 24)
+            offset: 추가 오프셋 (예: LEFT * 0.5)
+        Returns:
+            생성된 Text 객체
+        """
+        # 빵판의 스케일값을 반영
+        adjusted_font_size = font_size * self.scale_factor
+        if offset is None:
+            offset = ORIGIN
+        else:
+            offset = offset * self.scale_factor
+
+        label = Text(text, font_size=adjusted_font_size)
+        base = self.c2p(*pos)
+        label.move_to(base + offset)
+        self.add(label)
+        return label
 
     def shift_coords(self, coords, offset):
         """빵판 좌표를 지정된 오프셋만큼 이동한 새로운 좌표 반환"""
         if len(offset) == 2:
             return (coords[0] + offset[0], coords[1] + offset[1])
         return (coords[0] + offset[0], coords[1] + offset[1], coords[2] + offset[2])
-
-    def get_wire_start_coords(self, wire):
-        """와이어의 시작점을 빵판 좌표계로 변환하여 (x, y) 튜플로 반환"""
-        start_point = wire.get_start_point()
-        coords = self.p2c(start_point)
-        return (float(coords[0]), float(coords[1]))
-
-    def get_wire_end_coords(self, wire):
-        """와이어의 끝점을 빵판 좌표계로 변환하여 (x, y) 튜플로 반환"""
-        end_point = wire.get_end_point()
-        coords = self.p2c(end_point)
-        return (float(coords[0]), float(coords[1]))
