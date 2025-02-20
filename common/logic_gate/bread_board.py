@@ -5,6 +5,8 @@ from common.logic_gate.not_gate import NotGate
 from common.logic_gate.and_gate import AndGate
 from common.logic_gate.or_gate import OrGate
 from common.logic_gate.nand_gate import NandGate
+from common.logic_gate.nor_gate import NorGate
+from common.logic_gate.xor_gate import XorGate
 from common.logic_gate.wire import Wire
 from common.logic_gate.styles import LogicGateStyle
 
@@ -43,9 +45,11 @@ class BreadBoardPlane(NumberPlane):
         self.scale_factor = factor
         return super().scale(factor, **kwargs)
 
-    def create_not_gate(self,
-                        pos: tuple[float, float] | tuple[float, float, float],
-                        **kwargs) -> NotGate:
+    def _create_gate_common(self,
+                          pos: tuple[float, float] | tuple[float, float, float],
+                          gate_class: type,
+                          **kwargs) -> LogicGate:
+        """논리 게이트 생성을 위한 공통 메서드"""
         scaled_size = kwargs.get(
             'size', LogicGateStyle.DEFAULT_SIZE) * self.scale_factor
         kwargs['size'] = scaled_size
@@ -53,54 +57,45 @@ class BreadBoardPlane(NumberPlane):
         screen_pos = self.c2p(*pos) if len(pos) == 3 else self.c2p(
             pos[0], pos[1], LogicGateStyle.DEFAULT_Z_COORD)
 
-        not_gate = NotGate(**kwargs).move_to(screen_pos)
-        self.add(not_gate)
-        return not_gate
+        gate = gate_class(**kwargs).move_to(screen_pos)
+        self.add(gate)
+        return gate
+
+    def create_not_gate(self,
+                       pos: tuple[float, float] | tuple[float, float, float],
+                       **kwargs) -> NotGate:
+        """빵판 좌표계 상의 위치에 NOT 게이트 생성"""
+        return self._create_gate_common(pos, NotGate, **kwargs)
 
     def create_and_gate(self,
                        pos: tuple[float, float] | tuple[float, float, float],
                        **kwargs) -> AndGate:
         """빵판 좌표계 상의 위치에 AND 게이트 생성"""
-        scaled_size = kwargs.get(
-            'size', LogicGateStyle.DEFAULT_SIZE) * self.scale_factor
-        kwargs['size'] = scaled_size
-
-        screen_pos = self.c2p(*pos) if len(pos) == 3 else self.c2p(
-            pos[0], pos[1], LogicGateStyle.DEFAULT_Z_COORD)
-
-        and_gate = AndGate(**kwargs).move_to(screen_pos)
-        self.add(and_gate)
-        return and_gate
+        return self._create_gate_common(pos, AndGate, **kwargs)
 
     def create_or_gate(self,
                       pos: tuple[float, float] | tuple[float, float, float],
                       **kwargs) -> OrGate:
         """빵판 좌표계 상의 위치에 OR 게이트 생성"""
-        scaled_size = kwargs.get(
-            'size', LogicGateStyle.DEFAULT_SIZE) * self.scale_factor
-        kwargs['size'] = scaled_size
-
-        screen_pos = self.c2p(*pos) if len(pos) == 3 else self.c2p(
-            pos[0], pos[1], LogicGateStyle.DEFAULT_Z_COORD)
-
-        or_gate = OrGate(**kwargs).move_to(screen_pos)
-        self.add(or_gate)
-        return or_gate
+        return self._create_gate_common(pos, OrGate, **kwargs)
 
     def create_nand_gate(self,
                         pos: tuple[float, float] | tuple[float, float, float],
                         **kwargs) -> NandGate:
         """빵판 좌표계 상의 위치에 NAND 게이트 생성"""
-        scaled_size = kwargs.get(
-            'size', LogicGateStyle.DEFAULT_SIZE) * self.scale_factor
-        kwargs['size'] = scaled_size
+        return self._create_gate_common(pos, NandGate, **kwargs)
 
-        screen_pos = self.c2p(*pos) if len(pos) == 3 else self.c2p(
-            pos[0], pos[1], LogicGateStyle.DEFAULT_Z_COORD)
+    def create_nor_gate(self,
+                       pos: tuple[float, float] | tuple[float, float, float],
+                       **kwargs) -> NorGate:
+        """빵판 좌표계 상의 위치에 NOR 게이트 생성"""
+        return self._create_gate_common(pos, NorGate, **kwargs)
 
-        nand_gate = NandGate(**kwargs).move_to(screen_pos)
-        self.add(nand_gate)
-        return nand_gate
+    def create_xor_gate(self,
+                       pos: tuple[float, float] | tuple[float, float, float],
+                       **kwargs) -> XorGate:
+        """빵판 좌표계 상의 위치에 XOR 게이트 생성"""
+        return self._create_gate_common(pos, XorGate, **kwargs)
 
     def connect_gates(self,
                       output_gate: LogicGate,

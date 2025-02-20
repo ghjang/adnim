@@ -44,3 +44,14 @@ class LogicGateStyle:
     # NAND 게이트 관련 상수
     NAND_GATE_CIRCLE_RATIO = 0.08      # 출력 원의 크기 비율
     NAND_GATE_CIRCLE_OFFSET = 0.01     # 출력 원의 이격 거리 비율 (0.05 -> 0.01로 축소)
+
+    # NOR 게이트 관련 상수
+    NOR_GATE_CIRCLE_RATIO = 0.08      # 출력 원의 크기 비율 (NAND와 동일)
+    NOR_GATE_CIRCLE_OFFSET = 0.01     # 출력 원의 이격 거리 비율 (NAND와 동일)
+
+    # XOR 게이트 관련 상수 수정
+    XOR_GATE_WIDTH_RATIO = 0.25        # OR 게이트와 동일한 너비 비율
+    XOR_GATE_CURVE_DEPTH = 0.2         # OR 게이트와 동일한 곡선 깊이
+    XOR_GATE_PORT_SPACING = 1.9        # OR 게이트와 동일한 포트 간격
+    XOR_GATE_EXTRA_CURVE_OFFSET = 0.08  # 추가 곡선의 오프셋 비율 (0.15 -> 0.08로 축소)
+    XOR_GATE_EXTRA_CURVE_WIDTH = 3.0   # 추가 곡선의 선 두께
