@@ -40,3 +40,7 @@ class LogicGateStyle:
     OR_GATE_CURVE_DEPTH = 0.2       # 곡선의 깊이 증가
     # 입력 포트 간격 비율 (기존 PORT_VERTICAL_SPACING의 1.9배)
     OR_GATE_PORT_SPACING = 1.9
+
+    # NAND 게이트 관련 상수
+    NAND_GATE_CIRCLE_RATIO = 0.08      # 출력 원의 크기 비율
+    NAND_GATE_CIRCLE_OFFSET = 0.01     # 출력 원의 이격 거리 비율 (0.05 -> 0.01로 축소)
