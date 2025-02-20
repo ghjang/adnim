@@ -2,6 +2,7 @@ from typing import Tuple
 from manim import *
 from common.logic_gate.logic_gate import LogicGate
 from common.logic_gate.not_gate import NotGate
+from common.logic_gate.and_gate import AndGate  # AndGate 임포트 추가
 from common.logic_gate.wire import Wire
 from common.logic_gate.styles import LogicGateStyle
 
@@ -53,6 +54,21 @@ class BreadBoardPlane(NumberPlane):
         not_gate = NotGate(**kwargs).move_to(screen_pos)
         self.add(not_gate)
         return not_gate
+
+    def create_and_gate(self,
+                       pos: tuple[float, float] | tuple[float, float, float],
+                       **kwargs) -> AndGate:
+        """빵판 좌표계 상의 위치에 AND 게이트 생성"""
+        scaled_size = kwargs.get(
+            'size', LogicGateStyle.DEFAULT_SIZE) * self.scale_factor
+        kwargs['size'] = scaled_size
+
+        screen_pos = self.c2p(*pos) if len(pos) == 3 else self.c2p(
+            pos[0], pos[1], LogicGateStyle.DEFAULT_Z_COORD)
+
+        and_gate = AndGate(**kwargs).move_to(screen_pos)
+        self.add(and_gate)
+        return and_gate
 
     def connect_gates(self,
                       output_gate: LogicGate,

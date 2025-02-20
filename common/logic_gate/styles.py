@@ -30,3 +30,7 @@ class LogicGateStyle:
 
     # 좌표 변환 관련 상수
     DEFAULT_Z_COORD = 0  # 기본 z좌표값
+
+    # AND 게이트 관련 상수 추가
+    AND_GATE_WIDTH_RATIO = 0.3     # 전체 크기 대비 사각형 부분 너비 비율
+    AND_GATE_ARC_RATIO = 0.5      # 전체 크기 대비 반원 반지름 비율
