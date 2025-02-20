@@ -1,46 +1,9 @@
+from typing import Tuple
 from manim import *
-import numpy as np
-from common.logic_gate.styles import LogicGateStyle
-from common.logic_gate.base import LogicGate
+from common.logic_gate.logic_gate import LogicGate
+from common.logic_gate.not_gate import NotGate
 from common.logic_gate.wire import Wire
-
-
-class NotGate(LogicGate):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-
-        # 기본 도형 생성
-        triangle = self._create_triangle()
-        circle = self._create_circle()
-
-        # 입출력 포트 생성 및 저장
-        self.input_ports.append(self._create_port(triangle.get_left()))
-        self.output_ports.append(self._create_port(circle.get_right()))
-
-        self.add(triangle, circle, *self.input_ports, *self.output_ports)
-
-    def _create_triangle(self):
-        stroke_color = interpolate_color(
-            self.color, WHITE, LogicGateStyle.DEFAULT_STROKE_LIGHTEN)
-        return Polygon(
-            np.array([-self.size/2, self.size/2,
-                     LogicGateStyle.DEFAULT_Z_COORD]),
-            np.array([-self.size/2, -self.size/2,
-                     LogicGateStyle.DEFAULT_Z_COORD]),
-            np.array([self.size/2, 0, LogicGateStyle.DEFAULT_Z_COORD])
-        ).set_stroke(color=stroke_color, width=LogicGateStyle.DEFAULT_STROKE_WIDTH
-                     ).set_fill(self.color, opacity=LogicGateStyle.DEFAULT_FILL_OPACITY)
-
-    def _create_circle(self):
-        stroke_color = interpolate_color(
-            self.color, WHITE, LogicGateStyle.DEFAULT_STROKE_LIGHTEN)
-        circle_radius = self.size * LogicGateStyle.DEFAULT_CIRCLE_RATIO
-        offset = self.size * (0.5 + LogicGateStyle.CIRCLE_OFFSET_RATIO)
-
-        return Circle(radius=circle_radius).move_to(
-            RIGHT * offset
-        ).set_stroke(color=stroke_color, width=LogicGateStyle.DEFAULT_STROKE_WIDTH
-                     ).set_fill(self.color, opacity=LogicGateStyle.DEFAULT_FILL_OPACITY)
+from common.logic_gate.styles import LogicGateStyle
 
 
 class BreadBoardPlane(NumberPlane):
@@ -77,7 +40,9 @@ class BreadBoardPlane(NumberPlane):
         self.scale_factor = factor
         return super().scale(factor, **kwargs)
 
-    def create_not_gate(self, pos, **kwargs):
+    def create_not_gate(self,
+                        pos: tuple[float, float] | tuple[float, float, float],
+                        **kwargs) -> NotGate:
         scaled_size = kwargs.get(
             'size', LogicGateStyle.DEFAULT_SIZE) * self.scale_factor
         kwargs['size'] = scaled_size
@@ -89,7 +54,11 @@ class BreadBoardPlane(NumberPlane):
         self.add(not_gate)
         return not_gate
 
-    def connect_gates(self, output_gate, input_gate, output_index=0, input_index=0):
+    def connect_gates(self,
+                      output_gate: LogicGate,
+                      input_gate: LogicGate,
+                      output_index: int = 0,
+                      input_index: int = 0) -> Wire:
         """두 게이트를 와이어로 연결"""
         start_point = self.get_gate_output_coords(output_gate, output_index)
         end_point = self.get_gate_input_coords(input_gate, input_index)
@@ -116,19 +85,26 @@ class BreadBoardPlane(NumberPlane):
 
         return UpdateFromAlphaFunc(gate, update_wires, run_time=run_time)
 
-    def get_gate_input_coords(self, gate, index=0):
+    def get_gate_input_coords(self,
+                              gate: LogicGate,
+                              index: int = 0) -> Tuple[float, float]:
         """게이트의 입력 연결점을 빵판 좌표계로 변환하여 (x, y) 튜플로 반환"""
         input_point = gate.get_input_point(index)
         coords = self.p2c(input_point)
         return (float(coords[0]), float(coords[1]))
 
-    def get_gate_output_coords(self, gate, index=0):
+    def get_gate_output_coords(self,
+                               gate: LogicGate,
+                               index: int = 0) -> Tuple[float, float]:
         """게이트의 출력 연결점을 빵판 좌표계로 변환하여 (x, y) 튜플로 반환"""
         output_point = gate.get_output_point(index)
         coords = self.p2c(output_point)
         return (float(coords[0]), float(coords[1]))
 
-    def create_wire(self, start_pos, end_pos, color=LogicGateStyle.WIRE_COLOR):
+    def create_wire(self,
+                    start_pos: tuple[float, float] | tuple[float, float, float],
+                    end_pos: tuple[float, float] | tuple[float, float, float],
+                    color: ManimColor = LogicGateStyle.WIRE_COLOR) -> Wire:
         """빵판 좌표계 상의 두 점을 연결하는 와이어 생성"""
         # 좌표계 변환
         start_screen_pos = self.c2p(
@@ -160,46 +136,3 @@ class BreadBoardPlane(NumberPlane):
         end_point = wire.get_end_point()
         coords = self.p2c(end_point)
         return (float(coords[0]), float(coords[1]))
-
-
-class NotGateScene(Scene):
-    def construct(self):
-        # 좌측에 NotGate 배치
-        left_gate = NotGate().to_edge(LEFT).shift(RIGHT * 2).scale(2)
-        self.play(FadeIn(left_gate))
-
-        # 우측에 NumberPlane 생성 및 위치 이동
-        plane = BreadBoardPlane().shift(RIGHT*3).scale(0.5)
-
-        # plane 내부 좌표 (1,1)에 NotGate 배치 후 (2,2)로 이동 애니메이션
-        right_gate = plane.create_not_gate((1, 1))
-
-        input_point = plane.get_gate_input_coords(right_gate)
-        # 입력 포인트에서 왼쪽으로 1만큼 이동한 좌표 생성
-        start_point = plane.shift_coords(input_point, (-5, 0))
-        input_wire = plane.create_wire(start_point, input_point)
-        right_gate.connect_input_wire(input_wire)
-
-        output_point = plane.get_gate_output_coords(right_gate)
-        end_point = plane.shift_coords(output_point, (5, 0))
-        output_wire = plane.create_wire(output_point, end_point)
-        right_gate.connect_output_wire(output_wire)
-
-        self.play(FadeOut(left_gate), FadeIn(plane))
-
-        # 스케일 애니메이션
-        self.play(
-            plane.animate.move_to(ORIGIN).scale(2)
-        )
-        self.wait(1)
-
-        # 이동 애니메이션 실행 (수정된 부분)
-        gate_movement = plane.move_gate(right_gate, (3, 0))
-        self.play(gate_movement)
-        self.wait(1)
-
-        # 게이트의 입출력 연결점 좌표 확인 (이제 x, y 좌표가 튜플로 반환됨)
-        input_coords = plane.get_gate_input_coords(right_gate)
-        output_coords = plane.get_gate_output_coords(right_gate)
-        print(f"Input coords (x,y): {input_coords}")
-        print(f"Output coords (x,y): {output_coords}")

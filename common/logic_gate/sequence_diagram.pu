@@ -1,0 +1,52 @@
+@startuml NotGateTest Scene Sequence
+
+skinparam sequenceGroupBorderColor grey
+skinparam SequenceGroupBodyBackgroundColor transparent
+
+actor Scene
+participant NotGateTestScene
+participant NotGate as "left_gate:NotGate"
+participant BreadBoardPlane as "plane:BreadBoardPlane"
+participant "right_gate:NotGate"
+participant "input_wire:Wire"
+participant "output_wire:Wire"
+
+activate NotGateTestScene
+Scene -> NotGateTestScene: construct()
+
+== 초기 게이트 생성 및 배치 ==
+NotGateTestScene -> NotGate: create & scale(2)
+NotGateTestScene -> BreadBoardPlane: create & shift(RIGHT*3).scale(0.5)
+NotGateTestScene -> BreadBoardPlane: create_not_gate((1,1))
+BreadBoardPlane --> "right_gate:NotGate": create
+
+== 와이어 연결 ==
+NotGateTestScene -> BreadBoardPlane: get_gate_input_coords(right_gate)
+BreadBoardPlane -> "right_gate:NotGate": get_input_point()
+BreadBoardPlane --> NotGateTestScene: input_point
+
+NotGateTestScene -> BreadBoardPlane: shift_coords(input_point, (-5,0))
+BreadBoardPlane --> NotGateTestScene: start_point
+
+NotGateTestScene -> BreadBoardPlane: create_wire(start_point, input_point)
+BreadBoardPlane --> "input_wire:Wire": create
+NotGateTestScene -> "right_gate:NotGate": connect_input_wire(input_wire)
+
+NotGateTestScene -> BreadBoardPlane: get_gate_output_coords(right_gate)
+NotGateTestScene -> BreadBoardPlane: shift_coords(output_point, (5,0))
+NotGateTestScene -> BreadBoardPlane: create_wire(output_point, end_point)
+BreadBoardPlane --> "output_wire:Wire": create
+NotGateTestScene -> "right_gate:NotGate": connect_output_wire(output_wire)
+
+== 애니메이션 실행 ==
+NotGateTestScene -> Scene: play(FadeOut(left_gate), FadeIn(plane))
+NotGateTestScene -> Scene: play(plane.animate.move_to(ORIGIN).scale(2))
+NotGateTestScene -> BreadBoardPlane: move_gate(right_gate, (3,0))
+BreadBoardPlane -> "right_gate:NotGate": update_connected_wires()
+"right_gate:NotGate" -> "input_wire:Wire": update_end_position()
+"right_gate:NotGate" -> "output_wire:Wire": update_start_position()
+NotGateTestScene -> Scene: play(gate_movement)
+
+deactivate NotGateTestScene
+
+@enduml

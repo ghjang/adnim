@@ -1,5 +1,5 @@
 from manim import *
-from common.logic_gate.base import LogicGate
+from common.logic_gate.logic_gate import LogicGate
 from common.logic_gate.styles import LogicGateStyle
 
 

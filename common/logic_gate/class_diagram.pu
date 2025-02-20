@@ -1,0 +1,72 @@
+@startuml Logic Gate Class Diagram
+
+skinparam class {
+    BackgroundColor White
+    ArrowColor Black
+    BorderColor Black
+}
+
+' 추상 클래스/인터페이스
+abstract class LogicGateBase {
+    + size: float
+    + color: ManimColor
+    + input_ports: List[Dot]
+    + output_ports: List[Dot]
+    + {abstract} get_input_point(index: int): ndarray
+    + {abstract} get_output_point(index: int): ndarray
+    + {abstract} update_connected_wires(): None
+}
+
+abstract class WireBase {
+    + {abstract} set_start_gate(gate: LogicGateBase, port_index: int): None
+    + {abstract} set_end_gate(gate: LogicGateBase, port_index: int): None
+    + {abstract} update_start_position(): None
+    + {abstract} update_end_position(): None
+}
+
+' 실제 구현 클래스들
+class LogicGate {
+    + input_wires: List[WireBase]
+    + output_wires: List[WireBase]
+    + connect_input_wire(wire: WireBase): LogicGate
+    + connect_output_wire(wire: WireBase): LogicGate
+}
+
+class Wire {
+    - start_pos: ndarray
+    - end_pos: ndarray
+    - start_gate: Optional[LogicGateBase]
+    - end_gate: Optional[LogicGateBase]
+    + get_start_point(): ndarray
+    + get_end_point(): ndarray
+}
+
+class NotGate {
+}
+
+class AndGate {
+}
+
+class BreadBoardPlane {
+    + create_not_gate(pos: tuple): NotGate
+    + create_wire(start_pos: tuple, end_pos: tuple): Wire
+    + connect_gates(output_gate: LogicGate, input_gate: LogicGate): Wire
+    + get_gate_input_coords(gate: LogicGate): tuple
+    + get_gate_output_coords(gate: LogicGate): tuple
+}
+
+' 관계 정의
+LogicGateBase <|-- LogicGate
+WireBase <|.. Wire
+
+LogicGate --> "*" WireBase : uses
+Wire --> "0..1" LogicGateBase : start_gate
+Wire --> "0..1" LogicGateBase : end_gate
+
+LogicGate <|-- NotGate
+LogicGate <|-- AndGate
+
+BreadBoardPlane --> "*" Wire : creates
+BreadBoardPlane --> "*" NotGate : creates
+
+@enduml
