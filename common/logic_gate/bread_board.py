@@ -131,7 +131,8 @@ class BreadBoardPlane(NumberPlane):
     def create_wire(self,
                     start_pos: tuple[float, float] | tuple[float, float, float],
                     end_pos: tuple[float, float] | tuple[float, float, float],
-                    mid_points: Optional[List[np.ndarray]] = None,
+                    mid_points: Optional[List[tuple[float, float]
+                                              | tuple[float, float, float]]] = None,
                     color: ManimColor = LogicGateStyle.WIRE_COLOR) -> Wire:
         """빵판 좌표계 상의 두 점을 연결하는 와이어 생성"""
         # 좌표계 변환
@@ -150,8 +151,8 @@ class BreadBoardPlane(NumberPlane):
 
         # Wire 객체 생성 및 스케일 적용
         wire = Wire(
-            start_screen_pos, 
-            end_screen_pos, 
+            start_screen_pos,
+            end_screen_pos,
             mid_points=transformed_mid_points,
             color=color
         )

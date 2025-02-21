@@ -62,11 +62,11 @@ class CompositeGateBuilder:
             self.board.create_wire(
                 input_a.get_center() + RIGHT * 0.7,
                 and_gate.input_ports[0].get_center(),
-                mid_points=[np.array([
+                mid_points=[(
                     input_a.get_center()[0] + 0.7,  # x 좌표
                     and_gate.input_ports[0].get_center()[1],  # y 좌표
                     0  # z 좌표
-                ])]
+                )]
             ),
 
             # input_b에서 분기
@@ -76,11 +76,11 @@ class CompositeGateBuilder:
             self.board.create_wire(
                 input_b.get_center() + RIGHT * 0.3,
                 and_gate.input_ports[1].get_center(),
-                mid_points=[np.array([
+                mid_points=[(
                     input_b.get_center()[0] + 0.3,  # x 좌표
                     and_gate.input_ports[1].get_center()[1],  # y 좌표
                     0  # z 좌표
-                ])]
+                )]
             ),
 
             # 출력 연결
@@ -151,24 +151,16 @@ class CompositeGateBuilder:
         # 내부 와이어 연결
         wires = [
             # 입력 A 분기
-            self.board.create_wire(
-                input_a.get_center(),
-                nand2.input_ports[0].get_center()
-            ),
+            self.board.create_wire(input_a.get_center(),
+                                   nand2.input_ports[0].get_center()),
             self.board.create_wire(
                 input_a.get_center(),
                 nand1.input_ports[0].get_center(),
                 mid_points=[
-                    np.array([
-                        input_a.get_center()[0] + spacing / 2,
-                        input_a.get_center()[1],
-                        0
-                    ]),
-                    np.array([
-                        input_a.get_center()[0] + spacing / 2,
-                        nand1.input_ports[0].get_center()[1],
-                        0
-                    ])
+                    (input_a.get_center()[0] + spacing /
+                     2, input_a.get_center()[1], 0),
+                    (input_a.get_center()[0] + spacing/2,
+                     nand1.input_ports[0].get_center()[1], 0)
                 ]
             ),
 
@@ -177,92 +169,56 @@ class CompositeGateBuilder:
                 input_b.get_center(),
                 nand1.input_ports[1].get_center(),
                 mid_points=[
-                    np.array([
-                        input_b.get_center()[0] + spacing / 2,
-                        input_b.get_center()[1],
-                        0
-                    ]),
-                    np.array([
-                        input_b.get_center()[0] + spacing / 2,
-                        nand1.input_ports[1].get_center()[1],
-                        0
-                    ])
+                    (input_b.get_center()[0] + spacing /
+                     2, input_b.get_center()[1], 0),
+                    (input_b.get_center()[0] + spacing/2,
+                     nand1.input_ports[1].get_center()[1], 0)
                 ]
             ),
-            self.board.create_wire(
-                input_b.get_center(),
-                nand3.input_ports[1].get_center()
-            ),
+            self.board.create_wire(input_b.get_center(),
+                                   nand3.input_ports[1].get_center()),
 
-            # NAND1 출력 -> NAND2 입력
+            # NAND1 출력 분기
             self.board.create_wire(
                 nand1.output_ports[0].get_center(),
                 nand2.input_ports[1].get_center(),
                 mid_points=[
-                    np.array([
-                        nand1.output_ports[0].get_center()[0] + spacing / 2,
-                        nand1.output_ports[0].get_center()[1],
-                        0
-                    ]),
-                    np.array([
-                        nand1.output_ports[0].get_center()[0] + spacing / 2,
-                        nand2.input_ports[1].get_center()[1],
-                        0
-                    ])
+                    (nand1.output_ports[0].get_center()[0] + spacing/2,
+                     nand1.output_ports[0].get_center()[1], 0),
+                    (nand1.output_ports[0].get_center()[0] + spacing/2,
+                     nand2.input_ports[1].get_center()[1], 0)
                 ]
             ),
-
-            # NAND1 출력 -> NAND3 입력
             self.board.create_wire(
                 nand1.output_ports[0].get_center(),
                 nand3.input_ports[0].get_center(),
                 mid_points=[
-                    np.array([
-                        nand1.output_ports[0].get_center()[0] + spacing / 2,
-                        nand1.output_ports[0].get_center()[1],
-                        0
-                    ]),
-                    np.array([
-                        nand1.output_ports[0].get_center()[0] + spacing / 2,
-                        nand3.input_ports[0].get_center()[1],
-                        0
-                    ])
+                    (nand1.output_ports[0].get_center()[0] + spacing/2,
+                     nand1.output_ports[0].get_center()[1], 0),
+                    (nand1.output_ports[0].get_center()[0] + spacing/2,
+                     nand3.input_ports[0].get_center()[1], 0)
                 ]
             ),
 
-            # NAND2 출력 -> NAND4 입력 1
+            # NAND2, NAND3 출력 -> NAND4 입력
             self.board.create_wire(
                 nand2.output_ports[0].get_center(),
                 nand4.input_ports[0].get_center(),
                 mid_points=[
-                    np.array([
-                        nand2.output_ports[0].get_center()[0] + spacing / 2,
-                        nand2.output_ports[0].get_center()[1],
-                        0
-                    ]),
-                    np.array([
-                        nand2.output_ports[0].get_center()[0] + spacing / 2,
-                        nand4.input_ports[0].get_center()[1],
-                        0
-                    ])
+                    (nand2.output_ports[0].get_center()[0] + spacing/2,
+                     nand2.output_ports[0].get_center()[1], 0),
+                    (nand2.output_ports[0].get_center()[0] + spacing/2,
+                     nand4.input_ports[0].get_center()[1], 0)
                 ]
             ),
-
-            # NAND3 출력 -> NAND4 입력 2
             self.board.create_wire(
                 nand3.output_ports[0].get_center(),
                 nand4.input_ports[1].get_center(),
                 mid_points=[
-                    np.array([
-                        nand3.output_ports[0].get_center()[0] + spacing / 2,
-                        nand3.output_ports[0].get_center()[1],
-                        0
-                    ]),
-                    np.array([
-                        nand3.output_ports[0].get_center()[0] + spacing / 2,
-                        nand4.input_ports[1].get_center()[1],
-                        0
-                    ])
+                    (nand3.output_ports[0].get_center()[0] + spacing/2,
+                     nand3.output_ports[0].get_center()[1], 0),
+                    (nand3.output_ports[0].get_center()[0] + spacing/2,
+                     nand4.input_ports[1].get_center()[1], 0)
                 ]
             ),
 
