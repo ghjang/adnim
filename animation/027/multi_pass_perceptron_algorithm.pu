@@ -1,0 +1,14 @@
+@startuml perceptron_flow
+start
+:Initialize weights (w, b);
+repeat
+    :For each training sample (x, y_actual);
+    :Compute prediction y_pred = w * x + b;
+    :Compute error = y_actual - y_pred;
+    if (error != 0) then (Yes)
+        :Update weights w = w + η * error * x;
+        :Update bias b = b + η * error;
+    endif
+repeat while (not converged)
+stop
+@enduml
