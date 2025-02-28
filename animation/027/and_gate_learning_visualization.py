@@ -28,7 +28,7 @@ class AndGateLearningVisualization(Scene):
         "b": "#FFD93D",  # 노란 계열
     }
     CORRECT_COLOR = GREEN  # 예측 성공 색상
-    WRONG_COLOR = RED      # 예측 실패 색상
+    WRONG_COLOR = RED  # 예측 실패 색상
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -86,7 +86,12 @@ class AndGateLearningVisualization(Scene):
             position = self.get_plane_coords(x, y)
 
             # 점 생성 (초기에는 보이지 않게 - 불투명도 0)
-            dot = Dot(position, color=self.WRONG_COLOR, radius=self.POINT_RADIUS, fill_opacity=0)
+            dot = Dot(
+                position,
+                color=self.WRONG_COLOR,
+                radius=self.POINT_RADIUS,
+                fill_opacity=0,
+            )
             self.data_dots[(x, y)] = dot
             self.add(dot)
 
@@ -112,8 +117,8 @@ class AndGateLearningVisualization(Scene):
     def _create_epoch_text(self, epoch_data: dict) -> VGroup:
         """에포크 데이터를 표시하는 텍스트 그룹을 생성합니다."""
         # 에포크 0인지 확인
-        is_epoch_zero = epoch_data['epoch'] == 0
-        
+        is_epoch_zero = epoch_data["epoch"] == 0
+
         # 모든 텍스트 요소를 하나의 리스트로 생성
         text_elements = [
             # 기본 정보 (항상 표시)
@@ -138,7 +143,7 @@ class AndGateLearningVisualization(Scene):
                 color=self.TEXT_LABEL_COLOR,
             ),
         ]
-        
+
         # 추가 정보 (에포크 0에서는 숨김)
         additional_texts = [
             # Total Error 텍스트
@@ -160,7 +165,7 @@ class AndGateLearningVisualization(Scene):
                 color=self.TEXT_LABEL_COLOR,
             ),
         ]
-        
+
         # 에포크 0에서는 추가 정보 텍스트를 숨기고, 그 외에는 모두 표시
         if is_epoch_zero:
             # 에포크 0에서는 기본 정보만 표시
@@ -168,11 +173,11 @@ class AndGateLearningVisualization(Scene):
         else:
             # 나머지 에포크에서는 모든 정보 표시
             all_texts = text_elements + additional_texts
-        
+
         # 모든 텍스트를 그룹으로 결합하고 좌측 정렬로 배치
         text_group = VGroup(*all_texts).arrange(DOWN, aligned_edge=LEFT).to_corner(UL)
         text_group.set_z_index(self.TEXT_Z_INDEX)
-        
+
         return text_group
 
     def _create_equation_text(
@@ -357,33 +362,33 @@ class AndGateLearningVisualization(Scene):
         temp_perceptron = Perceptron()
         temp_perceptron.weights = weights.copy()
         temp_perceptron.bias = bias
-        
+
         animations = []
-        
+
         for point in self.data_points:
             x, y = point["coords"]
             target = point["output"]
             prediction = temp_perceptron.predict([x, y])
-            
+
             # 예측 성공/실패에 따른 색상 결정
             new_color = self.CORRECT_COLOR if prediction == target else self.WRONG_COLOR
-            
+
             # 색상 변경 애니메이션 생성
             dot = self.data_dots[(x, y)]
             animations.append(dot.animate.set_color(new_color))
-        
+
         return animations
 
     def _show_data_points(self):
         """데이터 포인트와 레이블을 불투명도 1.0으로 설정하여 보이게 합니다."""
         animations = []
-        
+
         for coords, dot in self.data_dots.items():
             animations.append(dot.animate.set_fill(opacity=1))
-            
+
         for coords, label in self.data_labels.items():
             animations.append(label.animate.set_opacity(1))
-            
+
         return animations
 
     def _display_training_history(self, number_plane: NumberPlane) -> None:
@@ -394,7 +399,7 @@ class AndGateLearningVisualization(Scene):
 
         # 초기 요소들 생성 (에포크 0)
         first_data = self.epoch_history[0]
-        
+
         # 직선과 영역은 생성하되 화면에 표시하지 않음
         current_line, current_region, current_equation = (
             self._draw_decision_boundary_with_region(
@@ -420,10 +425,10 @@ class AndGateLearningVisualization(Scene):
             # 데이터 포인트와 레이블을 보이게 만듦 (직접 설정)
             for coords, dot in self.data_dots.items():
                 dot.set_fill(opacity=1)  # 직접 불투명도 설정
-            
+
             for coords, label in self.data_labels.items():
-                label.set_opacity(1)     # 직접 불투명도 설정
-                
+                label.set_opacity(1)  # 직접 불투명도 설정
+
             # 데이터 포인트 색상 업데이트
             for point in self.data_points:
                 x, y = point["coords"]
@@ -434,28 +439,29 @@ class AndGateLearningVisualization(Scene):
                 temp_perceptron.bias = epoch_data["bias"]
                 prediction = temp_perceptron.predict([x, y])
                 # 색상 설정
-                new_color = self.CORRECT_COLOR if prediction == target else self.WRONG_COLOR
+                new_color = (
+                    self.CORRECT_COLOR if prediction == target else self.WRONG_COLOR
+                )
                 self.data_dots[(x, y)].set_color(new_color)  # 직접 색상 설정
 
             # 에포크 1의 모든 요소 표시
             animations = [
-                FadeIn(new_region), 
+                FadeIn(new_region),
                 FadeIn(new_line),
-                ReplacementTransform(current_text, new_text)
+                ReplacementTransform(current_text, new_text),
             ]
-            
+
             if new_equation:
                 animations.append(FadeIn(new_equation))
-                
+
             # 모든 데이터 포인트와 레이블을 애니메이션으로 표시
             animations.append(
-                AnimationGroup(*[
-                    FadeIn(dot) for dot in self.data_dots.values()
-                ] + [
-                    FadeIn(label) for label in self.data_labels.values()
-                ])
+                AnimationGroup(
+                    *[FadeIn(dot) for dot in self.data_dots.values()]
+                    + [FadeIn(label) for label in self.data_labels.values()]
+                )
             )
-            
+
             self.play(*animations)
             self.wait()
 
@@ -464,7 +470,7 @@ class AndGateLearningVisualization(Scene):
             current_region = new_region
             current_equation = new_equation
             current_text = new_text
-            
+
         # 두 번째 에포크부터는 ReplacementTransform 사용
         for i in range(2, history_len):
             epoch_data = self.epoch_history[i]
@@ -474,7 +480,7 @@ class AndGateLearningVisualization(Scene):
                 )
             )
             new_text = self._create_epoch_text(epoch_data)
-            
+
             # 데이터 포인트 색상 업데이트 애니메이션
             color_animations = self._update_data_point_colors(
                 epoch_data["weights"], epoch_data["bias"]
@@ -487,7 +493,7 @@ class AndGateLearningVisualization(Scene):
                     ReplacementTransform(current_text, new_text),
                 ]
                 animations.extend(color_animations)  # 색상 업데이트
-                
+
                 if current_equation and new_equation:
                     animations.append(
                         ReplacementTransform(current_equation, new_equation)
@@ -517,10 +523,10 @@ class AndGateLearningVisualization(Scene):
         # fmt: on
 
         # 퍼셉트론 생성
-        perceptron = Perceptron(learning_rate=self.LEARNING_RATE)
+        perceptron = Perceptron()
 
         # 트레이너 생성 및 학습
-        trainer = PerceptronTrainer(perceptron)
+        trainer = PerceptronTrainer(perceptron, learning_rate=self.LEARNING_RATE)
         trainer.add_epoch_callback(self._update_training_data)
 
         # 애니메이션과 함께 학습 진행
@@ -549,7 +555,6 @@ class AndGateLearningVisualization(Scene):
     def _update_training_data(self, epoch_data: dict) -> None:
         """에포크 데이터를 기록하고 콘솔에 출력합니다."""
         # 학습률 정보 추가
-        epoch_data["learning_rate"] = self.LEARNING_RATE
         self.epoch_history.append(epoch_data)
 
         epoch = epoch_data["epoch"]
