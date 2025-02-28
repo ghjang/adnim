@@ -27,8 +27,8 @@ def main() -> None:
         print(f"입력: {inputs}, 출력: {prediction}, 정답: {target}")
 
     # 학습된 가중치와 바이어스 출력
-    print(f"\n학습된 가중치: {perceptron.weights}")
-    print(f"학습된 바이어스: {perceptron.bias}")
+    print(f"\n학습된 가중치: {perceptron.input_weights}")
+    print(f"학습된 바이어스: {perceptron.input_bias}")
 
 
 if __name__ == "__main__":

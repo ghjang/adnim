@@ -372,8 +372,8 @@ class AndGateLearningVisualization(Scene):
     def _predict_with_weights(self, weights, bias, inputs):
         """주어진 가중치와 바이어스로 예측 결과를 반환합니다."""
         temp_perceptron = Perceptron()
-        temp_perceptron.weights = weights.copy()
-        temp_perceptron.bias = bias
+        temp_perceptron.input_weights = weights.copy()
+        temp_perceptron.input_bias = bias
         return temp_perceptron.predict(inputs)
 
     def _update_data_point_colors(self, weights, bias):
@@ -450,8 +450,8 @@ class AndGateLearningVisualization(Scene):
                 target = point["output"]
                 # 임시 퍼셉트론으로 예측
                 temp_perceptron = Perceptron()
-                temp_perceptron.weights = epoch_data["weights"].copy()
-                temp_perceptron.bias = epoch_data["bias"]
+                temp_perceptron.input_weights = epoch_data["weights"].copy()
+                temp_perceptron.input_bias = epoch_data["bias"]
                 prediction = temp_perceptron.predict([x, y])
                 # 색상 설정
                 new_color = (
@@ -564,8 +564,8 @@ class AndGateLearningVisualization(Scene):
             print(f"입력: {inputs}, 출력: {prediction}, 정답: {target}")
 
         # 학습된 가중치와 바이어스 출력
-        print(f"\n학습된 가중치: {perceptron.weights}")
-        print(f"학습된 바이어스: {perceptron.bias}")
+        print(f"\n학습된 가중치: {perceptron.input_weights}")
+        print(f"학습된 바이어스: {perceptron.input_bias}")
 
     def _update_training_data(self, epoch_data: dict) -> None:
         """에포크 데이터를 기록하고 콘솔에 출력합니다."""

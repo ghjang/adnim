@@ -34,12 +34,12 @@ class PerceptronTrainer:
         # 특정 가중치와 바이어스로 예측했을 때의 오류를 계산하는 함수
         def calculate_error_for_weights(weights, bias):
             # 현재 가중치와 바이어스를 임시 저장
-            orig_weights = self.perceptron.weights.copy()
-            orig_bias = self.perceptron.bias
+            orig_weights = self.perceptron.input_weights.copy()
+            orig_bias = self.perceptron.input_bias
 
             # 주어진 가중치와 바이어스로 설정
-            self.perceptron.weights = weights.copy()
-            self.perceptron.bias = bias
+            self.perceptron.input_weights = weights.copy()
+            self.perceptron.input_bias = bias
 
             # 오류 계산
             total_error = 0
@@ -49,15 +49,15 @@ class PerceptronTrainer:
                 total_error += abs(error)
 
             # 원래 가중치와 바이어스 복원
-            self.perceptron.weights = orig_weights
-            self.perceptron.bias = orig_bias
+            self.perceptron.input_weights = orig_weights
+            self.perceptron.input_bias = orig_bias
 
             return total_error
 
         for epoch in range(epochs):
             # 현재 에포크 시작 전의 상태 저장
-            prev_weights = self.perceptron.weights.copy()
-            prev_bias = self.perceptron.bias
+            prev_weights = self.perceptron.input_weights.copy()
+            prev_bias = self.perceptron.input_bias
 
             # 현재 학습 진행
             total_error = 0
@@ -68,13 +68,13 @@ class PerceptronTrainer:
 
                 if error != 0:
                     # 가중치 업데이트
-                    for i in range(len(self.perceptron.weights)):
+                    for i in range(len(self.perceptron.input_weights)):
                         weight_delta = learning_rate * error * inputs[i]
-                        self.perceptron.update_weight(i, weight_delta)
+                        self.perceptron.update_input_weight(i, weight_delta)
 
                     # 바이어스 업데이트
                     bias_delta = learning_rate * error
-                    self.perceptron.update_bias(bias_delta)
+                    self.perceptron.update_input_bias(bias_delta)
 
             # 이전 가중치와 바이어스에 맞는 오류값 계산
             prev_error = calculate_error_for_weights(prev_weights, prev_bias)
