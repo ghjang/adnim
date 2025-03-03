@@ -15,6 +15,7 @@ class MPerceptron(VGroup, Perceptron):
     # 내부 구성요소에 대한 타입 힌트
     main_outer_circle: Circle
     outer_text: Optional[MathTex]  # 외부원 텍스트에 대한 타입 힌트 추가
+    outer_text_scale_factor: float
     input_circle: Optional[Circle]
     output_circle: Optional[Circle]
     input_to_output_arrow: Optional[Arrow]
@@ -30,6 +31,7 @@ class MPerceptron(VGroup, Perceptron):
         fill_color: ManimColor = PINK,
         fill_opacity: float = 0.2,
         outer_text: Optional[str] = None,  # 외부원 텍스트 인자 추가
+        outer_text_scale_factor: float = 1.6,
         layout_direction: Literal[
             "horizontal", "vertical"
         ] = "horizontal",  # 배치 방향 옵션 추가
@@ -52,6 +54,7 @@ class MPerceptron(VGroup, Perceptron):
 
         # 내부 구성요소 초기화
         self.outer_text = None  # 외부원 텍스트 초기화
+        self.outer_text_scale_factor = outer_text_scale_factor
         self.input_circle = None
         self.output_circle = None
         self.input_to_output_arrow = None
@@ -66,12 +69,12 @@ class MPerceptron(VGroup, Perceptron):
             fill_color=fill_color,
             fill_opacity=fill_opacity,
         )
-
+        self.main_outer_circle.set_z_index(0)  # 원을 기본 레이어에 배치
         self.add(self.main_outer_circle)
 
         # 외부원 텍스트가 있으면 표시
         if outer_text:
-            self.show_outer_text(outer_text)
+            self.show_outer_text(outer_text, outer_text_scale_factor)
 
     def show_outer_text(
         self,
@@ -92,6 +95,7 @@ class MPerceptron(VGroup, Perceptron):
 
         # 텍스트 생성
         math_text = MathTex(str(text), color=WHITE).scale(radius * text_scale_factor)
+        math_text.set_z_index(1)  # 텍스트를 원보다 위에 배치
 
         if math_text.height > radius * text_max_height_ratio:
             scale_factor = (radius * text_max_height_ratio) / math_text.height
@@ -122,6 +126,7 @@ class MPerceptron(VGroup, Perceptron):
             return None
 
         math_text = MathTex(str(text), color=WHITE).scale(radius * scale_factor)
+        math_text.set_z_index(1)  # 텍스트를 원보다 위에 배치
 
         if math_text.height > radius * max_height_ratio:
             adjust_scale_factor = (radius * max_height_ratio) / math_text.height
@@ -198,6 +203,7 @@ class MPerceptron(VGroup, Perceptron):
                 fill_color=fill_color,
                 fill_opacity=fill_opacity,
             )
+            circle.set_z_index(0)  # 내부 원도 기본 레이어에 배치
             circle.move_to(
                 self.main_outer_circle.get_center()
                 + position_offset * (radius - inner_radius)
@@ -291,7 +297,7 @@ class MPerceptron(VGroup, Perceptron):
 
         # 내부 원이 숨겨질 때 외부 텍스트가 있었다면 다시 표시
         if hasattr(self, "outer_text_value") and self.outer_text_value:
-            self.show_outer_text(self.outer_text_value)
+            self.show_outer_text(self.outer_text_value, self.outer_text_scale_factor)
             self.outer_text_value = None  # 복원 후 값 초기화
 
     def get_input_point(self) -> np.ndarray:
@@ -345,4 +351,3 @@ class MPerceptron(VGroup, Perceptron):
             return center + RIGHT * radius  # 외부 원의 오른쪽 극점
         else:  # vertical
             return center + DOWN * radius  # 외부 원의 아래쪽 극점
-
