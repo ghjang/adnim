@@ -23,7 +23,7 @@ class Perceptron:
 
         self.activation_function = activation_function
 
-    def get_output(self, inputs: list[float]) -> int:
+    def get_output_value(self, inputs: list[float]) -> int:
         """퍼셉트론의 출력을 반환"""
         return self.predict(inputs)
 
