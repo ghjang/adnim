@@ -19,7 +19,6 @@ class Display3DPlot(Scene):
 
         # 좌측 영역에 모든 수식 배치
         left_group = VGroup()
-
         # 함수 표현식 표시 - 폰트 크기 줄임
         formula = MathTex(r"f(x, y) = " + func_latex, font_size=28)
         formula.to_edge(UP).to_edge(LEFT, buff=0.5)
@@ -104,7 +103,6 @@ class Display3DPlot(Scene):
         # sympy 함수를 사용해 3D 플롯 생성
         plot_image = self.create_3d_plot(func_expr, x, y)
         plot_image.scale(0.5)  # 크기 조정
-
         # 오른쪽 중앙에 배치
         plot_image.to_edge(RIGHT, buff=0.5).scale(0.6)
 
