@@ -1,7 +1,10 @@
-from typing import List, override
+from typing import override
 from manim import *
 from common.decorator.latex_factory import latex_factory
-from common.template.proof_sequence.base_proof_scene import BaseProofScene, ProofSceneConfig
+from common.template.proof_sequence.base_proof_scene import (
+    BaseProofScene,
+    ProofSceneConfig,
+)
 
 
 class ConstantMultipleRuleProof(BaseProofScene):
@@ -25,12 +28,12 @@ class ConstantMultipleRuleProof(BaseProofScene):
 
     @override
     @latex_factory()
-    def get_proof_steps(self, step_group_index: int) -> List[str]:
+    def get_proof_steps(self, step_group_index: int) -> list[str]:
         steps = [
             r"\left\{c \cdot f(x)\right\}' = \lim_{h \to 0} \frac{c \cdot f(x+h) - c \cdot f(x)}{h}",
             r"= \lim_{h \to 0} \frac{c \cdot \left\{f(x+h) - f(x)\right\}}{h}",
             r"= \lim_{h \to 0} c \cdot \left\{\frac{f(x+h) - f(x)}{h}\right\}",
             r"= c \cdot \lim_{h \to 0} \frac{f(x+h) - f(x)}{h}",
-            r"= c \cdot f'(x)"
+            r"= c \cdot f'(x)",
         ]
         return steps

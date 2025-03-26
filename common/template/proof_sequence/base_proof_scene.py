@@ -1,8 +1,10 @@
-from typing import List, override
+from typing import override
 from abc import ABC, abstractmethod
 from manim import *
 from .scrolling_group import ScrollingGroup
 from .proof_scene_config import ProofSceneConfig
+
+type ProofStepItem = str | dict
 
 
 class BaseProofScene(Scene, ABC):
@@ -24,7 +26,7 @@ class BaseProofScene(Scene, ABC):
         pass
 
     @abstractmethod
-    def get_proof_steps(self, step_group_index: int = 0) -> List[str]:
+    def get_proof_steps(self, step_group_index: int = 0) -> list[ProofStepItem]:
         """증명 단계별 수식 리스트 반환"""
         pass
 
@@ -83,9 +85,7 @@ class BaseProofScene(Scene, ABC):
     def _show_intro_title(self) -> None:
         """타이틀 페이지 표시"""
         title = Text(
-            self.get_title(),
-            font_size=self.config.title_font_size,
-            weight=BOLD
+            self.get_title(), font_size=self.config.title_font_size, weight=BOLD
         ).shift(self.config.title_position)
 
         title.set_color_by_gradient(*self.config.title_colors)
@@ -102,30 +102,25 @@ class BaseProofScene(Scene, ABC):
         formula = MathTex(
             self.get_intro_formula(),
             font_size=self.config.title_intro_formula_size,
-            color=self.config.formula_color
+            color=self.config.formula_color,
         ).shift(self.config.title_vertical_offset)
 
         # 타이틀과 공식을 함께 표시하고 페이드아웃
-        self.play(
-            FadeIn(title_group),
-            FadeIn(formula)
-        )
+        self.play(FadeIn(title_group), FadeIn(formula))
         self.wait(self.config.title_display_time)
-        self.play(
-            FadeOut(title_group),
-            FadeOut(formula)
-        )
+        self.play(FadeOut(title_group), FadeOut(formula))
 
-    def _create_formula_tex_group(self, rule: str) -> VGroup:
+    def _create_formula_tex_group(self, rule: str, color: ManimColor = None) -> VGroup:
         """수식 문자열로부터 MathTex VGroup을 생성"""
-        parts = rule.split('=')
+        parts = rule.split("=")
         tex_group = VGroup()
 
         for i, part in enumerate(parts):
+            tex_color = color or self.config.formula_color
             tex_part = MathTex(
-                ('=' if i > 0 else '') + part.strip(),
+                ("=" if i > 0 else "") + part.strip(),
                 font_size=self.config.font_size,
-                color=self.config.formula_color
+                color=tex_color,
             )
             tex_group.add(tex_part)
 
@@ -133,17 +128,30 @@ class BaseProofScene(Scene, ABC):
         return tex_group
 
     def _prepare_formula_groups(
-        self,
-        formulas: list[str]
-    ) -> tuple[list[VGroup], float, float]:
+        self, formulas: list[ProofStepItem]
+    ) -> tuple[list[tuple[VGroup, float]], float, float]:
         """모든 수식 VGroup을 생성하고 최대 높이와 기준 등호 위치를 계산"""
         formula_groups = []
         max_height = 0
         equal_x_pos = None
 
         for rule in formulas:
-            tex_group = self._create_formula_tex_group(rule)
-            formula_groups.append(tex_group)
+            if isinstance(rule, dict):
+                if "text" not in rule:
+                    raise ValueError(
+                        "The 'text' key is missing in the rule dictionary."
+                    )
+
+                rule_tex = rule["text"]
+                color = rule.get("color", None)
+                proof_step_item_h_offset = rule.get("h_offset", 0)
+            else:
+                rule_tex = rule
+                color = None
+                proof_step_item_h_offset = 0
+
+            tex_group = self._create_formula_tex_group(rule_tex, color)
+            formula_groups.append((tex_group, proof_step_item_h_offset))
 
             max_height = max(max_height, tex_group.height)
 
@@ -155,29 +163,41 @@ class BaseProofScene(Scene, ABC):
     def _add_formulas_to_scroller(
         self,
         scroller: ScrollingGroup,
-        formula_groups: list[VGroup],
+        formula_groups: list[tuple[VGroup, float]],
         max_height: float,
-        equal_x_pos: float
+        equal_x_pos: float,
     ) -> None:
         """수식들을 스크롤러에 순차적으로 추가"""
-        for idx, tex_group in enumerate(formula_groups):
+        for idx, (tex_group, group_h_offset) in enumerate(formula_groups):
             if idx == 0:
                 scroller.add_element(
                     self,
                     tex_group,
                     v_spacing=max_height,
-                    v_spacing_buff=self.config.v_spacing_buff
+                    v_spacing_buff=self.config.v_spacing_buff,
+                    h_offset=self.config.equal_symbol_h_extra_offset_for_first_step,
                 )
             else:
                 current_equal_pos = tex_group[1].get_left()[0]
                 h_offset = equal_x_pos - current_equal_pos
+
+                # NumPy 배열인지 확인하고 안전하게 비교
+                if isinstance(group_h_offset, np.ndarray):
+                    # NumPy 배열은 그대로 사용
+                    h_offset = group_h_offset
+                elif group_h_offset == 0:
+                    # 스칼라 0인 경우
+                    h_offset += self.config.equal_symbol_h_extra_offset
+                else:
+                    # 기타 스칼라 값
+                    h_offset += group_h_offset
 
                 scroller.add_element(
                     self,
                     tex_group,
                     v_spacing=max_height,
                     v_spacing_buff=self.config.v_spacing_buff,
-                    h_offset=h_offset
+                    h_offset=h_offset,
                 )
 
             self.wait(self.config.animation_pause)
@@ -186,25 +206,21 @@ class BaseProofScene(Scene, ABC):
         self,
         formula_group: VGroup,
         color: ManimColor = None,
-        qed_position: np.ndarray = DR
+        qed_position: np.ndarray = DR,
     ) -> None:
         """결론 수식을 강조하고 QED 박스 추가"""
         color = color or self.config.conclusion_color
 
-        qed_box = MathTex(
-            r"\blacksquare",
-            font_size=self.config.qed_font_size,
-            color=color
-        ).next_to(
-            formula_group,
-            qed_position,
-            buff=self.config.qed_buff
-        ).shift(self.config.qed_shift)
+        qed_box = (
+            MathTex(r"\blacksquare", font_size=self.config.qed_font_size, color=color)
+            .next_to(formula_group, qed_position, buff=self.config.qed_buff)
+            .shift(self.config.qed_shift)
+        )
 
         self.play(
             formula_group.animate.set_color(color),
             FadeIn(qed_box, scale=1.2),
-            run_time=self.config.conclusion_animation_time
+            run_time=self.config.conclusion_animation_time,
         )
 
     @override
@@ -230,19 +246,16 @@ class BaseProofScene(Scene, ABC):
                 )
 
                 scroller = ScrollingGroup(
-                    add_position=self.config.start_position,
-                    opacity_gradient=True
+                    add_position=self.config.start_position, opacity_gradient=True
                 )
 
                 self._add_formulas_to_scroller(
-                    scroller,
-                    formula_groups,
-                    max_height,
-                    equal_x_pos
+                    scroller, formula_groups, max_height, equal_x_pos
                 )
 
-                # 마지막 수식이 존재하는 경우에만 결론 강조
-                self._emphasize_conclusion(formula_groups[-1])
+                if formula_groups:
+                    last_group = formula_groups[-1][0]
+                    self._emphasize_conclusion(last_group)
 
             if self.config.scene_end_pause > 0:
                 self.wait(self.config.scene_end_pause)
