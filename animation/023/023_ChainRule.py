@@ -27,7 +27,7 @@ class ChainRuleProof(BaseProofScene):
     @override
     @latex_factory()
     def get_intro_formula(self) -> str:
-        return r"\frac{d}{dx}f(g(x)) = \frac{df}{dg} \cdot \frac{dg}{dx}"
+        return r"\frac{d}{dx}f(g(x)) = f'(g(x)) \cdot g'(x)"
 
     @override
     @latex_factory()
@@ -54,6 +54,7 @@ class ChainRuleProof(BaseProofScene):
             },
             r"= \lim_{\Delta g \to 0} \frac{\Delta f}{\Delta g} \cdot \lim_{\Delta x \to 0} \frac{\Delta g}{\Delta x}",
             r"= \frac{df}{dg} \cdot \frac{dg}{dx}",
+            r"= f'(g(x)) \cdot g'(x)",
         ]
 
         return steps
