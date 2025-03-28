@@ -111,7 +111,25 @@ class BaseProofScene(Scene, ABC):
         self.play(FadeOut(title_group), FadeOut(formula))
 
     def _create_formula_tex_group(self, rule: str, color: ManimColor = None) -> VGroup:
-        """수식 문자열로부터 MathTex VGroup을 생성"""
+        """수식 문자열로부터 MathTex VGroup을 생성합니다.
+
+        이 메서드는 문자열을 '=' 기호를 기준으로 분할하여 각 부분을 별도의 MathTex 객체로 만듭니다.
+        첫 번째 부분을 제외한 모든 부분 앞에는 '=' 기호가 자동으로 추가됩니다.
+
+        '=' 기호가 없는 문자열의 경우 단일 MathTex 객체만 생성됩니다.
+        '=' 기호가 있는 경우 (예: "A = B = C"), 다음과 같이 처리됩니다:
+          - 첫 번째 부분: "A"
+          - 두 번째 부분: "= B"
+          - 세 번째 부분: "= C"
+
+        Args:
+            rule (str): 변환할 LaTeX 수식 문자열
+            color (ManimColor, optional): 수식 색상. None일 경우 config.formula_color 사용
+
+        Returns:
+            VGroup: 각 부분이 별도의 MathTex 객체로 생성된 수식 그룹
+        """
+
         parts = rule.split("=")
         tex_group = VGroup()
 
@@ -178,7 +196,9 @@ class BaseProofScene(Scene, ABC):
                     h_offset=self.config.equal_symbol_h_extra_offset_for_first_step,
                 )
             else:
-                current_equal_pos = tex_group[1].get_left()[0]
+                current_equal_pos = (
+                    tex_group[1].get_left()[0] if len(tex_group) > 1 else 0
+                )
                 h_offset = equal_x_pos - current_equal_pos
 
                 # NumPy 배열인지 확인하고 안전하게 비교
