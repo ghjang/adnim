@@ -110,34 +110,34 @@ class BaseProofScene(Scene, ABC):
         self.wait(self.config.title_display_time)
         self.play(FadeOut(title_group), FadeOut(formula))
 
-    def _create_formula_tex_group(self, rule: str, color: ManimColor = None) -> VGroup:
-        """수식 문자열로부터 MathTex VGroup을 생성합니다.
+    def _create_formula_tex_group(
+        self, rule: str, color: ManimColor = None, font_size: int = None
+    ) -> VGroup:
+        """수식 문자열로부터 MathTex VGroup을 생성
 
-        이 메서드는 문자열을 '=' 기호를 기준으로 분할하여 각 부분을 별도의 MathTex 객체로 만듭니다.
-        첫 번째 부분을 제외한 모든 부분 앞에는 '=' 기호가 자동으로 추가됩니다.
-
-        '=' 기호가 없는 문자열의 경우 단일 MathTex 객체만 생성됩니다.
+        이 메서드는 문자열을 첫 번째 '=' 기호만을 기준으로 분할하여 최대 2개의 MathTex 객체로 구성된 VGroup을 만듭니다.
+        '=' 기호가 없는 경우에는 단일 MathTex 객체만 생성됩니다.
         '=' 기호가 있는 경우 (예: "A = B = C"), 다음과 같이 처리됩니다:
           - 첫 번째 부분: "A"
-          - 두 번째 부분: "= B"
-          - 세 번째 부분: "= C"
+          - 두 번째 부분: "= B = C" (추가 등호는 두 번째 부분에 포함됨)
 
         Args:
             rule (str): 변환할 LaTeX 수식 문자열
             color (ManimColor, optional): 수식 색상. None일 경우 config.formula_color 사용
+            font_size (int, optional): 수식 폰트 크기. None일 경우 config.font_size 사용
 
         Returns:
             VGroup: 각 부분이 별도의 MathTex 객체로 생성된 수식 그룹
         """
-
-        parts = rule.split("=")
+        # 첫 번째 등호만 기준으로 최대 2개 부분으로 분할
+        parts = rule.split("=", 1)
         tex_group = VGroup()
 
         for i, part in enumerate(parts):
             tex_color = color or self.config.formula_color
             tex_part = MathTex(
                 ("=" if i > 0 else "") + part.strip(),
-                font_size=self.config.font_size,
+                font_size=font_size or self.config.font_size,
                 color=tex_color,
             )
             tex_group.add(tex_part)
@@ -161,14 +161,16 @@ class BaseProofScene(Scene, ABC):
                     )
 
                 rule_tex = rule["text"]
+                font_size = rule.get("font_size", self.config.font_size)
                 color = rule.get("color", None)
                 proof_step_item_h_offset = rule.get("h_offset", 0)
             else:
                 rule_tex = rule
+                font_size = self.config.font_size
                 color = None
                 proof_step_item_h_offset = 0
 
-            tex_group = self._create_formula_tex_group(rule_tex, color)
+            tex_group = self._create_formula_tex_group(rule_tex, color, font_size)
             formula_groups.append((tex_group, proof_step_item_h_offset))
 
             max_height = max(max_height, tex_group.height)
